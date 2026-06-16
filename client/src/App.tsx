@@ -4,34 +4,41 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+import Login from "./pages/Login";
+import ClientDashboard from "./pages/ClientDashboard";
+import AdminPanel from "./pages/AdminPanel";
+import AdminClientDetail from "./pages/AdminClientDetail";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
+      <Route path="/" component={Login} />
+      <Route path="/login" component={Login} />
+      <Route path="/dashboard" component={ClientDashboard} />
+      <Route path="/dashboard/:clientId" component={ClientDashboard} />
+      <Route path="/admin" component={AdminPanel} />
+      <Route path="/admin/clients/:clientId" component={AdminClientDetail} />
+      <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
-          <Toaster />
+          <Toaster
+            theme="dark"
+            toastOptions={{
+              style: {
+                background: "rgb(18,13,16)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "rgb(245,240,232)",
+              },
+            }}
+          />
           <Router />
         </TooltipProvider>
       </ThemeProvider>
