@@ -4,6 +4,13 @@ export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 export const getLoginUrl = () => {
   const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
   const appId = import.meta.env.VITE_APP_ID;
+
+  // En desarrollo local no hay OAuth de Manus configurado. Sin esto,
+  // `new URL("undefined/app-auth")` lanza "Invalid URL" y rompe la app.
+  if (!oauthPortalUrl) {
+    return "/";
+  }
+
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
   const state = btoa(redirectUri);
 

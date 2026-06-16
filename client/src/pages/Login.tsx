@@ -7,7 +7,14 @@ export default function Login() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
 
+  // Modo preview: con ?preview=1 NO redirige al dashboard/admin, para poder
+  // diseñar la pantalla de login en vivo aunque el dev bypass autentique.
+  const isPreview =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("preview");
+
   useEffect(() => {
+    if (isPreview) return;
     if (!loading && isAuthenticated) {
       if (user?.role === "admin") {
         navigate("/admin");
@@ -15,90 +22,107 @@ export default function Login() {
         navigate("/dashboard");
       }
     }
-  }, [loading, isAuthenticated, user, navigate]);
+  }, [loading, isAuthenticated, user, navigate, isPreview]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--noir)" }}>
-        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--rojo)" }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--gj-petrol-ink)" }}>
+        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--gj-green)" }} />
       </div>
     );
   }
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
-      style={{ background: "var(--noir)" }}
+      className="flex flex-col items-center justify-center relative overflow-hidden"
+      style={{
+        minHeight: "100vh",
+        background:
+          "radial-gradient(ellipse 90% 70% at 50% 30%, var(--gj-petrol) 0%, var(--gj-petrol-deep) 50%, var(--gj-petrol-ink) 100%)",
+        fontFamily: "var(--gj-font)",
+      }}
     >
-      {/* Background glow */}
+      {/* Glow de acento */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "radial-gradient(ellipse 70% 50% at 50% 40%, rgba(43,10,18,0.8) 0%, transparent 70%)",
+          background:
+            "radial-gradient(ellipse 50% 40% at 50% 35%, rgba(10,135,105,0.18) 0%, transparent 70%)",
         }}
       />
 
-      {/* Decorative circles */}
+      {/* Círculos decorativos */}
       <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-        <div className="absolute w-[600px] h-[600px] rounded-full" style={{ border: "1px solid rgba(217,164,65,0.06)" }} />
-        <div className="absolute w-[400px] h-[400px] rounded-full" style={{ border: "1px solid rgba(179,40,37,0.08)" }} />
-        <div className="absolute w-[200px] h-[200px] rounded-full" style={{ border: "1px solid rgba(217,164,65,0.1)" }} />
+        <div className="absolute w-[640px] h-[640px] rounded-full" style={{ border: "1px solid rgba(154,230,180,0.05)" }} />
+        <div className="absolute w-[440px] h-[440px] rounded-full" style={{ border: "1px solid rgba(10,135,105,0.10)" }} />
+        <div className="absolute w-[240px] h-[240px] rounded-full" style={{ border: "1px solid rgba(154,230,180,0.08)" }} />
       </div>
 
-      {/* Login card */}
+      {/* Tarjeta de login */}
       <div
         className="relative z-10 w-full max-w-md px-8 py-12 animate-fade-up"
         style={{
-          background: "rgba(255,255,255,0.02)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: "4px",
+          background: "rgba(255,255,255,0.025)",
+          border: "1px solid rgba(154,230,180,0.12)",
+          borderRadius: "10px",
+          backdropFilter: "blur(8px)",
         }}
       >
-        {/* Header */}
+        {/* Logo (monograma GJ + nombre) */}
         <div className="text-center mb-10">
+          <img
+            src="/gj-logo.png"
+            alt="Gumercindo Jiménez"
+            className="mx-auto mb-6"
+            style={{ width: 210, height: "auto" }}
+          />
+
           <p
-            className="font-label text-xs tracking-widest mb-4"
-            style={{ color: "var(--ambar)", letterSpacing: "6px" }}
+            className="text-xs mb-3"
+            style={{ color: "var(--gj-mint)", letterSpacing: "6px", fontWeight: 500 }}
           >
             PORTAL DE CLIENTES
           </p>
-          <h1
-            className="font-display text-4xl font-bold mb-3"
-            style={{ color: "var(--creme)", lineHeight: 1.1 }}
-          >
-            Consultoría
-            <br />
-            <em style={{ color: "var(--rojo-vivo)", fontStyle: "italic" }}>Estratégica</em>
-          </h1>
           <p
-            className="font-serif text-base"
-            style={{ color: "var(--oro-pale)", fontStyle: "italic" }}
+            className="text-base"
+            style={{ color: "var(--gj-muted)", fontWeight: 400 }}
           >
-            Tu proyecto, en tiempo real.
+            El caos me busca.{" "}
+            <span style={{ color: "var(--gj-mint)", fontStyle: "italic" }}>
+              Yo lo convierto en método.
+            </span>
           </p>
         </div>
 
-        {/* Divider */}
-        <div className="sdt-divider mb-10" />
+        {/* Divisor */}
+        <div
+          className="mb-10"
+          style={{
+            height: 1,
+            background:
+              "linear-gradient(90deg, transparent, rgba(154,230,180,0.25), transparent)",
+          }}
+        />
 
-        {/* Login button */}
+        {/* Botón de acceso */}
         <div className="flex flex-col gap-4">
           <a
             href={getLoginUrl()}
-            className="flex items-center justify-center gap-3 w-full py-4 px-6 font-label tracking-widest text-sm transition-all duration-300"
+            className="flex items-center justify-center gap-3 w-full py-4 px-6 text-sm transition-all duration-300"
             style={{
-              background: "var(--rojo)",
-              color: "var(--creme)",
-              borderRadius: "3px",
+              background: "var(--gj-green)",
+              color: "var(--gj-cream)",
+              borderRadius: "8px",
               letterSpacing: "3px",
+              fontWeight: 600,
               textDecoration: "none",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "var(--rojo-vivo)";
-              (e.currentTarget as HTMLElement).style.boxShadow = "var(--glow-red)";
+              (e.currentTarget as HTMLElement).style.background = "var(--gj-green-bright)";
+              (e.currentTarget as HTMLElement).style.boxShadow = "0 0 28px rgba(10,135,105,0.45)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "var(--rojo)";
+              (e.currentTarget as HTMLElement).style.background = "var(--gj-green)";
               (e.currentTarget as HTMLElement).style.boxShadow = "none";
             }}
           >
@@ -106,10 +130,10 @@ export default function Login() {
           </a>
         </div>
 
-        {/* Footer note */}
+        {/* Nota al pie */}
         <p
           className="text-center text-xs mt-8"
-          style={{ color: "var(--gris)", fontFamily: "var(--font-body)" }}
+          style={{ color: "var(--gj-muted)", lineHeight: 1.6 }}
         >
           Acceso exclusivo para clientes y colaboradores.
           <br />
@@ -117,10 +141,10 @@ export default function Login() {
         </p>
       </div>
 
-      {/* Bottom line */}
+      {/* Firma inferior */}
       <div className="relative z-10 mt-8 text-center">
-        <p className="font-label text-xs tracking-widest" style={{ color: "var(--gris)", letterSpacing: "4px" }}>
-          GUMERCINDO JIMÉNEZ · CONSULTORÍA ESTRATÉGICA
+        <p className="text-xs" style={{ color: "var(--gj-muted)", letterSpacing: "4px", fontWeight: 500 }}>
+          GUMERCINDO JIMÉNEZ · CONSULTORÍA
         </p>
       </div>
     </div>

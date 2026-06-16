@@ -3,6 +3,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─── MARCA CONSULTOR — GUMERCINDO JIMÉNEZ ───────────────────────────────────
+   Identidad propia del consultor (portal de entrada / login / panel admin).
+   Es INDEPENDIENTE del branding de cada cliente. Verde petróleo + Poppins. */
+:root {
+  --gj-petrol: #0F3D3A;       /* verde petróleo (color del logo) */
+  --gj-petrol-deep: #0A2A28;  /* petróleo profundo (fondos) */
+  --gj-petrol-ink: #061A19;   /* casi negro verdoso */
+  --gj-green: #0A8769;        /* teal/verde acento (CTA) */
+  --gj-green-bright: #10A883; /* hover del acento */
+  --gj-mint: #9AE6B4;         /* menta (detalles, highlights) */
+  --gj-cream: #F4F7F5;        /* texto claro */
+  --gj-muted: #8FA9A3;        /* texto secundario */
+  --gj-font: 'Poppins', system-ui, sans-serif;
+}
+
 /* ─── SDT DESIGN SYSTEM ──────────────────────────────────────────────────── */
 :root {
   /* Brand palette */
@@ -188,6 +203,36 @@ body::before {
 
 .sdt-glow-red { box-shadow: var(--glow-red); }
 .sdt-glow-amber { box-shadow: var(--glow-amber); }
+
+/* ─── MARCA CONSULTOR — componentes del portal/admin ─────────────────────── */
+.gj-card {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(154,230,180,0.10);
+  border-radius: 10px;
+  transition: border-color var(--dur-mid) var(--ease-out),
+              transform var(--dur-mid) var(--ease-out);
+}
+.gj-card:hover {
+  border-color: rgba(10,135,105,0.45);
+  transform: translateY(-2px);
+}
+.gj-section-label {
+  font-family: var(--gj-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 5px;
+  color: var(--gj-mint);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.gj-section-label::before {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: var(--gj-green);
+  flex-shrink: 0;
+}
 
 /* Status badge colors */
 .status-completed { color: #4eba8a; background: rgba(45,122,94,0.15); border-color: rgba(45,122,94,0.3); }
