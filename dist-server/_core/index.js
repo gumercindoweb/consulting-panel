@@ -54,6 +54,7 @@ var clients = pgTable("clients", {
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   logoUrl: text("logoUrl"),
+  coverImageUrl: text("coverImageUrl"),
   branding: json("branding").$type(),
   consultorName: varchar("consultorName", { length: 255 }),
   startDate: timestamp("startDate"),
