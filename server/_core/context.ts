@@ -25,11 +25,11 @@ export async function createContext(
     user = null;
   }
 
-  // ─── DEV AUTH BYPASS ──────────────────────────────────────────────────────
-  // En desarrollo (NODE_ENV !== "production") no hay OAuth de Manus disponible,
-  // así que si no hay sesión válida entramos automáticamente como el admin de
-  // desarrollo. En producción este bloque nunca se ejecuta.
-  if (!user && !ENV.isProduction) {
+  // ─── DEV AUTH BYPASS (opcional) ───────────────────────────────────────────
+  // Solo si DEV_AUTOLOGIN=1 y no estamos en producción: sin sesión válida,
+  // entramos como el admin de desarrollo. Apagado por defecto para poder
+  // probar el login real por email+clave y la restricción de acceso del cliente.
+  if (!user && !ENV.isProduction && ENV.devAutoLogin) {
     user = (await db.getUserByOpenId(DEV_ADMIN_OPEN_ID)) ?? null;
   }
 

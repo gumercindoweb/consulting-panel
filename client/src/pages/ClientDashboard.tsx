@@ -22,7 +22,7 @@ export type DashboardSection =
   | "resources";
 
 export default function ClientDashboard() {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated, logout } = useAuth();
   const [, navigate] = useLocation();
   const params = useParams<{ clientId?: string }>();
   const [activeSection, setActiveSection] = useState<DashboardSection>("overview");
@@ -137,9 +137,9 @@ export default function ClientDashboard() {
               {user?.name || user?.email}
             </span>
             <button
-              onClick={() => {
-                // logout handled by auth
-                window.location.href = "/login";
+              onClick={async () => {
+                await logout();
+                navigate("/login");
               }}
               className="font-label text-xs tracking-widest px-4 py-2 transition-all"
               style={{

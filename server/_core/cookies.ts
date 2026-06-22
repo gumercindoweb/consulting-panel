@@ -39,10 +39,16 @@ export function getSessionCookieOptions(
   //       ? hostname
   //       : undefined;
 
+  const secure = isSecureRequest(req);
+
+  // SameSite=None requiere Secure; los navegadores rechazan None sin Secure
+  // (caso típico en http://localhost). En ese caso usamos Lax, que funciona
+  // para same-origin. En producción (https) usamos None para soportar
+  // escenarios cross-site.
   return {
     httpOnly: true,
     path: "/",
-    sameSite: "none",
-    secure: isSecureRequest(req),
+    sameSite: secure ? "none" : "lax",
+    secure,
   };
 }

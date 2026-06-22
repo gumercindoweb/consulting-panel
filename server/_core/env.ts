@@ -5,6 +5,10 @@ export const ENV = {
   oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? "",
   ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
   isProduction: process.env.NODE_ENV === "production",
+  // Auto-login como admin de desarrollo (sin pasar por el login real).
+  // Apagado por defecto: así se puede probar el acceso por email+clave.
+  // Activar con DEV_AUTOLOGIN=1 en .env si querés la comodidad del bypass.
+  devAutoLogin: process.env.DEV_AUTOLOGIN === "1",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
 };

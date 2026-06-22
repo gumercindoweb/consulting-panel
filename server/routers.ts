@@ -1,7 +1,10 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { ENV } from "./_core/env";
+import { verifyPassword } from "./_core/password";
+import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
@@ -23,6 +26,7 @@ import {
   getAllClients,
   getClientAccessForUser,
   getClientById,
+  getUserByEmail,
   getLearningsByClient,
   getMetricsByClient,
   getMilestonesByClient,
@@ -65,6 +69,54 @@ export const appRouter = router({
 
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
+
+    // Login por email + contraseña. Crea la sesión (cookie firmada) si las
+    // credenciales son válidas. Mensaje genérico ante cualquier fallo para no
+    // revelar si el email existe.
+    login: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email("Email inválido"),
+          password: z.string().min(1, "Ingresá tu contraseña"),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const invalid = new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Email o contraseña incorrectos.",
+        });
+
+        const user = await getUserByEmail(input.email);
+        if (!user || !user.passwordHash) throw invalid;
+
+        const ok = await verifyPassword(input.password, user.passwordHash);
+        if (!ok) throw invalid;
+
+        // appId debe ser no-vacío para que verifySession acepte el token.
+        // En local (sin OAuth) ENV.appId está vacío, usamos un fallback.
+        const sessionToken = await sdk.signSession(
+          {
+            openId: user.openId,
+            appId: ENV.appId || "consulting-panel",
+            name: user.name || "",
+          },
+          { expiresInMs: ONE_YEAR_MS }
+        );
+
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, {
+          ...cookieOptions,
+          maxAge: ONE_YEAR_MS,
+        });
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        };
+      }),
+
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });

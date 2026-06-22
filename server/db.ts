@@ -1,5 +1,5 @@
 import { and, asc, eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
 import {
   Client,
   ClientAccess,
@@ -79,13 +79,31 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (!values.lastSignedIn) values.lastSignedIn = new Date();
   if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
 
-  await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+  const existing = await db.select().from(users).where(eq(users.openId, values.openId!)).limit(1);
+  if (existing.length > 0) {
+    await db.update(users).set(updateSet).where(eq(users.openId, values.openId!));
+  } else {
+    await db.insert(users).values(values);
+  }
 }
 
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
   if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Busca un usuario por email (case-insensitive). Usado por el login email+clave.
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const normalized = email.trim().toLowerCase();
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, normalized))
+    .limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -133,9 +151,10 @@ export async function getClientAccessForUser(userId: number): Promise<ClientAcce
 export async function grantClientAccess(userId: number, clientId: number): Promise<void> {
   const db = await getDb();
   if (!db) return;
-  await db.insert(clientAccess).values({ userId, clientId }).onDuplicateKeyUpdate({
-    set: { userId, clientId },
-  });
+  const existing = await db.select().from(clientAccess).where(and(eq(clientAccess.userId, userId), eq(clientAccess.clientId, clientId))).limit(1);
+  if (existing.length === 0) {
+    await db.insert(clientAccess).values({ userId, clientId });
+  }
 }
 
 // ─── PROJECT PHASES ───────────────────────────────────────────────────────────
