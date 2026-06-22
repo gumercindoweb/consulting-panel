@@ -2,7 +2,7 @@
   "version": 2,
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
-  "outputDirectory": "dist",
+  "outputDirectory": "dist/public",
   "routes": [
     { "src": "/trpc/(.*)", "dest": "/api" },
     { "src": "/api/(.*)", "dest": "/api" },
