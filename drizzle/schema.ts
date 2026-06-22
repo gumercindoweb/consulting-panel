@@ -9,6 +9,17 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
+// ─── ENUMS ───────────────────────────────────────────────────────────────────
+export const roleEnum = pgEnum("role", ["user", "admin"]);
+export const phaseStatusEnum = pgEnum("phase_status", ["completed", "in_progress", "pending"]);
+export const okrStatusEnum = pgEnum("okr_status", ["on_track", "at_risk", "off_track", "completed"]);
+export const milestoneStatusEnum = pgEnum("milestone_status", ["completed", "in_progress", "pending"]);
+export const milestoneCategoryEnum = pgEnum("milestone_category", ["strategy", "implementation", "training", "automation", "content", "analytics", "other"]);
+export const impactEnum = pgEnum("impact", ["high", "medium", "low"]);
+export const learningTypeEnum = pgEnum("learning_type", ["learning", "obstacle", "win"]);
+export const resourceCategoryEnum = pgEnum("resource_category", ["document", "template", "script", "training", "guide", "other"]);
+export const trendEnum = pgEnum("trend", ["up", "down", "stable"]);
+
 // ─── USERS ───────────────────────────────────────────────────────────────────
 export const users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -16,12 +27,10 @@ export const users = pgTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  // Hash scrypt de la contraseña para login por email+clave. NULL para usuarios
-  // que solo entran por OAuth. Formato: "scrypt:<saltHex>:<hashHex>".
   passwordHash: varchar("passwordHash", { length: 255 }),
-  role: pgEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: roleEnum("role").default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
@@ -29,14 +38,12 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
 // ─── CLIENTS ─────────────────────────────────────────────────────────────────
-// Each consulting client (e.g. Sensaciones de Tango)
 export const clients = pgTable("clients", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  slug: varchar("slug", { length: 64 }).notNull().unique(), // e.g. "sensaciones-de-tango"
+  slug: varchar("slug", { length: 64 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   logoUrl: text("logoUrl"),
-  // Branding tokens stored as JSON
   branding: json("branding").$type<{
     primaryColor: string;
     accentColor: string;
@@ -50,14 +57,13 @@ export const clients = pgTable("clients", {
   startDate: timestamp("startDate"),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type Client = typeof clients.$inferSelect;
 export type InsertClient = typeof clients.$inferInsert;
 
 // ─── CLIENT ACCESS ────────────────────────────────────────────────────────────
-// Links a user to a client (many-to-many, but typically 1 user = 1 client)
 export const clientAccess = pgTable("client_access", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   userId: integer("userId").notNull(),
@@ -73,13 +79,13 @@ export const projectPhases = pgTable("project_phases", {
   clientId: integer("clientId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
-  status: pgEnum("status", ["completed", "in_progress", "pending"]).default("pending").notNull(),
+  status: phaseStatusEnum("status").default("pending").notNull(),
   startDate: timestamp("startDate"),
   endDate: timestamp("endDate"),
   order: integer("order").default(0).notNull(),
   color: varchar("color", { length: 32 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type ProjectPhase = typeof projectPhases.$inferSelect;
@@ -95,12 +101,12 @@ export const okrs = pgTable("okrs", {
   targetValue: varchar("targetValue", { length: 128 }),
   currentValue: varchar("currentValue", { length: 128 }),
   unit: varchar("unit", { length: 64 }),
-  progressPct: integer("progressPct").default(0).notNull(), // 0-100
-  status: pgEnum("status", ["on_track", "at_risk", "off_track", "completed"]).default("on_track").notNull(),
-  period: varchar("period", { length: 64 }), // e.g. "Q2 2026"
+  progressPct: integer("progressPct").default(0).notNull(),
+  status: okrStatusEnum("status").default("on_track").notNull(),
+  period: varchar("period", { length: 64 }),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type Okr = typeof okrs.$inferSelect;
@@ -114,19 +120,11 @@ export const milestones = pgTable("milestones", {
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   date: timestamp("date").notNull(),
-  status: pgEnum("status", ["completed", "in_progress", "pending"]).default("pending").notNull(),
-  category: pgEnum("category", [
-    "strategy",
-    "implementation",
-    "training",
-    "automation",
-    "content",
-    "analytics",
-    "other",
-  ]).default("other").notNull(),
-  impact: pgEnum("impact", ["high", "medium", "low"]).default("medium").notNull(),
+  status: milestoneStatusEnum("status").default("pending").notNull(),
+  category: milestoneCategoryEnum("category").default("other").notNull(),
+  impact: impactEnum("impact").default("medium").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type Milestone = typeof milestones.$inferSelect;
@@ -137,14 +135,14 @@ export const learnings = pgTable("learnings", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   clientId: integer("clientId").notNull(),
   phaseId: integer("phaseId"),
-  type: pgEnum("type", ["learning", "obstacle", "win"]).default("learning").notNull(),
+  type: learningTypeEnum("type").default("learning").notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description").notNull(),
-  resolution: text("resolution"), // how it was resolved (for obstacles)
+  resolution: text("resolution"),
   date: timestamp("date").notNull(),
   isResolved: boolean("isResolved").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type Learning = typeof learnings.$inferSelect;
@@ -156,11 +154,11 @@ export const scopeItems = pgTable("scope_items", {
   clientId: integer("clientId").notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  inScope: boolean("inScope").default(true).notNull(), // true = in scope, false = out of scope
+  inScope: boolean("inScope").default(true).notNull(),
   category: varchar("category", { length: 128 }),
   order: integer("order").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type ScopeItem = typeof scopeItems.$inferSelect;
@@ -172,21 +170,14 @@ export const resources = pgTable("resources", {
   clientId: integer("clientId").notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  category: pgEnum("category", [
-    "document",
-    "template",
-    "script",
-    "training",
-    "guide",
-    "other",
-  ]).default("other").notNull(),
+  category: resourceCategoryEnum("category").default("other").notNull(),
   fileUrl: text("fileUrl"),
   externalUrl: text("externalUrl"),
-  content: text("content"), // inline markdown content
-  isPublic: boolean("isPublic").default(true).notNull(), // visible to client's team
+  content: text("content"),
+  isPublic: boolean("isPublic").default(true).notNull(),
   order: integer("order").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type Resource = typeof resources.$inferSelect;
@@ -200,12 +191,12 @@ export const metrics = pgTable("metrics", {
   value: varchar("value", { length: 128 }).notNull(),
   previousValue: varchar("previousValue", { length: 128 }),
   unit: varchar("unit", { length: 64 }),
-  trend: pgEnum("trend", ["up", "down", "stable"]).default("stable").notNull(),
+  trend: trendEnum("trend").default("stable").notNull(),
   description: text("description"),
   period: varchar("period", { length: 64 }),
   order: integer("order").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type Metric = typeof metrics.$inferSelect;
