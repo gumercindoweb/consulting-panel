@@ -198,18 +198,62 @@ export default function SectionOverview({ clientId, client }: Props) {
   const avgOkrProgress =
     okrs.length > 0 ? Math.round(okrs.reduce((s, o) => s + o.progressPct, 0) / okrs.length) : 0;
 
+  const coverUrl = (client as any).coverImageUrl;
+
   return (
     <div className="space-y-10 animate-fade-up">
-      {/* Header */}
-      <div>
-        <p className="sdt-section-label mb-3">RESUMEN EJECUTIVO</p>
-        <h1 className="font-display text-4xl font-bold mb-2" style={{ color: "var(--creme)" }}>
-          Estado del Proyecto
-        </h1>
-        <p className="font-serif text-lg" style={{ color: "var(--oro-pale)", fontStyle: "italic" }}>
+      {/* Cover image */}
+      {coverUrl && (
+        <div
+          className="relative w-full overflow-hidden"
+          style={{ height: 280, borderRadius: 12, marginBottom: 8 }}
+        >
+          <img
+            src={coverUrl}
+            alt={client.name}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center 20%",
+            }}
+          />
+          {/* Scrim gradient */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(to top, rgba(11,8,7,0.95) 0%, rgba(11,8,7,0.3) 50%, transparent 100%)",
+            }}
+          />
+          {/* Title over cover */}
+          <div style={{ position: "absolute", bottom: 24, left: 28 }}>
+            <p className="sdt-section-label mb-1" style={{ letterSpacing: "5px" }}>RESUMEN EJECUTIVO</p>
+            <h1 className="font-display text-4xl font-bold" style={{ color: "var(--creme)" }}>
+              Estado del Proyecto
+            </h1>
+          </div>
+        </div>
+      )}
+
+      {/* Header (when no cover) */}
+      {!coverUrl && (
+        <div>
+          <p className="sdt-section-label mb-3">RESUMEN EJECUTIVO</p>
+          <h1 className="font-display text-4xl font-bold mb-2" style={{ color: "var(--creme)" }}>
+            Estado del Proyecto
+          </h1>
+          <p className="font-serif text-lg" style={{ color: "var(--oro-pale)", fontStyle: "italic" }}>
+            {client.description || "Seguimiento estratégico en tiempo real."}
+          </p>
+        </div>
+      )}
+
+      {coverUrl && (
+        <p className="font-serif text-lg -mt-4" style={{ color: "var(--oro-pale)", fontStyle: "italic" }}>
           {client.description || "Seguimiento estratégico en tiempo real."}
         </p>
-      </div>
+      )}
 
       <div className="sdt-divider" />
 
