@@ -1,0 +1,2 @@
+branding
+{"fontBody": "Hanken Grotesk", "textColor": "#F5EFE6", "fontAccent": "Bebas Neue", "accentColor": "#D9A441", "fontDisplay": "Playfair Display", "primaryColor": "#B32825", "backgroundColor": "#0B0807"}

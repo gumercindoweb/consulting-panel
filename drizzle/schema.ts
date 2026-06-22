@@ -44,6 +44,7 @@ export const clients = pgTable("clients", {
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   logoUrl: text("logoUrl"),
+  coverImageUrl: text("coverImageUrl"),
   branding: json("branding").$type<{
     primaryColor: string;
     accentColor: string;
