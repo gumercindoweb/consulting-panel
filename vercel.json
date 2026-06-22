@@ -3,7 +3,13 @@
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
   "outputDirectory": "dist/public",
-  "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "dist-server/**"
+    }
+  },
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
