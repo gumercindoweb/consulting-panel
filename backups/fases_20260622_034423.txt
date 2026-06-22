@@ -1,0 +1,4 @@
+id	name	status	start	end
+1	Diagnóstico + Estrategia + Implementación Inicial	completed	2025-08-01	2025-12-31
+2	Ejecución/Implementación + Primera Optimización	completed	2026-01-01	2026-05-31
+3	Consolidación + Optimización Avanzada	in_progress	2026-06-01	2026-08-31

@@ -1,0 +1,19 @@
+
+=== FASES ===
+id	name	status	start	end
+1	Diagnóstico + Estrategia + Implementación Inicial	completed	2025-08-01	2025-12-31
+2	Ejecución/Implementación + Primera Optimización	completed	2026-01-01	2026-05-31
+3	Consolidación + Optimización Avanzada	in_progress	2026-06-01	2026-08-31
+
+
+
+=== HITOS VINCULADOS ===
+id	phaseId	phaseName	title	date	status
+1	1	Diagnóstico + Estrategia + Implementación Inicial	Auditoria inicial del negocio	2025-08-15	completed
+2	1	Diagnóstico + Estrategia + Implementación Inicial	Conexion de ManyChat a WhatsApp e Instagram	2025-09-01	completed
+3	1	Diagnóstico + Estrategia + Implementación Inicial	Creacion de 6 plantillas de mensajes trilingues	2025-09-15	completed
+4	1	Diagnóstico + Estrategia + Implementación Inicial	Identificacion del mercado brasileno como prioridad	2025-10-01	completed
+5	2	Ejecución/Implementación + Primera Optimización	Primera ronda de capacitacion a vendedoras digitales	2026-01-15	completed
+6	2	Ejecución/Implementación + Primera Optimización	Documentacion de protocolos de reserva	2026-02-01	completed
+7	2	Ejecución/Implementación + Primera Optimización	Segunda ronda de capacitacion y refinamiento de guiones	2026-03-01	completed
+8	2	Ejecución/Implementación + Primera Optimización	Lanzamiento del Plan Estrategico 2026	2026-05-01	in_progress
