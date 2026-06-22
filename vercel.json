@@ -1,19 +1,11 @@
 {
   "version": 2,
   "buildCommand": "pnpm run build",
-  "devCommand": "pnpm run dev",
   "installCommand": "pnpm install",
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "server/_core/index.ts": {
-      "runtime": "nodejs20.x"
-    }
-  },
+  "outputDirectory": "dist",
   "routes": [
-    { "src": "/trpc/(.*)", "dest": "server/_core/index.ts" },
-    { "src": "/api/(.*)", "dest": "server/_core/index.ts" },
-    { "src": "/(.*)", "dest": "dist/$1" }
+    { "src": "/trpc/(.*)", "dest": "/api" },
+    { "src": "/api/(.*)", "dest": "/api" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
