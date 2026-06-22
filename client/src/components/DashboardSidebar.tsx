@@ -52,28 +52,21 @@ export default function DashboardSidebar({ client, activeSection, onSectionChang
         className="px-6 py-8"
         style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
       >
-        {(client as any).logoUrl ? (
+        {(client as any).logoUrl && (
           <img
             src={(client as any).logoUrl}
             alt={client.name}
-            style={{ height: 80, width: "auto", marginBottom: 16, objectFit: "contain" }}
+            style={{ height: 72, width: "auto", marginBottom: 14, objectFit: "contain" }}
           />
-        ) : (
-          <p
-            className="font-label text-xs tracking-widest mb-2"
-            style={{ color: accentColor, letterSpacing: "5px" }}
-          >
-            CONSULTORÍA ESTRATÉGICA
-          </p>
         )}
         <h2
-          className="font-display text-2xl font-bold leading-tight"
-          style={{ color: "var(--creme)" }}
+          className="font-accent leading-tight"
+          style={{ color: "var(--creme)", fontSize: 26 }}
         >
           {client.name}
         </h2>
         {client.consultorName && (
-          <p className="text-xs mt-2" style={{ color: "var(--gris)" }}>
+          <p className="font-body text-xs mt-1" style={{ color: "var(--gris)", letterSpacing: "0.04em" }}>
             Consultor: {client.consultorName}
           </p>
         )}

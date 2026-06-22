@@ -36,7 +36,8 @@
   /* Typography */
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-serif: 'Cormorant Garamond', Georgia, serif;
-  --font-label: 'Arizonia', cursive;
+  --font-label: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-accent: 'Arizonia', cursive;
   --font-body: 'Hanken Grotesk', system-ui, sans-serif;
 
   /* Animations */
@@ -162,7 +163,8 @@ body::before {
 /* ─── TYPOGRAPHY ──────────────────────────────────────────────────────────── */
 .font-display { font-family: var(--font-display); }
 .font-serif { font-family: var(--font-serif); }
-.font-label { font-family: var(--font-label); letter-spacing: 0.1em; }
+.font-label { font-family: var(--font-label); letter-spacing: 0.08em; }
+.font-accent { font-family: var(--font-accent); }
 .font-body { font-family: var(--font-body); }
 
 /* ─── SDT COMPONENT TOKENS ────────────────────────────────────────────────── */
