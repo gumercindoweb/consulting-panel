@@ -5,6 +5,7 @@ import { useLocation, useParams } from "wouter";
 import { getLoginUrl } from "@/const";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import SectionOverview from "@/components/dashboard/SectionOverview";
+import SectionTimeline from "@/components/dashboard/SectionTimeline";
 import SectionPhases from "@/components/dashboard/SectionPhases";
 import SectionMilestones from "@/components/dashboard/SectionMilestones";
 import SectionOKRs from "@/components/dashboard/SectionOKRs";
@@ -14,6 +15,7 @@ import SectionResources from "@/components/dashboard/SectionResources";
 
 export type DashboardSection =
   | "overview"
+  | "timeline"
   | "phases"
   | "milestones"
   | "okrs"
@@ -160,6 +162,9 @@ export default function ClientDashboard() {
         <div className="p-8">
           {activeSection === "overview" && (
             <SectionOverview clientId={activeClient.id} client={activeClient} />
+          )}
+          {activeSection === "timeline" && (
+            <SectionTimeline clientId={activeClient.id} />
           )}
           {activeSection === "phases" && (
             <SectionPhases clientId={activeClient.id} />
