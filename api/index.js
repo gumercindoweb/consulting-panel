@@ -1,4 +1,9 @@
-import('../dist/index.js').catch(err => {
-  console.error('Failed to load server:', err);
-  process.exit(1);
-});
+let server;
+
+export default async (req, res) => {
+  if (!server) {
+    const { app } = await import('../dist-server/index.js');
+    server = app;
+  }
+  return server(req, res);
+};
