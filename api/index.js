@@ -1,9 +1,9 @@
-let server;
+let app;
 
 export default async (req, res) => {
-  if (!server) {
-    const { app } = await import('../dist-server/index.js');
-    server = app;
+  if (!app) {
+    const mod = await import("../dist-server/serverless.js");
+    app = mod.default;
   }
-  return server(req, res);
+  return app(req, res);
 };
