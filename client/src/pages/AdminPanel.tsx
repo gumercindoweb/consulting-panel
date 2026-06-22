@@ -162,7 +162,7 @@ function CreateClientModal({ onClose, onCreated }: { onClose: () => void; onCrea
 }
 
 export default function AdminPanel() {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated, logout } = useAuth();
   const [, navigate] = useLocation();
   const [showCreate, setShowCreate] = useState(false);
 
@@ -225,6 +225,24 @@ export default function AdminPanel() {
           >
             <Plus size={14} />
             NUEVO CLIENTE
+          </button>
+          <button
+            onClick={async () => {
+              await logout();
+              navigate("/login");
+            }}
+            className="text-xs tracking-widest px-5 py-2.5 transition-all"
+            style={{
+              background: "transparent",
+              color: "var(--gj-muted)",
+              borderRadius: "6px",
+              border: "1px solid rgba(154,230,180,0.20)",
+              cursor: "pointer",
+              letterSpacing: "3px",
+              fontWeight: 600,
+            }}
+          >
+            SALIR
           </button>
         </div>
       </header>
