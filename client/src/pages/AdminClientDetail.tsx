@@ -987,37 +987,81 @@ function ResourcesTab({ clientId }: { clientId: number }) {
     onSuccess: () => { utils.resources.list.invalidate({ clientId }); toast.success("Recurso creado."); },
     onError: (e) => toast.error(e.message),
   });
+  const updateResource = trpc.resources.update.useMutation({
+    onSuccess: () => { utils.resources.list.invalidate({ clientId }); toast.success("Recurso actualizado."); setEditingId(null); },
+    onError: (e) => toast.error(e.message),
+  });
   const deleteResource = trpc.resources.delete.useMutation({
     onSuccess: () => { utils.resources.list.invalidate({ clientId }); toast.success("Recurso eliminado."); },
     onError: (e) => toast.error(e.message),
   });
 
-  const [form, setForm] = useState({ title: "", description: "", category: "document" as const, externalUrl: "", content: "" });
+  const EMPTY_R = { title: "", description: "", category: "script" as const, externalUrl: "", content: "" };
+  const [form, setForm] = useState(EMPTY_R);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState(EMPTY_R);
+
+  const inputStyle = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" };
 
   return (
     <div className="space-y-4">
       {resources.map((r) => (
-        <div key={r.id} className="gj-card p-4 flex items-start justify-between gap-4">
-          <div>
-            <span className="text-xs" style={{ color: "var(--gj-mint)", letterSpacing: "2px" }}>{r.category.toUpperCase()}</span>
-            <p className="text-sm font-medium mt-1" style={{ color: "var(--gj-cream)" }}>{r.title}</p>
-            {r.description && <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{r.description}</p>}
-            {r.externalUrl && <a href={r.externalUrl} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 block" style={{ color: "var(--gj-green)" }}>{r.externalUrl}</a>}
-          </div>
-          <button onClick={() => deleteResource.mutate({ id: r.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px", flexShrink: 0 }}>
-            <Trash2 size={14} />
-          </button>
+        <div key={r.id}>
+          {editingId === r.id ? (
+            <div style={{ background: "rgba(154,230,180,0.05)", border: "1px solid rgba(154,230,180,0.2)", borderRadius: "6px", padding: "20px" }}>
+              <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-mint)", letterSpacing: "3px" }}>EDITANDO RECURSO</p>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <input value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+                <input value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+                <input value={editForm.externalUrl} onChange={(e) => setEditForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL (opcional)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+                <textarea value={editForm.content} onChange={(e) => setEditForm((f) => ({ ...f, content: e.target.value }))} placeholder="Contenido de texto (opcional)..." rows={3} className="col-span-2 px-3 py-2 text-sm resize-none" style={inputStyle} />
+                <select value={editForm.category} onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={inputStyle}>
+                  <option value="script">Videotutorial</option>
+                  <option value="training">Curso</option>
+                  <option value="document">Presentación</option>
+                  <option value="guide">Referencia</option>
+                  <option value="template">Material de Apoyo</option>
+                  <option value="other">Otro</option>
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => { if (editForm.title) updateResource.mutate({ id: r.id, clientId, ...editForm }); }} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
+                  <Save size={13} /> GUARDAR
+                </button>
+                <button onClick={() => setEditingId(null)} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "var(--gj-muted)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
+                  <X size={13} /> CANCELAR
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="gj-card p-4 flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <span className="text-xs" style={{ color: "var(--gj-mint)", letterSpacing: "2px" }}>{r.category.toUpperCase()}</span>
+                <p className="text-sm font-medium mt-1" style={{ color: "var(--gj-cream)" }}>{r.title}</p>
+                {r.description && <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{r.description}</p>}
+                {r.externalUrl && <a href={r.externalUrl} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 block" style={{ color: "var(--gj-green)" }}>{r.externalUrl}</a>}
+              </div>
+              <div className="flex gap-1 flex-shrink-0">
+                <button onClick={() => { setEditingId(r.id); setEditForm({ title: r.title, description: r.description || "", category: r.category as any, externalUrl: r.externalUrl || "", content: (r as any).content || "" }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-mint)", padding: "4px" }}>
+                  <Edit3 size={14} />
+                </button>
+                <button onClick={() => deleteResource.mutate({ id: r.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}>
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ))}
 
       <div style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "20px" }}>
         <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-muted)", letterSpacing: "3px" }}>AGREGAR RECURSO</p>
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título del recurso..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <input value={form.externalUrl} onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL (opcional)" className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <textarea value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} placeholder="Contenido de texto (opcional)..." rows={3} className="col-span-2 px-3 py-2 text-sm resize-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}>
+          <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título del recurso..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+          <input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+          <input value={form.externalUrl} onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL (opcional)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+          <textarea value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} placeholder="Contenido de texto (opcional)..." rows={3} className="col-span-2 px-3 py-2 text-sm resize-none" style={inputStyle} />
+          <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={inputStyle}>
             <option value="script">Videotutorial</option>
             <option value="training">Curso</option>
             <option value="document">Presentación</option>
@@ -1027,7 +1071,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
           </select>
         </div>
         <button
-          onClick={() => { if (form.title) { createResource.mutate({ clientId, ...form, order: resources.length }); setForm({ title: "", description: "", category: "document", externalUrl: "", content: "" }); } }}
+          onClick={() => { if (form.title) { createResource.mutate({ clientId, ...form, order: resources.length }); setForm(EMPTY_R); } }}
           className="flex items-center gap-1 text-xs px-4 py-2 rounded"
           style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
         >
@@ -1046,6 +1090,10 @@ function DigitalAssetsTab({ clientId }: { clientId: number }) {
     onSuccess: () => { utils.digitalAssets.list.invalidate({ clientId }); toast.success("Activo creado."); },
     onError: (e) => toast.error(e.message),
   });
+  const updateAsset = trpc.digitalAssets.update.useMutation({
+    onSuccess: () => { utils.digitalAssets.list.invalidate({ clientId }); toast.success("Activo actualizado."); setEditingId(null); },
+    onError: (e) => toast.error(e.message),
+  });
   const deleteAsset = trpc.digitalAssets.delete.useMutation({
     onSuccess: () => { utils.digitalAssets.list.invalidate({ clientId }); toast.success("Activo eliminado."); },
     onError: (e) => toast.error(e.message),
@@ -1053,52 +1101,85 @@ function DigitalAssetsTab({ clientId }: { clientId: number }) {
 
   const EMPTY = { title: "", description: "", category: "webpage" as const, externalUrl: "", fileUrl: "", notes: "" };
   const [form, setForm] = useState(EMPTY);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState(EMPTY);
 
   const CATEGORY_LABELS: Record<string, string> = {
-    webpage: "Página Web",
-    design_system: "Design System",
-    tool: "Herramienta Digital",
-    document: "Documento",
-    brand_asset: "Activo de Marca",
-    other: "Otro",
+    webpage: "Página Web", design_system: "Design System", tool: "Herramienta Digital",
+    document: "Documento", brand_asset: "Activo de Marca", other: "Otro",
   };
+
+  const inputStyle = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" };
+
+  const CategorySelect = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
+    <select value={value} onChange={(e) => onChange(e.target.value)} className="col-span-2 px-3 py-2 text-sm" style={inputStyle}>
+      <option value="webpage">Página Web</option>
+      <option value="design_system">Design System</option>
+      <option value="tool">Herramienta Digital</option>
+      <option value="document">Documento</option>
+      <option value="brand_asset">Activo de Marca</option>
+      <option value="other">Otro</option>
+    </select>
+  );
 
   return (
     <div className="space-y-4">
       {assets.map((a) => (
-        <div key={a.id} className="gj-card p-4 flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <span className="text-xs" style={{ color: "var(--gj-mint)", letterSpacing: "2px" }}>{CATEGORY_LABELS[a.category]?.toUpperCase()}</span>
-            <p className="text-sm font-medium mt-1" style={{ color: "var(--gj-cream)" }}>{a.title}</p>
-            {a.description && <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{a.description}</p>}
-            {a.notes && <p className="text-xs mt-0.5 italic" style={{ color: "rgba(138,128,130,0.6)" }}>{a.notes}</p>}
-            <div className="flex gap-3 mt-1 flex-wrap">
-              {a.externalUrl && <a href={a.externalUrl} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-green)" }}>↗ {a.externalUrl}</a>}
-              {a.fileUrl && <a href={a.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-mint)" }}>↓ Archivo</a>}
+        <div key={a.id}>
+          {editingId === a.id ? (
+            <div style={{ background: "rgba(154,230,180,0.05)", border: "1px solid rgba(154,230,180,0.2)", borderRadius: "6px", padding: "20px" }}>
+              <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-mint)", letterSpacing: "3px" }}>EDITANDO ACTIVO</p>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <input value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+                <input value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+                <input value={editForm.externalUrl} onChange={(e) => setEditForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL externa (página, herramienta, Drive...)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+                <input value={editForm.fileUrl} onChange={(e) => setEditForm((f) => ({ ...f, fileUrl: e.target.value }))} placeholder="URL de archivo (PDF, imagen...)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+                <input value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Notas internas..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+                <CategorySelect value={editForm.category} onChange={(v) => setEditForm((f) => ({ ...f, category: v as any }))} />
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => { if (editForm.title) updateAsset.mutate({ id: a.id, clientId, ...editForm }); }} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
+                  <Save size={13} /> GUARDAR
+                </button>
+                <button onClick={() => setEditingId(null)} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "var(--gj-muted)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
+                  <X size={13} /> CANCELAR
+                </button>
+              </div>
             </div>
-          </div>
-          <button onClick={() => deleteAsset.mutate({ id: a.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px", flexShrink: 0 }}>
-            <Trash2 size={14} />
-          </button>
+          ) : (
+            <div className="gj-card p-4 flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <span className="text-xs" style={{ color: "var(--gj-mint)", letterSpacing: "2px" }}>{CATEGORY_LABELS[a.category]?.toUpperCase()}</span>
+                <p className="text-sm font-medium mt-1" style={{ color: "var(--gj-cream)" }}>{a.title}</p>
+                {a.description && <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{a.description}</p>}
+                {a.notes && <p className="text-xs mt-0.5 italic" style={{ color: "rgba(138,128,130,0.6)" }}>{a.notes}</p>}
+                <div className="flex gap-3 mt-1 flex-wrap">
+                  {a.externalUrl && <a href={a.externalUrl} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-green)" }}>↗ {a.externalUrl}</a>}
+                  {a.fileUrl && <a href={a.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-mint)" }}>↓ Archivo</a>}
+                </div>
+              </div>
+              <div className="flex gap-1 flex-shrink-0">
+                <button onClick={() => { setEditingId(a.id); setEditForm({ title: a.title, description: a.description || "", category: a.category as any, externalUrl: a.externalUrl || "", fileUrl: a.fileUrl || "", notes: a.notes || "" }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-mint)", padding: "4px" }}>
+                  <Edit3 size={14} />
+                </button>
+                <button onClick={() => deleteAsset.mutate({ id: a.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}>
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ))}
 
       <div style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "20px" }}>
         <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-muted)", letterSpacing: "3px" }}>AGREGAR ACTIVO DIGITAL</p>
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <input value={form.externalUrl} onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL externa (página, herramienta, Drive...)" className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <input value={form.fileUrl} onChange={(e) => setForm((f) => ({ ...f, fileUrl: e.target.value }))} placeholder="URL de archivo (PDF, imagen...)" className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Notas internas..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}>
-            <option value="webpage">Página Web</option>
-            <option value="design_system">Design System</option>
-            <option value="tool">Herramienta Digital</option>
-            <option value="document">Documento</option>
-            <option value="brand_asset">Activo de Marca</option>
-            <option value="other">Otro</option>
-          </select>
+          <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+          <input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+          <input value={form.externalUrl} onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL externa (página, herramienta, Drive...)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+          <input value={form.fileUrl} onChange={(e) => setForm((f) => ({ ...f, fileUrl: e.target.value }))} placeholder="URL de archivo (PDF, imagen...)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+          <input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Notas internas..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+          <CategorySelect value={form.category} onChange={(v) => setForm((f) => ({ ...f, category: v as any }))} />
         </div>
         <button
           onClick={() => { if (form.title) { createAsset.mutate({ clientId, ...form, order: assets.length }); setForm(EMPTY); } }}
