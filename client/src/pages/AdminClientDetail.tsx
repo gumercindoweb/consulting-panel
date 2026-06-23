@@ -360,6 +360,10 @@ function MilestonesTab({ clientId }: { clientId: number }) {
     onSuccess: () => utils.milestones.list.invalidate({ clientId }),
     onError: (e) => toast.error(e.message),
   });
+  const updateMilestone = trpc.milestones.update.useMutation({
+    onSuccess: () => { utils.milestones.list.invalidate({ clientId }); toast.success("Hito actualizado."); setEditingId(null); },
+    onError: (e) => toast.error(e.message),
+  });
   const reorder = trpc.milestones.reorder.useMutation({ onError: (e) => toast.error(e.message) });
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -377,6 +381,8 @@ function MilestonesTab({ clientId }: { clientId: number }) {
   const EMPTY_M = { title: "", description: "", date: new Date().toISOString().split("T")[0], status: "completed" as const, category: "strategy" as const, impact: "medium" as const };
   const [form, setForm] = useState(EMPTY_M);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState(EMPTY_M);
 
   return (
     <div className="space-y-6">
@@ -437,7 +443,7 @@ function MilestonesTab({ clientId }: { clientId: number }) {
                         const impact = M_IMPACT[m.impact];
                         return (
                           <SortableItem key={m.id} id={m.id}>
-                            <div style={{ background: m.isPaused ? "rgba(154,230,180,0.01)" : "rgba(154,230,180,0.03)", border: "1px solid rgba(154,230,180,0.08)", borderLeft: `3px solid ${m.isPaused ? "rgba(143,169,163,0.3)" : status.color}`, borderRadius: "6px", padding: "14px 16px 14px 32px", display: "flex", gap: "14px", alignItems: "flex-start", opacity: m.isPaused ? 0.55 : 1, transition: "opacity 0.2s" }}>
+                            <div style={{ background: m.isPaused ? "rgba(224,145,63,0.12)" : "rgba(154,230,180,0.03)", border: m.isPaused ? "1px solid rgba(224,145,63,0.4)" : "1px solid rgba(154,230,180,0.08)", borderLeft: `3px solid ${m.isPaused ? "rgba(224,145,63,0.6)" : status.color}`, borderRadius: "6px", padding: "14px 16px 14px 32px", display: "flex", gap: "14px", alignItems: "flex-start", opacity: m.isPaused ? 0.7 : 1, transition: "opacity 0.2s" }}>
                               <div style={{ width: 34, height: 34, borderRadius: "6px", background: `${cat.color}18`, border: `1px solid ${cat.color}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
                                 <span style={{ fontSize: "11px", color: cat.color, fontFamily: "var(--gj-font)" }}>{m.category.slice(0,2).toUpperCase()}</span>
                               </div>
@@ -451,6 +457,13 @@ function MilestonesTab({ clientId }: { clientId: number }) {
                                     {!m.isPaused && <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${impact.color}12`, border: `1px solid ${impact.color}30`, color: impact.color, fontFamily: "var(--gj-font)" }}>{impact.label}</span>}
                                     {!m.isPaused && <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${status.color}12`, border: `1px solid ${status.color}30`, color: status.color, fontFamily: "var(--gj-font)" }}>{status.label}</span>}
                                     <button
+                                      title="Editar"
+                                      onClick={() => { setEditingId(m.id); setEditForm({ title: m.title, description: m.description || "", date: m.date.split("T")[0], status: m.status, category: m.category, impact: m.impact }); }}
+                                      style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}
+                                    >
+                                      <Edit3 size={14} />
+                                    </button>
+                                    <button
                                       title={m.isPaused ? "Reactivar" : "Pausar"}
                                       onClick={() => pauseMilestone.mutate({ id: m.id, clientId, isPaused: !m.isPaused })}
                                       style={{ background: "none", border: "none", cursor: "pointer", color: m.isPaused ? "#4eba8a" : "var(--gj-muted)", padding: "2px" }}
@@ -462,13 +475,39 @@ function MilestonesTab({ clientId }: { clientId: number }) {
                                     </button>
                                   </div>
                                 </div>
-                                {m.description && <p style={{ fontSize: "12px", color: "var(--gj-muted)", lineHeight: 1.5, marginBottom: "6px" }}>{m.description}</p>}
-                                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                  <span style={{ fontSize: "9px", letterSpacing: "2px", color: cat.color, fontFamily: "var(--gj-font)" }}>{cat.label}</span>
-                                  <span style={{ fontSize: "11px", color: "rgba(143,169,163,0.5)", fontFamily: "var(--gj-font)" }}>
-                                    {new Date(m.date).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
-                                  </span>
-                                </div>
+                                {editingId === m.id ? (
+                                  <div style={{ background: "rgba(154,230,180,0.05)", border: "1px solid rgba(154,230,180,0.15)", borderRadius: "6px", padding: "12px", marginTop: "8px" }}>
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
+                                      <input style={{ ...INP, gridColumn: "1/-1" }} placeholder="Título *" value={editForm.title} onChange={(e) => setEditForm(f => ({ ...f, title: e.target.value }))} />
+                                      <input style={{ ...INP, gridColumn: "1/-1" }} placeholder="Descripción..." value={editForm.description} onChange={(e) => setEditForm(f => ({ ...f, description: e.target.value }))} />
+                                      <input type="date" style={INP} value={editForm.date} onChange={(e) => setEditForm(f => ({ ...f, date: e.target.value }))} />
+                                      <select style={INP} value={editForm.status} onChange={(e) => setEditForm(f => ({ ...f, status: e.target.value as any }))}>
+                                        <option value="completed">Completado</option><option value="in_progress">En curso</option><option value="pending">Pendiente</option>
+                                      </select>
+                                      <select style={INP} value={editForm.category} onChange={(e) => setEditForm(f => ({ ...f, category: e.target.value as any }))}>
+                                        <option value="strategy">Estrategia</option><option value="implementation">Implementación</option><option value="training">Capacitación</option>
+                                        <option value="automation">Automatización</option><option value="content">Contenido</option><option value="analytics">Analítica</option><option value="other">Otro</option>
+                                      </select>
+                                      <select style={INP} value={editForm.impact} onChange={(e) => setEditForm(f => ({ ...f, impact: e.target.value as any }))}>
+                                        <option value="high">Alto impacto</option><option value="medium">Impacto medio</option><option value="low">Bajo impacto</option>
+                                      </select>
+                                    </div>
+                                    <div style={{ display: "flex", gap: "6px" }}>
+                                      <button onClick={() => { if (editForm.title) updateMilestone.mutate({ id: m.id, clientId, ...editForm, date: new Date(editForm.date) }); }} disabled={!editForm.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "6px 12px", fontSize: "10px", letterSpacing: "1px", cursor: "pointer", opacity: editForm.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>GUARDAR</button>
+                                      <button onClick={() => setEditingId(null)} style={{ background: "none", border: "1px solid rgba(154,230,180,0.2)", color: "var(--gj-muted)", borderRadius: "3px", padding: "6px 12px", fontSize: "10px", letterSpacing: "1px", cursor: "pointer", fontFamily: "var(--gj-font)" }}>CANCELAR</button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    {m.description && <p style={{ fontSize: "12px", color: "var(--gj-muted)", lineHeight: 1.5, marginBottom: "6px" }}>{m.description}</p>}
+                                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                      <span style={{ fontSize: "9px", letterSpacing: "2px", color: cat.color, fontFamily: "var(--gj-font)" }}>{cat.label}</span>
+                                      <span style={{ fontSize: "11px", color: "rgba(143,169,163,0.5)", fontFamily: "var(--gj-font)" }}>
+                                        {new Date(m.date).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
+                                      </span>
+                                    </div>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </SortableItem>
