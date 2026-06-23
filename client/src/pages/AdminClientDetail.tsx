@@ -718,7 +718,7 @@ export default function AdminClientDetail() {
           overflowY: "auto",
         }}
       >
-        {/* Back + brand */}
+        {/* Back + GJ brand */}
         <div className="px-6 pt-6 pb-2">
           <button
             onClick={() => navigate("/admin")}
@@ -726,17 +726,25 @@ export default function AdminClientDetail() {
             style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: 0 }}
           >
             <ArrowLeft size={14} />
-            <span style={{ fontSize: "10px", letterSpacing: "2px", fontFamily: "var(--font-label)" }}>VOLVER</span>
+            <span style={{ fontSize: "10px", letterSpacing: "2px", fontFamily: "var(--gj-font)" }}>VOLVER</span>
           </button>
-          {(client as any).logoUrl && (
-            <img src={(client as any).logoUrl} alt={client.name} style={{ height: 64, width: "auto", marginBottom: 12, objectFit: "contain" }} />
-          )}
-          <h2 className="font-accent leading-tight" style={{ color: "var(--gj-cream)", fontSize: 22 }}>
-            {client.name}
-          </h2>
-          <p className="font-body text-xs mt-1" style={{ color: "var(--gj-muted)", letterSpacing: "0.04em" }}>
-            Panel de administración
+          {/* Logo GJ — siempre, no el del cliente */}
+          <img src="/gj-logo.png" alt="Gumercindo Jiménez" style={{ height: 40, width: "auto", marginBottom: 16, objectFit: "contain" }} />
+          <p style={{ fontSize: "10px", letterSpacing: "4px", color: "var(--gj-mint)", fontFamily: "var(--gj-font)", marginBottom: 4 }}>
+            CONSULTOR
           </p>
+          <p style={{ fontSize: "15px", fontWeight: 600, color: "var(--gj-cream)", fontFamily: "var(--gj-font)", letterSpacing: "0.02em" }}>
+            Gumercindo Jiménez
+          </p>
+          {/* Cliente como contexto, no como marca */}
+          <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid rgba(154,230,180,0.1)" }}>
+            <p style={{ fontSize: "9px", letterSpacing: "3px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", marginBottom: 4 }}>
+              CLIENTE ACTIVO
+            </p>
+            <p style={{ fontSize: "13px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", fontWeight: 500 }}>
+              {client.name}
+            </p>
+          </div>
         </div>
 
         {/* Nav */}
