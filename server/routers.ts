@@ -16,6 +16,7 @@ import {
   createPhase,
   createResource,
   createScopeItem,
+  createUpdate,
   deleteLearning,
   deleteMetric,
   deleteMilestone,
@@ -23,6 +24,7 @@ import {
   deletePhase,
   deleteResource,
   deleteScopeItem,
+  deleteUpdate,
   getAllClients,
   getClientAccessForUser,
   getClientById,
@@ -34,6 +36,7 @@ import {
   getPhasesByClient,
   getResourcesByClient,
   getScopeByClient,
+  getUpdatesByClient,
   grantClientAccess,
   updateClient,
   updateLearning,
@@ -43,6 +46,7 @@ import {
   updatePhase,
   updateResource,
   updateScopeItem,
+  updateUpdate,
 } from "./db";
 
 // ─── ADMIN GUARD ──────────────────────────────────────────────────────────────
@@ -530,6 +534,57 @@ export const appRouter = router({
     delete: adminProcedure
       .input(z.object({ id: z.number(), clientId: z.number() }))
       .mutation(({ input }) => deleteMetric(input.id, input.clientId)),
+  }),
+
+  // ─── UPDATES (Actualizaciones) ───────────────────────────────────────────
+  updates: router({
+    list: protectedProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+        const all = await getUpdatesByClient(input.clientId);
+        if (ctx.user.role !== "admin") return all.filter((u) => u.isPublic === true);
+        return all;
+      }),
+
+    create: adminProcedure
+      .input(z.object({
+        clientId: z.number(),
+        phaseId: z.number().optional(),
+        title: z.string().min(1).max(255),
+        body: z.string().min(1),
+        category: z.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).default("general"),
+        status: z.enum(["on_track", "at_risk", "blocked"]).default("on_track"),
+        impact: z.enum(["high", "medium", "low"]).default("medium"),
+        isPublic: z.boolean().default(true),
+        date: z.string(),
+      }))
+      .mutation(({ input }) => {
+        const { date, ...rest } = input;
+        return createUpdate({ ...rest, date: new Date(date) });
+      }),
+
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        clientId: z.number(),
+        title: z.string().optional(),
+        body: z.string().optional(),
+        category: z.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).optional(),
+        status: z.enum(["on_track", "at_risk", "blocked"]).optional(),
+        impact: z.enum(["high", "medium", "low"]).optional(),
+        isPublic: z.boolean().optional(),
+        phaseId: z.number().optional(),
+        date: z.string().optional(),
+      }))
+      .mutation(({ input }) => {
+        const { id, clientId, date, ...rest } = input;
+        return updateUpdate(id, clientId, { ...rest, ...(date ? { date: new Date(date) } : {}) });
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number(), clientId: z.number() }))
+      .mutation(({ input }) => deleteUpdate(input.id, input.clientId)),
   }),
 });
 

@@ -13,8 +13,9 @@ var UNAUTHED_ERR_MSG = "Please login (10001)";
 var NOT_ADMIN_ERR_MSG = "You do not have required permission (10002)";
 
 // server/db.ts
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 
 // drizzle/schema.ts
 import {
@@ -36,6 +37,8 @@ var impactEnum = pgEnum("impact", ["high", "medium", "low"]);
 var learningTypeEnum = pgEnum("learning_type", ["learning", "obstacle", "win"]);
 var resourceCategoryEnum = pgEnum("resource_category", ["document", "template", "script", "training", "guide", "other"]);
 var trendEnum = pgEnum("trend", ["up", "down", "stable"]);
+var updateCategoryEnum = pgEnum("update_category", ["session", "result", "delivery", "insight", "blocker", "win", "general"]);
+var updateStatusEnum = pgEnum("update_status", ["on_track", "at_risk", "blocked"]);
 var users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
@@ -162,6 +165,20 @@ var metrics = pgTable("metrics", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
+var projectUpdates = pgTable("project_updates", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  clientId: integer("clientId").notNull(),
+  phaseId: integer("phaseId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  category: updateCategoryEnum("category").default("general").notNull(),
+  status: updateStatusEnum("status").default("on_track").notNull(),
+  impact: impactEnum("impact").default("medium").notNull(),
+  isPublic: boolean("isPublic").default(true).notNull(),
+  date: timestamp("date").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull()
+});
 
 // server/_core/env.ts
 var ENV = {
@@ -184,7 +201,11 @@ var _db = null;
 async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const client = postgres(process.env.DATABASE_URL, {
+        ssl: "require",
+        max: 1
+      });
+      _db = drizzle(client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -420,6 +441,27 @@ async function deleteMetric(id, clientId) {
   const db = await getDb();
   if (!db) return;
   await db.delete(metrics).where(and(eq(metrics.id, id), eq(metrics.clientId, clientId)));
+}
+async function getUpdatesByClient(clientId) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(projectUpdates).where(eq(projectUpdates.clientId, clientId)).orderBy(desc(projectUpdates.date));
+}
+async function createUpdate(data) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(projectUpdates).values(data);
+  return result[0].insertId;
+}
+async function updateUpdate(id, clientId, data) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(projectUpdates).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(and(eq(projectUpdates.id, id), eq(projectUpdates.clientId, clientId)));
+}
+async function deleteUpdate(id, clientId) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(projectUpdates).where(and(eq(projectUpdates.id, id), eq(projectUpdates.clientId, clientId)));
 }
 
 // server/_core/cookies.ts
@@ -1300,6 +1342,45 @@ var appRouter = router({
       return updateMetric(id, clientId, data);
     }),
     delete: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number() })).mutation(({ input }) => deleteMetric(input.id, input.clientId))
+  }),
+  // ─── UPDATES (Actualizaciones) ───────────────────────────────────────────
+  updates: router({
+    list: protectedProcedure.input(z2.object({ clientId: z2.number() })).query(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+      const all = await getUpdatesByClient(input.clientId);
+      if (ctx.user.role !== "admin") return all.filter((u) => u.isPublic === true);
+      return all;
+    }),
+    create: adminProcedure2.input(z2.object({
+      clientId: z2.number(),
+      phaseId: z2.number().optional(),
+      title: z2.string().min(1).max(255),
+      body: z2.string().min(1),
+      category: z2.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).default("general"),
+      status: z2.enum(["on_track", "at_risk", "blocked"]).default("on_track"),
+      impact: z2.enum(["high", "medium", "low"]).default("medium"),
+      isPublic: z2.boolean().default(true),
+      date: z2.string()
+    })).mutation(({ input }) => {
+      const { date, ...rest } = input;
+      return createUpdate({ ...rest, date: new Date(date) });
+    }),
+    update: adminProcedure2.input(z2.object({
+      id: z2.number(),
+      clientId: z2.number(),
+      title: z2.string().optional(),
+      body: z2.string().optional(),
+      category: z2.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).optional(),
+      status: z2.enum(["on_track", "at_risk", "blocked"]).optional(),
+      impact: z2.enum(["high", "medium", "low"]).optional(),
+      isPublic: z2.boolean().optional(),
+      phaseId: z2.number().optional(),
+      date: z2.string().optional()
+    })).mutation(({ input }) => {
+      const { id, clientId, date, ...rest } = input;
+      return updateUpdate(id, clientId, { ...rest, ...date ? { date: new Date(date) } : {} });
+    }),
+    delete: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number() })).mutation(({ input }) => deleteUpdate(input.id, input.clientId))
   })
 });
 

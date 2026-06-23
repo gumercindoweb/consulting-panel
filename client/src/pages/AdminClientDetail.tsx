@@ -5,9 +5,10 @@ import { useLocation, useParams } from "wouter";
 import { ArrowLeft, Plus, Trash2, Edit3, Save, X } from "lucide-react";
 import { toast } from "sonner";
 
-type Tab = "phases" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics";
+type Tab = "phases" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates";
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: "updates", label: "ACTUALIZACIONES" },
   { id: "phases", label: "ETAPAS" },
   { id: "milestones", label: "HITOS" },
   { id: "okrs", label: "OKRs" },
@@ -16,6 +17,123 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "resources", label: "RECURSOS" },
   { id: "metrics", label: "MÉTRICAS" },
 ];
+
+// ─── UPDATES TAB ──────────────────────────────────────────────────────────────
+function UpdatesTab({ clientId }: { clientId: number }) {
+  const utils = trpc.useUtils();
+  const { data: updates = [] } = trpc.updates.list.useQuery({ clientId });
+  const createUpdate = trpc.updates.create.useMutation({
+    onSuccess: () => { utils.updates.list.invalidate({ clientId }); toast.success("Actualización publicada."); setShowForm(false); setForm(EMPTY); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteUpdate = trpc.updates.delete.useMutation({
+    onSuccess: () => { utils.updates.list.invalidate({ clientId }); toast.success("Eliminada."); },
+    onError: (e) => toast.error(e.message),
+  });
+  const updateUpdate = trpc.updates.update.useMutation({
+    onSuccess: () => { utils.updates.list.invalidate({ clientId }); toast.success("Guardada."); setEditingId(null); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const EMPTY = { title: "", body: "", category: "general" as const, status: "on_track" as const, impact: "medium" as const, isPublic: true, date: new Date().toISOString().split("T")[0] };
+  const [form, setForm] = useState(EMPTY);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editData, setEditData] = useState<any>({});
+
+  const inp = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", fontSize: "13px", padding: "7px 10px", width: "100%", outline: "none" };
+
+  const CAT_LABELS: Record<string, string> = { session: "SESIÓN", result: "RESULTADO", delivery: "ENTREGABLE", insight: "INSIGHT", blocker: "BLOQUEADOR", win: "LOGRO", general: "ACTUALIZACIÓN" };
+
+  return (
+    <div className="space-y-4">
+      {!showForm ? (
+        <button onClick={() => setShowForm(true)} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
+          <Plus size={14} /> NUEVA ACTUALIZACIÓN
+        </button>
+      ) : (
+        <div className="gj-card p-5 space-y-3">
+          <p className="text-xs tracking-widest" style={{ color: "var(--gj-mint)", letterSpacing: "3px" }}>NUEVA ACTUALIZACIÓN</p>
+          <input style={inp} placeholder="Título *" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
+          <textarea style={{ ...inp, minHeight: "80px", resize: "vertical" }} placeholder="Descripción *" value={form.body} onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))} />
+          <div className="grid grid-cols-2 gap-2">
+            <select style={inp} value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))}>
+              {Object.entries(CAT_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+            <select style={inp} value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as any }))}>
+              <option value="on_track">EN CURSO</option><option value="at_risk">EN RIESGO</option><option value="blocked">BLOQUEADO</option>
+            </select>
+            <select style={inp} value={form.impact} onChange={(e) => setForm((f) => ({ ...f, impact: e.target.value as any }))}>
+              <option value="high">IMPACTO ALTO</option><option value="medium">IMPACTO MEDIO</option><option value="low">IMPACTO BAJO</option>
+            </select>
+            <input type="date" style={inp} value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
+          </div>
+          <label className="flex items-center gap-2 text-xs" style={{ color: "var(--gj-muted)", cursor: "pointer" }}>
+            <input type="checkbox" checked={form.isPublic} onChange={(e) => setForm((f) => ({ ...f, isPublic: e.target.checked }))} />
+            Visible para el cliente
+          </label>
+          <div className="flex gap-2">
+            <button onClick={() => { if (form.title && form.body) createUpdate.mutate({ clientId, ...form }); }} disabled={!form.title || !form.body} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px", opacity: (!form.title || !form.body) ? 0.5 : 1 }}>
+              <Save size={14} /> PUBLICAR
+            </button>
+            <button onClick={() => { setShowForm(false); setForm(EMPTY); }} className="text-xs px-4 py-2 rounded" style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "var(--gj-muted)", cursor: "pointer", letterSpacing: "2px" }}>
+              CANCELAR
+            </button>
+          </div>
+        </div>
+      )}
+
+      {updates.map((u) => (
+        <div key={u.id} className="gj-card p-4">
+          {editingId === u.id ? (
+            <div className="space-y-3">
+              <input style={inp} value={editData.title ?? u.title} onChange={(e) => setEditData((d: any) => ({ ...d, title: e.target.value }))} />
+              <textarea style={{ ...inp, minHeight: "70px", resize: "vertical" }} value={editData.body ?? u.body} onChange={(e) => setEditData((d: any) => ({ ...d, body: e.target.value }))} />
+              <div className="grid grid-cols-2 gap-2">
+                <select style={inp} value={editData.category ?? u.category} onChange={(e) => setEditData((d: any) => ({ ...d, category: e.target.value }))}>
+                  {Object.entries(CAT_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
+                <select style={inp} value={editData.status ?? u.status} onChange={(e) => setEditData((d: any) => ({ ...d, status: e.target.value }))}>
+                  <option value="on_track">EN CURSO</option><option value="at_risk">EN RIESGO</option><option value="blocked">BLOQUEADO</option>
+                </select>
+                <input type="date" style={inp} value={editData.date ?? new Date(u.date).toISOString().split("T")[0]} onChange={(e) => setEditData((d: any) => ({ ...d, date: e.target.value }))} />
+                <label className="flex items-center gap-2 text-xs" style={{ color: "var(--gj-muted)", cursor: "pointer" }}>
+                  <input type="checkbox" checked={editData.isPublic ?? u.isPublic} onChange={(e) => setEditData((d: any) => ({ ...d, isPublic: e.target.checked }))} />
+                  Visible para el cliente
+                </label>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => updateUpdate.mutate({ id: u.id, clientId, ...editData })} className="flex items-center gap-1 text-xs px-3 py-1 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}><Save size={12} /> GUARDAR</button>
+                <button onClick={() => { setEditingId(null); setEditData({}); }} className="text-xs px-3 py-1 rounded" style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "var(--gj-muted)", cursor: "pointer", letterSpacing: "2px" }}>CANCELAR</button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="text-xs" style={{ color: "var(--gj-mint)", letterSpacing: "2px" }}>{CAT_LABELS[u.category]}</span>
+                  <span className="text-xs" style={{ color: "var(--gj-muted)" }}>·</span>
+                  <span className="text-xs" style={{ color: "var(--gj-muted)" }}>{new Date(u.date).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" })}</span>
+                  {!u.isPublic && <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(138,128,130,0.15)", color: "var(--gj-muted)", letterSpacing: "1px" }}>PRIVADO</span>}
+                </div>
+                <p className="text-sm font-medium" style={{ color: "var(--gj-cream)" }}>{u.title}</p>
+                <p className="text-xs mt-1" style={{ color: "var(--gj-muted)", lineHeight: 1.5 }}>{u.body.slice(0, 120)}{u.body.length > 120 ? "…" : ""}</p>
+              </div>
+              <div className="flex gap-1 flex-shrink-0">
+                <button onClick={() => { setEditingId(u.id); setEditData({}); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}><Edit3 size={13} /></button>
+                <button onClick={() => { if (confirm("¿Eliminar?")) deleteUpdate.mutate({ id: u.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}><Trash2 size={13} /></button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {updates.length === 0 && !showForm && (
+        <p className="text-xs" style={{ color: "var(--gj-muted)" }}>Sin actualizaciones publicadas todavía.</p>
+      )}
+    </div>
+  );
+}
 
 // ─── PHASES TAB ───────────────────────────────────────────────────────────────
 function PhasesTab({ clientId }: { clientId: number }) {
@@ -651,6 +769,7 @@ export default function AdminClientDetail() {
         </div>
 
         {/* Tab content */}
+        {activeTab === "updates" && <UpdatesTab clientId={clientId} />}
         {activeTab === "phases" && <PhasesTab clientId={clientId} />}
         {activeTab === "milestones" && <MilestonesTab clientId={clientId} />}
         {activeTab === "okrs" && <OKRsTab clientId={clientId} />}

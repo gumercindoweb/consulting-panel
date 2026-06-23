@@ -4,10 +4,10 @@ import {
   BarChart3,
   BookOpen,
   CheckSquare,
-  Clock,
   FileText,
   FolderOpen,
   LayoutDashboard,
+  Rss,
   Target,
 } from "lucide-react";
 
@@ -20,7 +20,7 @@ interface Props {
 
 const NAV_ITEMS: { id: DashboardSection; label: string; icon: React.FC<any> }[] = [
   { id: "overview", label: "RESUMEN EJECUTIVO", icon: LayoutDashboard },
-  { id: "timeline", label: "LÍNEA DE TIEMPO", icon: Clock },
+  { id: "updates", label: "ACTUALIZACIONES", icon: Rss },
   { id: "phases", label: "ETAPAS DEL PROYECTO", icon: CheckSquare },
   { id: "milestones", label: "HITOS E IMPLEMENTACIONES", icon: BarChart3 },
   { id: "okrs", label: "OKRs Y MÉTRICAS", icon: Target },

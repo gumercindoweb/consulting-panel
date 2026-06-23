@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
@@ -13,11 +13,13 @@ import {
   InsertResource,
   InsertScopeItem,
   InsertUser,
+  InsertProjectUpdate,
   Learning,
   Metric,
   Milestone,
   Okr,
   ProjectPhase,
+  ProjectUpdate,
   Resource,
   ScopeItem,
   clientAccess,
@@ -27,6 +29,7 @@ import {
   milestones,
   okrs,
   projectPhases,
+  projectUpdates,
   resources,
   scopeItems,
   users,
@@ -366,4 +369,30 @@ export async function deleteMetric(id: number, clientId: number): Promise<void> 
   const db = await getDb();
   if (!db) return;
   await db.delete(metrics).where(and(eq(metrics.id, id), eq(metrics.clientId, clientId)));
+}
+
+// ─── PROJECT UPDATES (Actualizaciones) ───────────────────────────────────────
+export async function getUpdatesByClient(clientId: number): Promise<ProjectUpdate[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(projectUpdates).where(eq(projectUpdates.clientId, clientId)).orderBy(desc(projectUpdates.date));
+}
+
+export async function createUpdate(data: InsertProjectUpdate): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(projectUpdates).values(data);
+  return (result[0] as any).insertId;
+}
+
+export async function updateUpdate(id: number, clientId: number, data: Partial<InsertProjectUpdate>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(projectUpdates).set({ ...data, updatedAt: new Date() }).where(and(eq(projectUpdates.id, id), eq(projectUpdates.clientId, clientId)));
+}
+
+export async function deleteUpdate(id: number, clientId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(projectUpdates).where(and(eq(projectUpdates.id, id), eq(projectUpdates.clientId, clientId)));
 }

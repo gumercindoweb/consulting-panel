@@ -19,6 +19,8 @@ export const impactEnum = pgEnum("impact", ["high", "medium", "low"]);
 export const learningTypeEnum = pgEnum("learning_type", ["learning", "obstacle", "win"]);
 export const resourceCategoryEnum = pgEnum("resource_category", ["document", "template", "script", "training", "guide", "other"]);
 export const trendEnum = pgEnum("trend", ["up", "down", "stable"]);
+export const updateCategoryEnum = pgEnum("update_category", ["session", "result", "delivery", "insight", "blocker", "win", "general"]);
+export const updateStatusEnum = pgEnum("update_status", ["on_track", "at_risk", "blocked"]);
 
 // ─── USERS ───────────────────────────────────────────────────────────────────
 export const users = pgTable("users", {
@@ -202,3 +204,22 @@ export const metrics = pgTable("metrics", {
 
 export type Metric = typeof metrics.$inferSelect;
 export type InsertMetric = typeof metrics.$inferInsert;
+
+// ─── PROJECT UPDATES (Actualizaciones) ───────────────────────────────────────
+export const projectUpdates = pgTable("project_updates", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  clientId: integer("clientId").notNull(),
+  phaseId: integer("phaseId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  category: updateCategoryEnum("category").default("general").notNull(),
+  status: updateStatusEnum("status").default("on_track").notNull(),
+  impact: impactEnum("impact").default("medium").notNull(),
+  isPublic: boolean("isPublic").default(true).notNull(),
+  date: timestamp("date").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type ProjectUpdate = typeof projectUpdates.$inferSelect;
+export type InsertProjectUpdate = typeof projectUpdates.$inferInsert;
