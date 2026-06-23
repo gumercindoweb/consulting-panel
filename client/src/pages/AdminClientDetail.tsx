@@ -290,11 +290,33 @@ function PhasesTab({ clientId }: { clientId: number }) {
 }
 
 // ─── MILESTONES TAB ───────────────────────────────────────────────────────────
+const M_CAT: Record<string, { label: string; color: string }> = {
+  strategy:       { label: "ESTRATEGIA",      color: "var(--gj-green)" },
+  implementation: { label: "IMPLEMENTACIÓN",  color: "#E0913F" },
+  training:       { label: "CAPACITACIÓN",    color: "#4eba8a" },
+  automation:     { label: "AUTOMATIZACIÓN",  color: "#7c6fcd" },
+  content:        { label: "CONTENIDO",       color: "#4db6e8" },
+  analytics:      { label: "ANALÍTICA",       color: "var(--gj-mint)" },
+  other:          { label: "OTRO",            color: "var(--gj-muted)" },
+};
+const M_STATUS: Record<string, { label: string; color: string }> = {
+  completed:   { label: "COMPLETADO",  color: "#4eba8a" },
+  in_progress: { label: "EN CURSO",   color: "#E0913F" },
+  pending:     { label: "PENDIENTE",  color: "var(--gj-muted)" },
+};
+const M_IMPACT: Record<string, { label: string; color: string }> = {
+  high:   { label: "ALTO IMPACTO",   color: "var(--gj-green)" },
+  medium: { label: "IMPACTO MEDIO",  color: "#E0913F" },
+  low:    { label: "IMPACTO BAJO",   color: "var(--gj-muted)" },
+};
+
+const INP = { background: "rgba(154,230,180,0.05)", border: "1px solid rgba(154,230,180,0.15)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", fontSize: "13px", padding: "7px 10px", width: "100%", outline: "none" };
+
 function MilestonesTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
   const { data: milestones = [] } = trpc.milestones.list.useQuery({ clientId });
   const createMilestone = trpc.milestones.create.useMutation({
-    onSuccess: () => { utils.milestones.list.invalidate({ clientId }); toast.success("Hito creado."); },
+    onSuccess: () => { utils.milestones.list.invalidate({ clientId }); toast.success("Hito creado."); setShowForm(false); setForm(EMPTY_M); },
     onError: (e) => toast.error(e.message),
   });
   const deleteMilestone = trpc.milestones.delete.useMutation({
@@ -302,67 +324,123 @@ function MilestonesTab({ clientId }: { clientId: number }) {
     onError: (e) => toast.error(e.message),
   });
 
-  const [form, setForm] = useState({ title: "", description: "", date: new Date().toISOString().split("T")[0], status: "completed" as const, category: "strategy" as const, impact: "medium" as const });
+  const EMPTY_M = { title: "", description: "", date: new Date().toISOString().split("T")[0], status: "completed" as const, category: "strategy" as const, impact: "medium" as const };
+  const [form, setForm] = useState(EMPTY_M);
+  const [showForm, setShowForm] = useState(false);
+
+  // Agrupar por mes igual que el panel del cliente
+  const grouped = milestones.reduce<Record<string, typeof milestones>>((acc, m) => {
+    const key = new Date(m.date).toLocaleDateString("es-AR", { month: "long", year: "numeric" }).toUpperCase();
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(m);
+    return acc;
+  }, {});
 
   return (
-    <div className="space-y-4">
-      {milestones.map((m) => (
-        <div key={m.id} className="gj-card p-4 flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium" style={{ color: "var(--gj-cream)" }}>{m.title}</p>
-            {m.description && <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{m.description}</p>}
-            <p className="text-xs mt-1" style={{ color: "rgba(138,128,130,0.6)" }}>{new Date(m.date).toLocaleDateString("es-AR")} · {m.category} · {m.impact}</p>
+    <div className="space-y-8">
+      {/* Botón agregar */}
+      {!showForm ? (
+        <button onClick={() => setShowForm(true)} className="flex items-center gap-2 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
+          <Plus size={13} /> AGREGAR HITO
+        </button>
+      ) : (
+        <div style={{ background: "rgba(154,230,180,0.04)", border: "1px solid rgba(154,230,180,0.15)", borderRadius: "8px", padding: "20px" }}>
+          <p style={{ fontSize: "10px", letterSpacing: "3px", color: "var(--gj-mint)", marginBottom: "14px", fontFamily: "var(--gj-font)" }}>NUEVO HITO</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+            <input style={{ ...INP, gridColumn: "1/-1" }} placeholder="Título del hito *" value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} />
+            <input style={{ ...INP, gridColumn: "1/-1" }} placeholder="Descripción..." value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} />
+            <input type="date" style={INP} value={form.date} onChange={(e) => setForm(f => ({ ...f, date: e.target.value }))} />
+            <select style={INP} value={form.status} onChange={(e) => setForm(f => ({ ...f, status: e.target.value as any }))}>
+              <option value="completed">Completado</option><option value="in_progress">En curso</option><option value="pending">Pendiente</option>
+            </select>
+            <select style={INP} value={form.category} onChange={(e) => setForm(f => ({ ...f, category: e.target.value as any }))}>
+              <option value="strategy">Estrategia</option><option value="implementation">Implementación</option><option value="training">Capacitación</option>
+              <option value="automation">Automatización</option><option value="content">Contenido</option><option value="analytics">Analítica</option><option value="other">Otro</option>
+            </select>
+            <select style={INP} value={form.impact} onChange={(e) => setForm(f => ({ ...f, impact: e.target.value as any }))}>
+              <option value="high">Alto impacto</option><option value="medium">Impacto medio</option><option value="low">Bajo impacto</option>
+            </select>
           </div>
-          <button onClick={() => deleteMilestone.mutate({ id: m.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px", flexShrink: 0 }}>
-            <Trash2 size={14} />
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={() => { if (form.title) createMilestone.mutate({ clientId, ...form, date: new Date(form.date) }); }} disabled={!form.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", opacity: form.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>
+              GUARDAR
+            </button>
+            <button onClick={() => { setShowForm(false); setForm(EMPTY_M); }} style={{ background: "none", border: "1px solid rgba(154,230,180,0.2)", color: "var(--gj-muted)", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", fontFamily: "var(--gj-font)" }}>
+              CANCELAR
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Lista agrupada por mes */}
+      {Object.entries(grouped).map(([period, items]) => (
+        <div key={period}>
+          {/* Encabezado de mes */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+            <span style={{ fontSize: "10px", letterSpacing: "3px", padding: "3px 10px", borderRadius: "4px", background: "rgba(154,230,180,0.08)", border: "1px solid rgba(154,230,180,0.2)", color: "var(--gj-mint)", fontFamily: "var(--gj-font)" }}>
+              {period}
+            </span>
+            <div style={{ flex: 1, height: "1px", background: "rgba(154,230,180,0.1)" }} />
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {items.map((m) => {
+              const cat = M_CAT[m.category] || M_CAT.other;
+              const status = M_STATUS[m.status];
+              const impact = M_IMPACT[m.impact];
+              return (
+                <div key={m.id} style={{ background: "rgba(154,230,180,0.03)", border: "1px solid rgba(154,230,180,0.08)", borderLeft: `3px solid ${status.color}`, borderRadius: "6px", padding: "16px 18px", display: "flex", gap: "14px", alignItems: "flex-start" }}>
+                  {/* Ícono categoría */}
+                  <div style={{ width: 34, height: 34, borderRadius: "6px", background: `${cat.color}18`, border: `1px solid ${cat.color}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                    <span style={{ fontSize: "11px", color: cat.color, fontFamily: "var(--gj-font)", letterSpacing: "0px" }}>{m.category.slice(0,2).toUpperCase()}</span>
+                  </div>
+                  {/* Contenido */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "4px" }}>
+                      <p style={{ fontSize: "14px", fontWeight: 500, color: "var(--gj-cream)", fontFamily: "var(--gj-font)", lineHeight: 1.3 }}>{m.title}</p>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                        <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${impact.color}12`, border: `1px solid ${impact.color}30`, color: impact.color, fontFamily: "var(--gj-font)" }}>{impact.label}</span>
+                        <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${status.color}12`, border: `1px solid ${status.color}30`, color: status.color, fontFamily: "var(--gj-font)" }}>{status.label}</span>
+                        <button onClick={() => { if (confirm("¿Eliminar hito?")) deleteMilestone.mutate({ id: m.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px", lineHeight: 1 }}>
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                    {m.description && <p style={{ fontSize: "12px", color: "var(--gj-muted)", lineHeight: 1.5, marginBottom: "6px" }}>{m.description}</p>}
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <span style={{ fontSize: "9px", letterSpacing: "2px", color: cat.color, fontFamily: "var(--gj-font)" }}>{cat.label}</span>
+                      <span style={{ fontSize: "11px", color: "rgba(143,169,163,0.6)", fontFamily: "var(--gj-font)" }}>
+                        {new Date(m.date).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       ))}
 
-      <div style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "20px" }}>
-        <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-muted)", letterSpacing: "3px" }}>AGREGAR HITO</p>
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título del hito..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} className="px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as any }))} className="px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}>
-            <option value="completed">Completado</option>
-            <option value="in_progress">En curso</option>
-            <option value="pending">Pendiente</option>
-          </select>
-          <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))} className="px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}>
-            <option value="strategy">Estrategia</option>
-            <option value="implementation">Implementación</option>
-            <option value="training">Capacitación</option>
-            <option value="automation">Automatización</option>
-            <option value="content">Contenido</option>
-            <option value="analytics">Analítica</option>
-            <option value="other">Otro</option>
-          </select>
-          <select value={form.impact} onChange={(e) => setForm((f) => ({ ...f, impact: e.target.value as any }))} className="px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}>
-            <option value="high">Alto impacto</option>
-            <option value="medium">Impacto medio</option>
-            <option value="low">Bajo impacto</option>
-          </select>
-        </div>
-        <button
-          onClick={() => { if (form.title) { createMilestone.mutate({ clientId, ...form, date: new Date(form.date) }); setForm({ title: "", description: "", date: new Date().toISOString().split("T")[0], status: "completed", category: "strategy", impact: "medium" }); } }}
-          className="flex items-center gap-1 text-xs px-4 py-2 rounded"
-          style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
-        >
-          <Plus size={14} /> AGREGAR HITO
-        </button>
-      </div>
+      {milestones.length === 0 && !showForm && (
+        <p style={{ fontSize: "13px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>No hay hitos registrados todavía.</p>
+      )}
     </div>
   );
 }
 
 // ─── OKRs TAB ─────────────────────────────────────────────────────────────────
+const OKR_STATUS: Record<string, { label: string; color: string }> = {
+  on_track:  { label: "EN CURSO",   color: "#4eba8a" },
+  at_risk:   { label: "EN RIESGO",  color: "#E0913F" },
+  off_track: { label: "DESVIADO",   color: "#B32825" },
+  completed: { label: "COMPLETADO", color: "var(--gj-mint)" },
+};
+
 function OKRsTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
   const { data: okrs = [] } = trpc.okrs.list.useQuery({ clientId });
   const createOkr = trpc.okrs.create.useMutation({
-    onSuccess: () => { utils.okrs.list.invalidate({ clientId }); toast.success("OKR creado."); },
+    onSuccess: () => { utils.okrs.list.invalidate({ clientId }); toast.success("OKR creado."); setShowForm(false); setForm(EMPTY_OKR); },
     onError: (e) => toast.error(e.message),
   });
   const deleteOkr = trpc.okrs.delete.useMutation({
@@ -370,76 +448,122 @@ function OKRsTab({ clientId }: { clientId: number }) {
     onError: (e) => toast.error(e.message),
   });
   const updateOkr = trpc.okrs.update.useMutation({
-    onSuccess: () => { utils.okrs.list.invalidate({ clientId }); toast.success("OKR actualizado."); },
     onError: (e) => toast.error(e.message),
   });
 
-  const [form, setForm] = useState({ objective: "", keyResult: "", targetValue: "", currentValue: "", unit: "", progressPct: 0, status: "on_track" as const, period: "", notes: "" });
+  const EMPTY_OKR = { objective: "", keyResult: "", targetValue: "", currentValue: "", unit: "", progressPct: 0, status: "on_track" as const, period: "", notes: "" };
+  const [form, setForm] = useState(EMPTY_OKR);
+  const [showForm, setShowForm] = useState(false);
+
+  // Agrupar por objetivo
+  const grouped = okrs.reduce<Record<string, typeof okrs>>((acc, okr) => {
+    if (!acc[okr.objective]) acc[okr.objective] = [];
+    acc[okr.objective].push(okr);
+    return acc;
+  }, {});
 
   return (
-    <div className="space-y-4">
-      {okrs.map((okr) => (
-        <div key={okr.id} style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "16px" }}>
-          <div className="flex items-start justify-between gap-4 mb-2">
-            <div>
-              <p className="text-xs" style={{ color: "var(--gj-muted)" }}>{okr.objective}</p>
-              <p className="text-sm font-medium" style={{ color: "var(--gj-cream)" }}>{okr.keyResult}</p>
-            </div>
-            <button onClick={() => deleteOkr.mutate({ id: okr.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px", flexShrink: 0 }}>
-              <Trash2 size={14} />
-            </button>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="progress-bar-track flex-1">
-              <div className="progress-bar-fill" style={{ width: `${okr.progressPct}%` }} />
-            </div>
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={okr.progressPct}
-              onChange={(e) => updateOkr.mutate({ id: okr.id, clientId, progressPct: parseInt(e.target.value) || 0 })}
-              className="w-16 px-2 py-1 text-xs text-center"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-mint)", fontFamily: "var(--gj-font)" }}
-            />
-            <span className="text-xs" style={{ color: "var(--gj-muted)" }}>%</span>
-          </div>
-        </div>
-      ))}
-
-      <div style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "20px" }}>
-        <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-muted)", letterSpacing: "3px" }}>AGREGAR OKR</p>
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <input value={form.objective} onChange={(e) => setForm((f) => ({ ...f, objective: e.target.value }))} placeholder="Objetivo..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <input value={form.keyResult} onChange={(e) => setForm((f) => ({ ...f, keyResult: e.target.value }))} placeholder="Resultado clave..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <input value={form.targetValue} onChange={(e) => setForm((f) => ({ ...f, targetValue: e.target.value }))} placeholder="Meta (ej: 100)" className="px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <input value={form.unit} onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))} placeholder="Unidad (ej: reservas)" className="px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <input value={form.period} onChange={(e) => setForm((f) => ({ ...f, period: e.target.value }))} placeholder="Período (ej: Q2 2026)" className="px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as any }))} className="px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}>
-            <option value="on_track">En curso</option>
-            <option value="at_risk">En riesgo</option>
-            <option value="off_track">Desviado</option>
-            <option value="completed">Completado</option>
-          </select>
-        </div>
-        <button
-          onClick={() => { if (form.objective && form.keyResult) { createOkr.mutate({ clientId, ...form }); setForm({ objective: "", keyResult: "", targetValue: "", currentValue: "", unit: "", progressPct: 0, status: "on_track", period: "", notes: "" }); } }}
-          className="flex items-center gap-1 text-xs px-4 py-2 rounded"
-          style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
-        >
-          <Plus size={14} /> AGREGAR OKR
+    <div className="space-y-8">
+      {!showForm ? (
+        <button onClick={() => setShowForm(true)} style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", fontFamily: "var(--gj-font)" }}>
+          <Plus size={13} /> AGREGAR OKR
         </button>
-      </div>
+      ) : (
+        <div style={{ background: "rgba(154,230,180,0.04)", border: "1px solid rgba(154,230,180,0.15)", borderRadius: "8px", padding: "20px" }}>
+          <p style={{ fontSize: "10px", letterSpacing: "3px", color: "var(--gj-mint)", marginBottom: "14px", fontFamily: "var(--gj-font)" }}>NUEVO OKR</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+            <input style={{ ...INP, gridColumn: "1/-1" }} placeholder="Objetivo estratégico *" value={form.objective} onChange={(e) => setForm(f => ({ ...f, objective: e.target.value }))} />
+            <input style={{ ...INP, gridColumn: "1/-1" }} placeholder="Resultado clave *" value={form.keyResult} onChange={(e) => setForm(f => ({ ...f, keyResult: e.target.value }))} />
+            <input style={INP} placeholder="Meta (ej: 80)" value={form.targetValue} onChange={(e) => setForm(f => ({ ...f, targetValue: e.target.value }))} />
+            <input style={INP} placeholder="Unidad (ej: personas/función)" value={form.unit} onChange={(e) => setForm(f => ({ ...f, unit: e.target.value }))} />
+            <input style={INP} placeholder="Período (ej: Q3 2025)" value={form.period} onChange={(e) => setForm(f => ({ ...f, period: e.target.value }))} />
+            <select style={INP} value={form.status} onChange={(e) => setForm(f => ({ ...f, status: e.target.value as any }))}>
+              <option value="on_track">En curso</option><option value="at_risk">En riesgo</option><option value="off_track">Desviado</option><option value="completed">Completado</option>
+            </select>
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={() => { if (form.objective && form.keyResult) createOkr.mutate({ clientId, ...form }); }} disabled={!form.objective || !form.keyResult} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", opacity: (form.objective && form.keyResult) ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>GUARDAR</button>
+            <button onClick={() => { setShowForm(false); setForm(EMPTY_OKR); }} style={{ background: "none", border: "1px solid rgba(154,230,180,0.2)", color: "var(--gj-muted)", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", fontFamily: "var(--gj-font)" }}>CANCELAR</button>
+          </div>
+        </div>
+      )}
+
+      {/* OKRs agrupados por objetivo */}
+      {Object.entries(grouped).map(([objective, keyResults]) => {
+        const avgProgress = Math.round(keyResults.reduce((s, kr) => s + kr.progressPct, 0) / keyResults.length);
+        return (
+          <div key={objective} style={{ background: "rgba(154,230,180,0.03)", border: "1px solid rgba(154,230,180,0.1)", borderRadius: "8px", padding: "22px" }}>
+            {/* Objetivo header */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", marginBottom: "16px" }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: "9px", letterSpacing: "4px", color: "var(--gj-mint)", fontFamily: "var(--gj-font)", marginBottom: "6px" }}>OBJETIVO</p>
+                <p style={{ fontSize: "16px", fontWeight: 600, color: "var(--gj-cream)", fontFamily: "var(--gj-font)", lineHeight: 1.3 }}>{objective}</p>
+                {keyResults[0]?.period && (
+                  <p style={{ fontSize: "10px", letterSpacing: "2px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", marginTop: "4px" }}>{keyResults[0].period}</p>
+                )}
+              </div>
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                <p style={{ fontSize: "28px", fontWeight: 700, color: "var(--gj-mint)", fontFamily: "var(--gj-font)", lineHeight: 1 }}>{avgProgress}%</p>
+                <p style={{ fontSize: "9px", letterSpacing: "2px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>PROGRESO</p>
+              </div>
+            </div>
+            {/* Barra de progreso */}
+            <div style={{ height: "4px", background: "rgba(154,230,180,0.1)", borderRadius: "2px", marginBottom: "18px", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${avgProgress}%`, background: "var(--gj-green)", borderRadius: "2px", transition: "width 0.4s" }} />
+            </div>
+            {/* Key results */}
+            <p style={{ fontSize: "9px", letterSpacing: "4px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", marginBottom: "12px" }}>RESULTADOS CLAVE</p>
+            {keyResults.map((kr) => {
+              const st = OKR_STATUS[kr.status];
+              return (
+                <div key={kr.id} style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "12px 0", borderTop: "1px solid rgba(154,230,180,0.07)" }}>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: "13px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", lineHeight: 1.4, marginBottom: "6px" }}>{kr.keyResult}</p>
+                    {(kr.targetValue || kr.currentValue) && (
+                      <div style={{ display: "flex", gap: "12px" }}>
+                        {kr.targetValue && <span style={{ fontSize: "11px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>Meta: <strong style={{ color: "var(--gj-cream)" }}>{kr.targetValue}{kr.unit ? ` ${kr.unit}` : ""}</strong></span>}
+                        {kr.currentValue && <span style={{ fontSize: "11px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>Actual: <strong style={{ color: "var(--gj-mint)" }}>{kr.currentValue}{kr.unit ? ` ${kr.unit}` : ""}</strong></span>}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${st.color}12`, border: `1px solid ${st.color}30`, color: st.color, fontFamily: "var(--gj-font)" }}>{st.label}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <input type="number" min="0" max="100" value={kr.progressPct}
+                        onChange={(e) => updateOkr.mutate({ id: kr.id, clientId, progressPct: parseInt(e.target.value) || 0 })}
+                        style={{ width: "48px", background: "rgba(154,230,180,0.08)", border: "1px solid rgba(154,230,180,0.2)", borderRadius: "3px", color: "var(--gj-mint)", fontFamily: "var(--gj-font)", fontSize: "12px", padding: "3px 6px", textAlign: "center" }} />
+                      <span style={{ fontSize: "11px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>%</span>
+                    </div>
+                    <button onClick={() => { if (confirm("¿Eliminar OKR?")) deleteOkr.mutate({ id: kr.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}>
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+
+      {okrs.length === 0 && !showForm && (
+        <p style={{ fontSize: "13px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>No hay OKRs registrados todavía.</p>
+      )}
     </div>
   );
 }
 
 // ─── LEARNINGS TAB ────────────────────────────────────────────────────────────
+const L_TYPE: Record<string, { label: string; plural: string; color: string; bg: string }> = {
+  win:      { label: "LOGRO",        plural: "LOGROS",        color: "#4eba8a", bg: "rgba(78,186,138,0.06)" },
+  learning: { label: "APRENDIZAJE",  plural: "APRENDIZAJES",  color: "#4db6e8", bg: "rgba(77,182,232,0.06)" },
+  obstacle: { label: "OBSTÁCULO",    plural: "OBSTÁCULOS",    color: "#E0913F", bg: "rgba(224,145,63,0.06)" },
+};
+
 function LearningsTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
   const { data: learnings = [] } = trpc.learnings.list.useQuery({ clientId });
   const createLearning = trpc.learnings.create.useMutation({
-    onSuccess: () => { utils.learnings.list.invalidate({ clientId }); toast.success("Registro creado."); },
+    onSuccess: () => { utils.learnings.list.invalidate({ clientId }); toast.success("Registro creado."); setShowForm(false); setForm(EMPTY_L); },
     onError: (e) => toast.error(e.message),
   });
   const deleteLearning = trpc.learnings.delete.useMutation({
@@ -447,48 +571,104 @@ function LearningsTab({ clientId }: { clientId: number }) {
     onError: (e) => toast.error(e.message),
   });
 
-  const [form, setForm] = useState<{ type: "learning" | "obstacle" | "win"; title: string; description: string; resolution: string; date: string; isResolved: boolean }>({ type: "learning", title: "", description: "", resolution: "", date: new Date().toISOString().split("T")[0], isResolved: false });
+  const EMPTY_L = { type: "learning" as "learning" | "obstacle" | "win", title: "", description: "", resolution: "", date: new Date().toISOString().split("T")[0], isResolved: false };
+  const [form, setForm] = useState(EMPTY_L);
+  const [showForm, setShowForm] = useState(false);
+
+  const wins = learnings.filter(l => l.type === "win");
+  const learningItems = learnings.filter(l => l.type === "learning");
+  const obstacles = learnings.filter(l => l.type === "obstacle");
 
   return (
-    <div className="space-y-4">
-      {learnings.map((l) => (
-        <div key={l.id} className="gj-card p-4 flex items-start justify-between gap-4">
-          <div>
-            <span className="text-xs" style={{ color: l.type === "win" ? "#4eba8a" : l.type === "obstacle" ? "var(--gj-mint)" : "#4db6e8", letterSpacing: "2px" }}>
-              {l.type === "win" ? "LOGRO" : l.type === "obstacle" ? "OBSTÁCULO" : "APRENDIZAJE"}
-            </span>
-            <p className="text-sm font-medium mt-1" style={{ color: "var(--gj-cream)" }}>{l.title}</p>
-            <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{l.description}</p>
-          </div>
-          <button onClick={() => deleteLearning.mutate({ id: l.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px", flexShrink: 0 }}>
-            <Trash2 size={14} />
-          </button>
-        </div>
-      ))}
-
-      <div style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "20px" }}>
-        <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-muted)", letterSpacing: "3px" }}>AGREGAR REGISTRO</p>
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as any }))} className="px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}>
-            <option value="learning">Aprendizaje</option>
-            <option value="obstacle">Obstáculo</option>
-            <option value="win">Logro</option>
-          </select>
-          <input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} className="px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          <textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." rows={2} className="col-span-2 px-3 py-2 text-sm resize-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          {form.type === "obstacle" && (
-            <textarea value={form.resolution} onChange={(e) => setForm((f) => ({ ...f, resolution: e.target.value }))} placeholder="Resolución (si aplica)..." rows={2} className="col-span-2 px-3 py-2 text-sm resize-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
-          )}
-        </div>
-        <button
-          onClick={() => { if (form.title && form.description) { createLearning.mutate({ clientId, ...form, date: new Date(form.date) }); setForm({ type: "learning", title: "", description: "", resolution: "", date: new Date().toISOString().split("T")[0], isResolved: false }); } }}
-          className="flex items-center gap-1 text-xs px-4 py-2 rounded"
-          style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
-        >
-          <Plus size={14} /> AGREGAR
+    <div className="space-y-8">
+      {/* Botón agregar */}
+      {!showForm ? (
+        <button onClick={() => setShowForm(true)} style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", fontFamily: "var(--gj-font)" }}>
+          <Plus size={13} /> AGREGAR REGISTRO
         </button>
-      </div>
+      ) : (
+        <div style={{ background: "rgba(154,230,180,0.04)", border: "1px solid rgba(154,230,180,0.15)", borderRadius: "8px", padding: "20px" }}>
+          <p style={{ fontSize: "10px", letterSpacing: "3px", color: "var(--gj-mint)", marginBottom: "14px", fontFamily: "var(--gj-font)" }}>NUEVO REGISTRO</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+            <select style={INP} value={form.type} onChange={(e) => setForm(f => ({ ...f, type: e.target.value as any }))}>
+              <option value="win">Logro</option><option value="learning">Aprendizaje</option><option value="obstacle">Obstáculo</option>
+            </select>
+            <input type="date" style={INP} value={form.date} onChange={(e) => setForm(f => ({ ...f, date: e.target.value }))} />
+            <input style={{ ...INP, gridColumn: "1/-1" }} placeholder="Título *" value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} />
+            <textarea style={{ ...INP, gridColumn: "1/-1", resize: "none" } as any} placeholder="Descripción..." rows={2} value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} />
+            {form.type === "obstacle" && (
+              <textarea style={{ ...INP, gridColumn: "1/-1", resize: "none" } as any} placeholder="Resolución (si aplica)..." rows={2} value={form.resolution} onChange={(e) => setForm(f => ({ ...f, resolution: e.target.value }))} />
+            )}
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={() => { if (form.title) createLearning.mutate({ clientId, ...form, date: new Date(form.date) }); }} disabled={!form.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", opacity: form.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>GUARDAR</button>
+            <button onClick={() => { setShowForm(false); setForm(EMPTY_L); }} style={{ background: "none", border: "1px solid rgba(154,230,180,0.2)", color: "var(--gj-muted)", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", fontFamily: "var(--gj-font)" }}>CANCELAR</button>
+          </div>
+        </div>
+      )}
+
+      {/* Contador resumen */}
+      {learnings.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+          {[{ label: "LOGROS", count: wins.length, color: "#4eba8a" }, { label: "APRENDIZAJES", count: learningItems.length, color: "#4db6e8" }, { label: "OBSTÁCULOS", count: obstacles.length, color: "#E0913F" }].map(s => (
+            <div key={s.label} style={{ background: `${s.color}08`, border: `1px solid ${s.color}25`, borderRadius: "6px", padding: "16px", textAlign: "center" }}>
+              <p style={{ fontSize: "26px", fontWeight: 700, color: s.color, fontFamily: "var(--gj-font)", lineHeight: 1 }}>{s.count}</p>
+              <p style={{ fontSize: "9px", letterSpacing: "3px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", marginTop: "4px" }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Grupos por tipo */}
+      {(["win", "learning", "obstacle"] as const).map((type) => {
+        const items = learnings.filter(l => l.type === type);
+        if (items.length === 0) return null;
+        const cfg = L_TYPE[type];
+        return (
+          <div key={type}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+              <div style={{ width: 28, height: 28, borderRadius: "6px", background: cfg.bg, border: `1px solid ${cfg.color}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <span style={{ fontSize: "10px", color: cfg.color, fontFamily: "var(--gj-font)" }}>{type === "win" ? "★" : type === "obstacle" ? "!" : "○"}</span>
+              </div>
+              <span style={{ fontSize: "9px", letterSpacing: "4px", color: cfg.color, fontFamily: "var(--gj-font)" }}>{cfg.plural}</span>
+              <div style={{ flex: 1, height: "1px", background: `${cfg.color}20` }} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {items.map(item => (
+                <div key={item.id} style={{ background: cfg.bg, border: "1px solid rgba(154,230,180,0.08)", borderLeft: `3px solid ${cfg.color}60`, borderRadius: "6px", padding: "16px 18px" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "6px" }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: "14px", fontWeight: 500, color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}>{item.title}</p>
+                      {item.type === "obstacle" && (
+                        <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 6px", borderRadius: "3px", marginTop: "4px", display: "inline-block", background: item.isResolved ? "rgba(78,186,138,0.12)" : "rgba(224,145,63,0.12)", border: `1px solid ${item.isResolved ? "#4eba8a" : "#E0913F"}40`, color: item.isResolved ? "#4eba8a" : "#E0913F", fontFamily: "var(--gj-font)" }}>
+                          {item.isResolved ? "RESUELTO" : "ACTIVO"}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                      <span style={{ fontSize: "11px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>{new Date(item.date).toLocaleDateString("es-AR", { day: "numeric", month: "short" })}</span>
+                      <button onClick={() => { if (confirm("¿Eliminar?")) deleteLearning.mutate({ id: item.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}>
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: "12px", color: "var(--gj-muted)", lineHeight: 1.6 }}>{item.description}</p>
+                  {item.resolution && (
+                    <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid rgba(154,230,180,0.08)" }}>
+                      <p style={{ fontSize: "9px", letterSpacing: "3px", color: "#4eba8a", fontFamily: "var(--gj-font)", marginBottom: "4px" }}>RESOLUCIÓN</p>
+                      <p style={{ fontSize: "12px", color: "rgba(154,230,180,0.7)" }}>{item.resolution}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+
+      {learnings.length === 0 && !showForm && (
+        <p style={{ fontSize: "13px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>No hay registros todavía.</p>
+      )}
     </div>
   );
 }
