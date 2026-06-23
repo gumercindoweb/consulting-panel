@@ -1333,7 +1333,7 @@ var appRouter = router({
       title: z2.string().optional(),
       body: z2.string().optional(),
       category: z2.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).optional(),
-      status: z2.enum(["on_track", "at_risk", "blocked"]).optional(),
+      status: z2.enum(["on_track", "at_risk", "blocked", "completed"]).optional(),
       impact: z2.enum(["high", "medium", "low"]).optional(),
       isPublic: z2.boolean().optional(),
       phaseId: z2.number().optional(),

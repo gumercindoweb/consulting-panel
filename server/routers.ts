@@ -596,7 +596,7 @@ export const appRouter = router({
         title: z.string().optional(),
         body: z.string().optional(),
         category: z.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).optional(),
-        status: z.enum(["on_track", "at_risk", "blocked"]).optional(),
+        status: z.enum(["on_track", "at_risk", "blocked", "completed"]).optional(),
         impact: z.enum(["high", "medium", "low"]).optional(),
         isPublic: z.boolean().optional(),
         phaseId: z.number().optional(),
