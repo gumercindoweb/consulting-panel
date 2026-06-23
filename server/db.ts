@@ -196,10 +196,19 @@ export async function deletePhase(id: number): Promise<void> {
 }
 
 // ─── OKRs ─────────────────────────────────────────────────────────────────────
-export async function getOkrsByClient(clientId: number): Promise<Okr[]> {
+export async function getOkrsByClient(clientId: number, includePaused = false): Promise<Okr[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(okrs).where(eq(okrs.clientId, clientId)).orderBy(asc(okrs.sortOrder), asc(okrs.createdAt));
+  const where = includePaused
+    ? eq(okrs.clientId, clientId)
+    : and(eq(okrs.clientId, clientId), eq(okrs.isPaused, false));
+  return db.select().from(okrs).where(where).orderBy(asc(okrs.sortOrder), asc(okrs.createdAt));
+}
+
+export async function pauseOkr(id: number, clientId: number, isPaused: boolean): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(okrs).set({ isPaused }).where(and(eq(okrs.id, id), eq(okrs.clientId, clientId)));
 }
 
 export async function reorderOkrs(clientId: number, ids: number[]): Promise<void> {
@@ -230,14 +239,19 @@ export async function deleteOkr(id: number, clientId: number): Promise<void> {
 }
 
 // ─── MILESTONES ───────────────────────────────────────────────────────────────
-export async function getMilestonesByClient(clientId: number): Promise<Milestone[]> {
+export async function getMilestonesByClient(clientId: number, includePaused = false): Promise<Milestone[]> {
   const db = await getDb();
   if (!db) return [];
-  return db
-    .select()
-    .from(milestones)
-    .where(eq(milestones.clientId, clientId))
-    .orderBy(asc(milestones.sortOrder), asc(milestones.date));
+  const where = includePaused
+    ? eq(milestones.clientId, clientId)
+    : and(eq(milestones.clientId, clientId), eq(milestones.isPaused, false));
+  return db.select().from(milestones).where(where).orderBy(asc(milestones.sortOrder), asc(milestones.date));
+}
+
+export async function pauseMilestone(id: number, clientId: number, isPaused: boolean): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(milestones).set({ isPaused }).where(and(eq(milestones.id, id), eq(milestones.clientId, clientId)));
 }
 
 export async function reorderMilestones(clientId: number, ids: number[]): Promise<void> {

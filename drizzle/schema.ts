@@ -109,6 +109,7 @@ export const okrs = pgTable("okrs", {
   period: varchar("period", { length: 64 }),
   notes: text("notes"),
   sortOrder: integer("sortOrder"),
+  isPaused: boolean("isPaused").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
@@ -128,6 +129,7 @@ export const milestones = pgTable("milestones", {
   category: milestoneCategoryEnum("category").default("other").notNull(),
   impact: impactEnum("impact").default("medium").notNull(),
   sortOrder: integer("sortOrder"),
+  isPaused: boolean("isPaused").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });

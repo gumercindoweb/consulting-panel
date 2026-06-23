@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
-import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -356,6 +356,10 @@ function MilestonesTab({ clientId }: { clientId: number }) {
     onSuccess: () => { utils.milestones.list.invalidate({ clientId }); toast.success("Hito eliminado."); },
     onError: (e) => toast.error(e.message),
   });
+  const pauseMilestone = trpc.milestones.pause.useMutation({
+    onSuccess: () => utils.milestones.list.invalidate({ clientId }),
+    onError: (e) => toast.error(e.message),
+  });
   const reorder = trpc.milestones.reorder.useMutation({ onError: (e) => toast.error(e.message) });
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -406,44 +410,76 @@ function MilestonesTab({ clientId }: { clientId: number }) {
         </div>
       )}
 
-      {/* Lista sortable plana (admin ve todo junto, cliente ve agrupado por mes) */}
+      {/* Lista agrupada por mes con drag-and-drop */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={items.map(m => m.id)} strategy={verticalListSortingStrategy}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {items.map((m) => {
-              const cat = M_CAT[m.category] || M_CAT.other;
-              const status = M_STATUS[m.status];
-              const impact = M_IMPACT[m.impact];
-              return (
-                <SortableItem key={m.id} id={m.id}>
-                  <div style={{ background: "rgba(154,230,180,0.03)", border: "1px solid rgba(154,230,180,0.08)", borderLeft: `3px solid ${status.color}`, borderRadius: "6px", padding: "14px 16px 14px 32px", display: "flex", gap: "14px", alignItems: "flex-start" }}>
-                    <div style={{ width: 34, height: 34, borderRadius: "6px", background: `${cat.color}18`, border: `1px solid ${cat.color}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
-                      <span style={{ fontSize: "11px", color: cat.color, fontFamily: "var(--gj-font)" }}>{m.category.slice(0,2).toUpperCase()}</span>
+          {(() => {
+            const grouped = items.reduce<Record<string, typeof items>>((acc, m) => {
+              const key = new Date(m.date).toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+              if (!acc[key]) acc[key] = [];
+              acc[key].push(m);
+              return acc;
+            }, {});
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+                {Object.entries(grouped).map(([period, monthItems]) => (
+                  <div key={period}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                      <span style={{ fontSize: "10px", letterSpacing: "3px", padding: "4px 10px", borderRadius: "3px", background: "rgba(154,230,180,0.1)", border: "1px solid rgba(154,230,180,0.25)", color: "var(--gj-mint)", fontFamily: "var(--gj-font)", textTransform: "uppercase" }}>
+                        {period}
+                      </span>
+                      <div style={{ flex: 1, height: "1px", background: "rgba(154,230,180,0.1)" }} />
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "4px" }}>
-                        <p style={{ fontSize: "14px", fontWeight: 500, color: "var(--gj-cream)", fontFamily: "var(--gj-font)", lineHeight: 1.3 }}>{m.title}</p>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-                          <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${impact.color}12`, border: `1px solid ${impact.color}30`, color: impact.color, fontFamily: "var(--gj-font)" }}>{impact.label}</span>
-                          <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${status.color}12`, border: `1px solid ${status.color}30`, color: status.color, fontFamily: "var(--gj-font)" }}>{status.label}</span>
-                          <button onClick={() => { if (confirm("¿Eliminar hito?")) deleteMilestone.mutate({ id: m.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}>
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </div>
-                      {m.description && <p style={{ fontSize: "12px", color: "var(--gj-muted)", lineHeight: 1.5, marginBottom: "6px" }}>{m.description}</p>}
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <span style={{ fontSize: "9px", letterSpacing: "2px", color: cat.color, fontFamily: "var(--gj-font)" }}>{cat.label}</span>
-                        <span style={{ fontSize: "11px", color: "rgba(143,169,163,0.5)", fontFamily: "var(--gj-font)" }}>
-                          {new Date(m.date).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
-                        </span>
-                      </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {monthItems.map((m) => {
+                        const cat = M_CAT[m.category] || M_CAT.other;
+                        const status = M_STATUS[m.status];
+                        const impact = M_IMPACT[m.impact];
+                        return (
+                          <SortableItem key={m.id} id={m.id}>
+                            <div style={{ background: m.isPaused ? "rgba(154,230,180,0.01)" : "rgba(154,230,180,0.03)", border: "1px solid rgba(154,230,180,0.08)", borderLeft: `3px solid ${m.isPaused ? "rgba(143,169,163,0.3)" : status.color}`, borderRadius: "6px", padding: "14px 16px 14px 32px", display: "flex", gap: "14px", alignItems: "flex-start", opacity: m.isPaused ? 0.55 : 1, transition: "opacity 0.2s" }}>
+                              <div style={{ width: 34, height: 34, borderRadius: "6px", background: `${cat.color}18`, border: `1px solid ${cat.color}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                                <span style={{ fontSize: "11px", color: cat.color, fontFamily: "var(--gj-font)" }}>{m.category.slice(0,2).toUpperCase()}</span>
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "4px" }}>
+                                  <p style={{ fontSize: "14px", fontWeight: 500, color: "var(--gj-cream)", fontFamily: "var(--gj-font)", lineHeight: 1.3 }}>{m.title}</p>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                                    {m.isPaused && (
+                                      <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: "rgba(143,169,163,0.12)", border: "1px solid rgba(143,169,163,0.3)", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>PAUSADO</span>
+                                    )}
+                                    {!m.isPaused && <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${impact.color}12`, border: `1px solid ${impact.color}30`, color: impact.color, fontFamily: "var(--gj-font)" }}>{impact.label}</span>}
+                                    {!m.isPaused && <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${status.color}12`, border: `1px solid ${status.color}30`, color: status.color, fontFamily: "var(--gj-font)" }}>{status.label}</span>}
+                                    <button
+                                      title={m.isPaused ? "Reactivar" : "Pausar"}
+                                      onClick={() => pauseMilestone.mutate({ id: m.id, clientId, isPaused: !m.isPaused })}
+                                      style={{ background: "none", border: "none", cursor: "pointer", color: m.isPaused ? "#4eba8a" : "var(--gj-muted)", padding: "2px" }}
+                                    >
+                                      {m.isPaused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
+                                    </button>
+                                    <button onClick={() => { if (confirm("¿Eliminar hito?")) deleteMilestone.mutate({ id: m.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}>
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
+                                </div>
+                                {m.description && <p style={{ fontSize: "12px", color: "var(--gj-muted)", lineHeight: 1.5, marginBottom: "6px" }}>{m.description}</p>}
+                                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                  <span style={{ fontSize: "9px", letterSpacing: "2px", color: cat.color, fontFamily: "var(--gj-font)" }}>{cat.label}</span>
+                                  <span style={{ fontSize: "11px", color: "rgba(143,169,163,0.5)", fontFamily: "var(--gj-font)" }}>
+                                    {new Date(m.date).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </SortableItem>
+                        );
+                      })}
                     </div>
                   </div>
-                </SortableItem>
-              );
-            })}
-          </div>
+                ))}
+              </div>
+            );
+          })()}
         </SortableContext>
       </DndContext>
 
@@ -474,6 +510,10 @@ function OKRsTab({ clientId }: { clientId: number }) {
   });
   const deleteOkr = trpc.okrs.delete.useMutation({
     onSuccess: () => { utils.okrs.list.invalidate({ clientId }); toast.success("OKR eliminado."); },
+    onError: (e) => toast.error(e.message),
+  });
+  const pauseOkr = trpc.okrs.pause.useMutation({
+    onSuccess: () => utils.okrs.list.invalidate({ clientId }),
     onError: (e) => toast.error(e.message),
   });
   const updateOkr = trpc.okrs.update.useMutation({ onError: (e) => toast.error(e.message) });
@@ -612,7 +652,7 @@ function OKRsTab({ clientId }: { clientId: number }) {
                     const st = OKR_STATUS[kr.status];
                     return (
                       <SortableItem key={kr.id} id={kr.id}>
-                        <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "12px 12px 12px 32px", borderTop: "1px solid rgba(154,230,180,0.07)" }}>
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "12px 12px 12px 32px", borderTop: "1px solid rgba(154,230,180,0.07)", opacity: kr.isPaused ? 0.5 : 1, transition: "opacity 0.2s" }}>
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: "13px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", lineHeight: 1.4, marginBottom: "6px" }}>{kr.keyResult}</p>
                             {(kr.targetValue || kr.currentValue) && (
@@ -623,13 +663,25 @@ function OKRsTab({ clientId }: { clientId: number }) {
                             )}
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-                            <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${st.color}12`, border: `1px solid ${st.color}30`, color: st.color, fontFamily: "var(--gj-font)" }}>{st.label}</span>
-                            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                              <input type="number" min="0" max="100" value={kr.progressPct}
-                                onChange={(e) => updateOkr.mutate({ id: kr.id, clientId, progressPct: parseInt(e.target.value) || 0 })}
-                                style={{ width: "48px", background: "rgba(154,230,180,0.08)", border: "1px solid rgba(154,230,180,0.2)", borderRadius: "3px", color: "var(--gj-mint)", fontFamily: "var(--gj-font)", fontSize: "12px", padding: "3px 6px", textAlign: "center" }} />
-                              <span style={{ fontSize: "11px", color: "var(--gj-muted)" }}>%</span>
-                            </div>
+                            {kr.isPaused
+                              ? <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: "rgba(143,169,163,0.12)", border: "1px solid rgba(143,169,163,0.3)", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>PAUSADO</span>
+                              : <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${st.color}12`, border: `1px solid ${st.color}30`, color: st.color, fontFamily: "var(--gj-font)" }}>{st.label}</span>
+                            }
+                            {!kr.isPaused && (
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                <input type="number" min="0" max="100" value={kr.progressPct}
+                                  onChange={(e) => updateOkr.mutate({ id: kr.id, clientId, progressPct: parseInt(e.target.value) || 0 })}
+                                  style={{ width: "48px", background: "rgba(154,230,180,0.08)", border: "1px solid rgba(154,230,180,0.2)", borderRadius: "3px", color: "var(--gj-mint)", fontFamily: "var(--gj-font)", fontSize: "12px", padding: "3px 6px", textAlign: "center" }} />
+                                <span style={{ fontSize: "11px", color: "var(--gj-muted)" }}>%</span>
+                              </div>
+                            )}
+                            <button
+                              title={kr.isPaused ? "Reactivar" : "Pausar"}
+                              onClick={() => pauseOkr.mutate({ id: kr.id, clientId, isPaused: !kr.isPaused })}
+                              style={{ background: "none", border: "none", cursor: "pointer", color: kr.isPaused ? "#4eba8a" : "var(--gj-muted)", padding: "2px" }}
+                            >
+                              {kr.isPaused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
+                            </button>
                             <button onClick={() => { if (confirm("¿Eliminar OKR?")) deleteOkr.mutate({ id: kr.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}>
                               <Trash2 size={13} />
                             </button>

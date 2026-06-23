@@ -166,6 +166,7 @@ var okrs = pgTable("okrs", {
   period: varchar("period", { length: 64 }),
   notes: text("notes"),
   sortOrder: integer("sortOrder"),
+  isPaused: boolean("isPaused").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
@@ -180,6 +181,7 @@ var milestones = pgTable("milestones", {
   category: milestoneCategoryEnum("category").default("other").notNull(),
   impact: impactEnum("impact").default("medium").notNull(),
   sortOrder: integer("sortOrder"),
+  isPaused: boolean("isPaused").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
@@ -371,10 +373,16 @@ async function deletePhase(id) {
   if (!db) return;
   await db.delete(projectPhases).where(eq(projectPhases.id, id));
 }
-async function getOkrsByClient(clientId) {
+async function getOkrsByClient(clientId, includePaused = false) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(okrs).where(eq(okrs.clientId, clientId)).orderBy(asc(okrs.sortOrder), asc(okrs.createdAt));
+  const where = includePaused ? eq(okrs.clientId, clientId) : and(eq(okrs.clientId, clientId), eq(okrs.isPaused, false));
+  return db.select().from(okrs).where(where).orderBy(asc(okrs.sortOrder), asc(okrs.createdAt));
+}
+async function pauseOkr(id, clientId, isPaused) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(okrs).set({ isPaused }).where(and(eq(okrs.id, id), eq(okrs.clientId, clientId)));
 }
 async function reorderOkrs(clientId, ids) {
   const db = await getDb();
@@ -399,10 +407,16 @@ async function deleteOkr(id, clientId) {
   if (!db) return;
   await db.delete(okrs).where(and(eq(okrs.id, id), eq(okrs.clientId, clientId)));
 }
-async function getMilestonesByClient(clientId) {
+async function getMilestonesByClient(clientId, includePaused = false) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(milestones).where(eq(milestones.clientId, clientId)).orderBy(asc(milestones.sortOrder), asc(milestones.date));
+  const where = includePaused ? eq(milestones.clientId, clientId) : and(eq(milestones.clientId, clientId), eq(milestones.isPaused, false));
+  return db.select().from(milestones).where(where).orderBy(asc(milestones.sortOrder), asc(milestones.date));
+}
+async function pauseMilestone(id, clientId, isPaused) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(milestones).set({ isPaused }).where(and(eq(milestones.id, id), eq(milestones.clientId, clientId)));
 }
 async function reorderMilestones(clientId, ids) {
   const db = await getDb();
@@ -1071,8 +1085,9 @@ var appRouter = router({
   okrs: router({
     list: protectedProcedure.input(z2.object({ clientId: z2.number() })).query(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
-      return getOkrsByClient(input.clientId);
+      return getOkrsByClient(input.clientId, ctx.user.role === "admin");
     }),
+    pause: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number(), isPaused: z2.boolean() })).mutation(({ input }) => pauseOkr(input.id, input.clientId, input.isPaused)),
     create: adminProcedure2.input(
       z2.object({
         clientId: z2.number(),
@@ -1112,8 +1127,9 @@ var appRouter = router({
   milestones: router({
     list: protectedProcedure.input(z2.object({ clientId: z2.number() })).query(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
-      return getMilestonesByClient(input.clientId);
+      return getMilestonesByClient(input.clientId, ctx.user.role === "admin");
     }),
+    pause: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number(), isPaused: z2.boolean() })).mutation(({ input }) => pauseMilestone(input.id, input.clientId, input.isPaused)),
     create: adminProcedure2.input(
       z2.object({
         clientId: z2.number(),

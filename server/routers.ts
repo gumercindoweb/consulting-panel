@@ -13,6 +13,8 @@ import {
   createMetric,
   createMilestone,
   createOkr,
+  pauseMilestone,
+  pauseOkr,
   createPhase,
   createResource,
   createScopeItem,
@@ -247,8 +249,12 @@ export const appRouter = router({
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
         if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
-        return getOkrsByClient(input.clientId);
+        return getOkrsByClient(input.clientId, ctx.user.role === "admin");
       }),
+
+    pause: adminProcedure
+      .input(z.object({ id: z.number(), clientId: z.number(), isPaused: z.boolean() }))
+      .mutation(({ input }) => pauseOkr(input.id, input.clientId, input.isPaused)),
 
     create: adminProcedure
       .input(
@@ -303,8 +309,12 @@ export const appRouter = router({
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
         if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
-        return getMilestonesByClient(input.clientId);
+        return getMilestonesByClient(input.clientId, ctx.user.role === "admin");
       }),
+
+    pause: adminProcedure
+      .input(z.object({ id: z.number(), clientId: z.number(), isPaused: z.boolean() }))
+      .mutation(({ input }) => pauseMilestone(input.id, input.clientId, input.isPaused)),
 
     create: adminProcedure
       .input(
