@@ -1,6 +1,18 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* ─── FUTURA STD — NM ROLLER ─────────────────────────────────────────────────
+   Solo se descarga cuando el portal activa la fuente via CSS vars de branding. */
+@font-face { font-family: 'Futura Std'; src: url('/fonts/nm-roller/FuturaStd-Light.otf') format('opentype'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Futura Std'; src: url('/fonts/nm-roller/FuturaStd-Book.otf') format('opentype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Futura Std'; src: url('/fonts/nm-roller/FuturaStd-Medium.otf') format('opentype'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Futura Std'; src: url('/fonts/nm-roller/FuturaStd-Bold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Futura Std'; src: url('/fonts/nm-roller/FuturaStd-Heavy.otf') format('opentype'); font-weight: 800; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Futura Std'; src: url('/fonts/nm-roller/FuturaStd-ExtraBold.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Futura Std Condensed'; src: url('/fonts/nm-roller/FuturaStd-Condensed.otf') format('opentype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Futura Std Condensed'; src: url('/fonts/nm-roller/FuturaStd-CondensedBold.otf') format('opentype'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Futura Std Condensed'; src: url('/fonts/nm-roller/FuturaStd-CondensedExtraBd.otf') format('opentype'); font-weight: 900; font-style: normal; font-display: swap; }
+
 @custom-variant dark (&:is(.dark *));
 
 /* ─── MARCA CONSULTOR — GUMERCINDO JIMÉNEZ ───────────────────────────────────

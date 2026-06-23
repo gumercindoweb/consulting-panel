@@ -1268,12 +1268,23 @@ export default function AdminClientDetail() {
   const params = useParams<{ clientId: string }>();
   const clientId = parseInt(params.clientId || "0");
   const [activeTab, setActiveTab] = useState<Tab>("updates");
+  const [brandLogoUrl, setBrandLogoUrl] = useState<string>("");
+  const [brandPrimary, setBrandPrimary] = useState<string>("#3B6EA5");
+  const [brandAccent, setBrandAccent] = useState<string>("#7FB2D9");
 
   const utils = trpc.useUtils();
   const { data: client } = trpc.clients.get.useQuery({ id: clientId }, { enabled: !!clientId && isAuthenticated });
   const updateClientMutation = trpc.clients.update.useMutation({
     onSuccess: () => utils.clients.get.invalidate({ id: clientId }),
   });
+
+  useEffect(() => {
+    if (!client) return;
+    const b = (client as any).branding as any;
+    setBrandLogoUrl((client as any).logoUrl || "");
+    setBrandPrimary(b?.primaryColor || "#3B6EA5");
+    setBrandAccent(b?.accentColor || "#7FB2D9");
+  }, [client]);
 
   const PORTAL_SECTIONS = [
     { id: "overview",   label: "Resumen ejecutivo" },
@@ -1313,10 +1324,6 @@ export default function AdminClientDetail() {
 
   const activeTabDef = TABS.find((t) => t.id === activeTab)!;
   const branding = (client as any).branding as any;
-
-  const [brandLogoUrl, setBrandLogoUrl] = useState<string>((client as any).logoUrl || "");
-  const [brandPrimary, setBrandPrimary] = useState<string>(branding?.primaryColor || "#3B6EA5");
-  const [brandAccent, setBrandAccent] = useState<string>(branding?.accentColor || "#7FB2D9");
 
   return (
     <div className="min-h-screen flex" style={{ background: "var(--gj-petrol-ink)" }}>

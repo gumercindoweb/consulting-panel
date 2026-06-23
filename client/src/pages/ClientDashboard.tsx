@@ -116,8 +116,26 @@ export default function ClientDashboard() {
 
   const branding = activeClient.branding as any;
 
+  // Override CSS variables per-client based on their branding JSON
+  const brandVars = branding ? {
+    '--rojo':     branding.primaryColor  || undefined,
+    '--rojo-vivo': branding.primaryColor || undefined,
+    '--ambar':    branding.accentColor   || undefined,
+    '--creme':    branding.textColor     || undefined,
+    '--noir':     branding.backgroundColor || undefined,
+    '--noir-deep': branding.backgroundColor || undefined,
+    '--oro-pale': branding.textColor ? 'rgba(255,255,255,0.55)' : undefined,
+    ...(branding.fontDisplay === 'Futura Std' ? {
+      '--font-display': "'Futura Std', 'Futura', sans-serif",
+      '--font-body':    "'Futura Std', 'Futura', sans-serif",
+      '--font-label':   "'Futura Std Condensed', 'Futura Std', sans-serif",
+      '--font-accent':  "'Futura Std', 'Futura', sans-serif",
+      '--font-serif':   "'Futura Std', 'Futura', sans-serif",
+    } : {}),
+  } as React.CSSProperties : {};
+
   return (
-    <div className="min-h-screen flex" style={{ background: "var(--noir)" }}>
+    <div className="min-h-screen flex" style={{ background: "var(--noir)", ...brandVars }}>
       {/* Sidebar */}
       <DashboardSidebar
         client={activeClient}
