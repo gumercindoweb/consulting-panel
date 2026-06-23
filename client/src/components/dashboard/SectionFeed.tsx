@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 
 type Category = "session" | "result" | "delivery" | "insight" | "blocker" | "win" | "general";
-type Status = "on_track" | "at_risk" | "blocked";
+type Status = "on_track" | "at_risk" | "blocked" | "completed";
 type Impact = "high" | "medium" | "low";
 
 const CATEGORY_LABELS: Record<Category, string> = {
@@ -26,15 +26,17 @@ const CATEGORY_COLORS: Record<Category, string> = {
 };
 
 const STATUS_LABELS: Record<Status, string> = {
-  on_track: "EN CURSO",
-  at_risk:  "EN RIESGO",
-  blocked:  "BLOQUEADO",
+  on_track:  "EN CURSO",
+  at_risk:   "EN RIESGO",
+  blocked:   "BLOQUEADO",
+  completed: "COMPLETADO",
 };
 
 const STATUS_COLORS: Record<Status, string> = {
-  on_track: "#4eba8a",
-  at_risk:  "#E0913F",
-  blocked:  "#B32825",
+  on_track:  "#4eba8a",
+  at_risk:   "#E0913F",
+  blocked:   "#B32825",
+  completed: "#4db6e8",
 };
 
 const IMPACT_LABELS: Record<Impact, string> = {

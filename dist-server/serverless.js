@@ -106,7 +106,7 @@ var learningTypeEnum = pgEnum("learning_type", ["learning", "obstacle", "win"]);
 var resourceCategoryEnum = pgEnum("resource_category", ["document", "template", "script", "training", "guide", "other"]);
 var trendEnum = pgEnum("trend", ["up", "down", "stable"]);
 var updateCategoryEnum = pgEnum("update_category", ["session", "result", "delivery", "insight", "blocker", "win", "general"]);
-var updateStatusEnum = pgEnum("update_status", ["on_track", "at_risk", "blocked"]);
+var updateStatusEnum = pgEnum("update_status", ["on_track", "at_risk", "blocked", "completed"]);
 var users = pgTable("users", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),

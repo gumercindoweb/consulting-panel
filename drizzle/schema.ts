@@ -20,7 +20,7 @@ export const learningTypeEnum = pgEnum("learning_type", ["learning", "obstacle",
 export const resourceCategoryEnum = pgEnum("resource_category", ["document", "template", "script", "training", "guide", "other"]);
 export const trendEnum = pgEnum("trend", ["up", "down", "stable"]);
 export const updateCategoryEnum = pgEnum("update_category", ["session", "result", "delivery", "insight", "blocker", "win", "general"]);
-export const updateStatusEnum = pgEnum("update_status", ["on_track", "at_risk", "blocked"]);
+export const updateStatusEnum = pgEnum("update_status", ["on_track", "at_risk", "blocked", "completed"]);
 
 // ─── USERS ───────────────────────────────────────────────────────────────────
 export const users = pgTable("users", {

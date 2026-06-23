@@ -76,7 +76,7 @@ function UpdatesTab({ clientId }: { clientId: number }) {
               {Object.entries(CAT_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
             <select style={inp} value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as any }))}>
-              <option value="on_track">EN CURSO</option><option value="at_risk">EN RIESGO</option><option value="blocked">BLOQUEADO</option>
+              <option value="on_track">EN CURSO</option><option value="at_risk">EN RIESGO</option><option value="blocked">BLOQUEADO</option><option value="completed">COMPLETADO</option>
             </select>
             <select style={inp} value={form.impact} onChange={(e) => setForm((f) => ({ ...f, impact: e.target.value as any }))}>
               <option value="high">IMPACTO ALTO</option><option value="medium">IMPACTO MEDIO</option><option value="low">IMPACTO BAJO</option>
@@ -109,7 +109,7 @@ function UpdatesTab({ clientId }: { clientId: number }) {
                   {Object.entries(CAT_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </select>
                 <select style={inp} value={editData.status ?? u.status} onChange={(e) => setEditData((d: any) => ({ ...d, status: e.target.value }))}>
-                  <option value="on_track">EN CURSO</option><option value="at_risk">EN RIESGO</option><option value="blocked">BLOQUEADO</option>
+                  <option value="on_track">EN CURSO</option><option value="at_risk">EN RIESGO</option><option value="blocked">BLOQUEADO</option><option value="completed">COMPLETADO</option>
                 </select>
                 <input type="date" style={inp} value={editData.date ?? new Date(u.date).toISOString().split("T")[0]} onChange={(e) => setEditData((d: any) => ({ ...d, date: e.target.value }))} />
                 <label className="flex items-center gap-2 text-xs" style={{ color: "var(--gj-muted)", cursor: "pointer" }}>
