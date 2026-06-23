@@ -419,8 +419,8 @@ export async function getUpdatesByClient(clientId: number): Promise<ProjectUpdat
 export async function createUpdate(data: InsertProjectUpdate): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(projectUpdates).values(data);
-  return (result[0] as any).insertId;
+  const result = await db.insert(projectUpdates).values(data).returning();
+  return result[0]?.id || 0;
 }
 
 export async function updateUpdate(id: number, clientId: number, data: Partial<InsertProjectUpdate>): Promise<void> {

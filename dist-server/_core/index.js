@@ -489,8 +489,8 @@ async function getUpdatesByClient(clientId) {
 async function createUpdate(data) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(projectUpdates).values(data);
-  return result[0].insertId;
+  const result = await db.insert(projectUpdates).values(data).returning();
+  return result[0]?.id || 0;
 }
 async function updateUpdate(id, clientId, data) {
   const db = await getDb();
@@ -1401,7 +1401,7 @@ var appRouter = router({
       title: z2.string().min(1).max(255),
       body: z2.string().min(1),
       category: z2.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).default("general"),
-      status: z2.enum(["on_track", "at_risk", "blocked"]).default("on_track"),
+      status: z2.enum(["on_track", "at_risk", "blocked", "completed"]).default("on_track"),
       impact: z2.enum(["high", "medium", "low"]).default("medium"),
       isPublic: z2.boolean().default(true),
       date: z2.string()
