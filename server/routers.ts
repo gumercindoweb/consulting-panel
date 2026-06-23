@@ -38,6 +38,9 @@ import {
   getScopeByClient,
   getUpdatesByClient,
   grantClientAccess,
+  reorderLearnings,
+  reorderMilestones,
+  reorderOkrs,
   updateClient,
   updateLearning,
   updateMetric,
@@ -288,6 +291,10 @@ export const appRouter = router({
     delete: adminProcedure
       .input(z.object({ id: z.number(), clientId: z.number() }))
       .mutation(({ input }) => deleteOkr(input.id, input.clientId)),
+
+    reorder: adminProcedure
+      .input(z.object({ clientId: z.number(), ids: z.array(z.number()) }))
+      .mutation(({ input }) => reorderOkrs(input.clientId, input.ids)),
   }),
 
   // ─── MILESTONES ──────────────────────────────────────────────────────────
@@ -339,6 +346,10 @@ export const appRouter = router({
     delete: adminProcedure
       .input(z.object({ id: z.number(), clientId: z.number() }))
       .mutation(({ input }) => deleteMilestone(input.id, input.clientId)),
+
+    reorder: adminProcedure
+      .input(z.object({ clientId: z.number(), ids: z.array(z.number()) }))
+      .mutation(({ input }) => reorderMilestones(input.clientId, input.ids)),
   }),
 
   // ─── LEARNINGS ───────────────────────────────────────────────────────────
@@ -386,6 +397,10 @@ export const appRouter = router({
     delete: adminProcedure
       .input(z.object({ id: z.number(), clientId: z.number() }))
       .mutation(({ input }) => deleteLearning(input.id, input.clientId)),
+
+    reorder: adminProcedure
+      .input(z.object({ clientId: z.number(), ids: z.array(z.number()) }))
+      .mutation(({ input }) => reorderLearnings(input.clientId, input.ids)),
   }),
 
   // ─── SCOPE ───────────────────────────────────────────────────────────────

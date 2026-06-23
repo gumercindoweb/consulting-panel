@@ -199,7 +199,15 @@ export async function deletePhase(id: number): Promise<void> {
 export async function getOkrsByClient(clientId: number): Promise<Okr[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(okrs).where(eq(okrs.clientId, clientId)).orderBy(asc(okrs.createdAt));
+  return db.select().from(okrs).where(eq(okrs.clientId, clientId)).orderBy(asc(okrs.sortOrder), asc(okrs.createdAt));
+}
+
+export async function reorderOkrs(clientId: number, ids: number[]): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await Promise.all(ids.map((id, index) =>
+    db.update(okrs).set({ sortOrder: index }).where(and(eq(okrs.id, id), eq(okrs.clientId, clientId)))
+  ));
 }
 
 export async function createOkr(data: InsertOkr): Promise<number> {
@@ -229,7 +237,15 @@ export async function getMilestonesByClient(clientId: number): Promise<Milestone
     .select()
     .from(milestones)
     .where(eq(milestones.clientId, clientId))
-    .orderBy(asc(milestones.date));
+    .orderBy(asc(milestones.sortOrder), asc(milestones.date));
+}
+
+export async function reorderMilestones(clientId: number, ids: number[]): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await Promise.all(ids.map((id, index) =>
+    db.update(milestones).set({ sortOrder: index }).where(and(eq(milestones.id, id), eq(milestones.clientId, clientId)))
+  ));
 }
 
 export async function createMilestone(data: InsertMilestone): Promise<number> {
@@ -259,7 +275,15 @@ export async function getLearningsByClient(clientId: number): Promise<Learning[]
     .select()
     .from(learnings)
     .where(eq(learnings.clientId, clientId))
-    .orderBy(asc(learnings.date));
+    .orderBy(asc(learnings.sortOrder), asc(learnings.date));
+}
+
+export async function reorderLearnings(clientId: number, ids: number[]): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await Promise.all(ids.map((id, index) =>
+    db.update(learnings).set({ sortOrder: index }).where(and(eq(learnings.id, id), eq(learnings.clientId, clientId)))
+  ));
 }
 
 export async function createLearning(data: InsertLearning): Promise<number> {

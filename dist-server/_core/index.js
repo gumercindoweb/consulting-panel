@@ -97,6 +97,7 @@ var okrs = pgTable("okrs", {
   status: okrStatusEnum("status").default("on_track").notNull(),
   period: varchar("period", { length: 64 }),
   notes: text("notes"),
+  sortOrder: integer("sortOrder"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
@@ -110,6 +111,7 @@ var milestones = pgTable("milestones", {
   status: milestoneStatusEnum("status").default("pending").notNull(),
   category: milestoneCategoryEnum("category").default("other").notNull(),
   impact: impactEnum("impact").default("medium").notNull(),
+  sortOrder: integer("sortOrder"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
@@ -123,6 +125,7 @@ var learnings = pgTable("learnings", {
   resolution: text("resolution"),
   date: timestamp("date").notNull(),
   isResolved: boolean("isResolved").default(false).notNull(),
+  sortOrder: integer("sortOrder"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
@@ -319,7 +322,14 @@ async function deletePhase(id) {
 async function getOkrsByClient(clientId) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(okrs).where(eq(okrs.clientId, clientId)).orderBy(asc(okrs.createdAt));
+  return db.select().from(okrs).where(eq(okrs.clientId, clientId)).orderBy(asc(okrs.sortOrder), asc(okrs.createdAt));
+}
+async function reorderOkrs(clientId, ids) {
+  const db = await getDb();
+  if (!db) return;
+  await Promise.all(ids.map(
+    (id, index) => db.update(okrs).set({ sortOrder: index }).where(and(eq(okrs.id, id), eq(okrs.clientId, clientId)))
+  ));
 }
 async function createOkr(data) {
   const db = await getDb();
@@ -340,7 +350,14 @@ async function deleteOkr(id, clientId) {
 async function getMilestonesByClient(clientId) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(milestones).where(eq(milestones.clientId, clientId)).orderBy(asc(milestones.date));
+  return db.select().from(milestones).where(eq(milestones.clientId, clientId)).orderBy(asc(milestones.sortOrder), asc(milestones.date));
+}
+async function reorderMilestones(clientId, ids) {
+  const db = await getDb();
+  if (!db) return;
+  await Promise.all(ids.map(
+    (id, index) => db.update(milestones).set({ sortOrder: index }).where(and(eq(milestones.id, id), eq(milestones.clientId, clientId)))
+  ));
 }
 async function createMilestone(data) {
   const db = await getDb();
@@ -361,7 +378,14 @@ async function deleteMilestone(id, clientId) {
 async function getLearningsByClient(clientId) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(learnings).where(eq(learnings.clientId, clientId)).orderBy(asc(learnings.date));
+  return db.select().from(learnings).where(eq(learnings.clientId, clientId)).orderBy(asc(learnings.sortOrder), asc(learnings.date));
+}
+async function reorderLearnings(clientId, ids) {
+  const db = await getDb();
+  if (!db) return;
+  await Promise.all(ids.map(
+    (id, index) => db.update(learnings).set({ sortOrder: index }).where(and(eq(learnings.id, id), eq(learnings.clientId, clientId)))
+  ));
 }
 async function createLearning(data) {
   const db = await getDb();
@@ -1163,7 +1187,8 @@ var appRouter = router({
       const { id, clientId, ...data } = input;
       return updateOkr(id, clientId, data);
     }),
-    delete: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number() })).mutation(({ input }) => deleteOkr(input.id, input.clientId))
+    delete: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number() })).mutation(({ input }) => deleteOkr(input.id, input.clientId)),
+    reorder: adminProcedure2.input(z2.object({ clientId: z2.number(), ids: z2.array(z2.number()) })).mutation(({ input }) => reorderOkrs(input.clientId, input.ids))
   }),
   // ─── MILESTONES ──────────────────────────────────────────────────────────
   milestones: router({
@@ -1198,7 +1223,8 @@ var appRouter = router({
       const { id, clientId, ...data } = input;
       return updateMilestone(id, clientId, data);
     }),
-    delete: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number() })).mutation(({ input }) => deleteMilestone(input.id, input.clientId))
+    delete: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number() })).mutation(({ input }) => deleteMilestone(input.id, input.clientId)),
+    reorder: adminProcedure2.input(z2.object({ clientId: z2.number(), ids: z2.array(z2.number()) })).mutation(({ input }) => reorderMilestones(input.clientId, input.ids))
   }),
   // ─── LEARNINGS ───────────────────────────────────────────────────────────
   learnings: router({
@@ -1233,7 +1259,8 @@ var appRouter = router({
       const { id, clientId, ...data } = input;
       return updateLearning(id, clientId, data);
     }),
-    delete: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number() })).mutation(({ input }) => deleteLearning(input.id, input.clientId))
+    delete: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number() })).mutation(({ input }) => deleteLearning(input.id, input.clientId)),
+    reorder: adminProcedure2.input(z2.object({ clientId: z2.number(), ids: z2.array(z2.number()) })).mutation(({ input }) => reorderLearnings(input.clientId, input.ids))
   }),
   // ─── SCOPE ───────────────────────────────────────────────────────────────
   scope: router({

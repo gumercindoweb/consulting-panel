@@ -2,8 +2,23 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
-import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 type Tab = "phases" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates";
 
@@ -312,9 +327,27 @@ const M_IMPACT: Record<string, { label: string; color: string }> = {
 
 const INP = { background: "rgba(154,230,180,0.05)", border: "1px solid rgba(154,230,180,0.15)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", fontSize: "13px", padding: "7px 10px", width: "100%", outline: "none" };
 
+// ─── SORTABLE CARD WRAPPER ────────────────────────────────────────────────────
+function SortableItem({ id, children }: { id: number; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  return (
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, position: "relative" }}>
+      <div {...attributes} {...listeners} style={{ position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", cursor: "grab", color: "rgba(154,230,180,0.3)", zIndex: 1, padding: "4px", touchAction: "none" }}>
+        <GripVertical size={14} />
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function MilestonesTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
-  const { data: milestones = [] } = trpc.milestones.list.useQuery({ clientId });
+  const { data: serverMilestones = [] } = trpc.milestones.list.useQuery({ clientId });
+  const [items, setItems] = useState(serverMilestones);
+
+  // Sync local state when server data changes (after create/delete)
+  useEffect(() => { setItems(serverMilestones); }, [serverMilestones]);
+
   const createMilestone = trpc.milestones.create.useMutation({
     onSuccess: () => { utils.milestones.list.invalidate({ clientId }); toast.success("Hito creado."); setShowForm(false); setForm(EMPTY_M); },
     onError: (e) => toast.error(e.message),
@@ -323,24 +356,29 @@ function MilestonesTab({ clientId }: { clientId: number }) {
     onSuccess: () => { utils.milestones.list.invalidate({ clientId }); toast.success("Hito eliminado."); },
     onError: (e) => toast.error(e.message),
   });
+  const reorder = trpc.milestones.reorder.useMutation({ onError: (e) => toast.error(e.message) });
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = items.findIndex(m => m.id === active.id);
+    const newIndex = items.findIndex(m => m.id === over.id);
+    const newItems = arrayMove(items, oldIndex, newIndex);
+    setItems(newItems);
+    reorder.mutate({ clientId, ids: newItems.map(m => m.id) });
+  }
 
   const EMPTY_M = { title: "", description: "", date: new Date().toISOString().split("T")[0], status: "completed" as const, category: "strategy" as const, impact: "medium" as const };
   const [form, setForm] = useState(EMPTY_M);
   const [showForm, setShowForm] = useState(false);
 
-  // Agrupar por mes igual que el panel del cliente
-  const grouped = milestones.reduce<Record<string, typeof milestones>>((acc, m) => {
-    const key = new Date(m.date).toLocaleDateString("es-AR", { month: "long", year: "numeric" }).toUpperCase();
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(m);
-    return acc;
-  }, {});
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Botón agregar */}
       {!showForm ? (
-        <button onClick={() => setShowForm(true)} className="flex items-center gap-2 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
+        <button onClick={() => setShowForm(true)} style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", fontFamily: "var(--gj-font)" }}>
           <Plus size={13} /> AGREGAR HITO
         </button>
       ) : (
@@ -362,66 +400,54 @@ function MilestonesTab({ clientId }: { clientId: number }) {
             </select>
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
-            <button onClick={() => { if (form.title) createMilestone.mutate({ clientId, ...form, date: new Date(form.date) }); }} disabled={!form.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", opacity: form.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>
-              GUARDAR
-            </button>
-            <button onClick={() => { setShowForm(false); setForm(EMPTY_M); }} style={{ background: "none", border: "1px solid rgba(154,230,180,0.2)", color: "var(--gj-muted)", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", fontFamily: "var(--gj-font)" }}>
-              CANCELAR
-            </button>
+            <button onClick={() => { if (form.title) createMilestone.mutate({ clientId, ...form, date: new Date(form.date) }); }} disabled={!form.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", opacity: form.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>GUARDAR</button>
+            <button onClick={() => { setShowForm(false); setForm(EMPTY_M); }} style={{ background: "none", border: "1px solid rgba(154,230,180,0.2)", color: "var(--gj-muted)", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", fontFamily: "var(--gj-font)" }}>CANCELAR</button>
           </div>
         </div>
       )}
 
-      {/* Lista agrupada por mes */}
-      {Object.entries(grouped).map(([period, items]) => (
-        <div key={period}>
-          {/* Encabezado de mes */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-            <span style={{ fontSize: "10px", letterSpacing: "3px", padding: "3px 10px", borderRadius: "4px", background: "rgba(154,230,180,0.08)", border: "1px solid rgba(154,230,180,0.2)", color: "var(--gj-mint)", fontFamily: "var(--gj-font)" }}>
-              {period}
-            </span>
-            <div style={{ flex: 1, height: "1px", background: "rgba(154,230,180,0.1)" }} />
-          </div>
-
+      {/* Lista sortable plana (admin ve todo junto, cliente ve agrupado por mes) */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={items.map(m => m.id)} strategy={verticalListSortingStrategy}>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {items.map((m) => {
               const cat = M_CAT[m.category] || M_CAT.other;
               const status = M_STATUS[m.status];
               const impact = M_IMPACT[m.impact];
               return (
-                <div key={m.id} style={{ background: "rgba(154,230,180,0.03)", border: "1px solid rgba(154,230,180,0.08)", borderLeft: `3px solid ${status.color}`, borderRadius: "6px", padding: "16px 18px", display: "flex", gap: "14px", alignItems: "flex-start" }}>
-                  {/* Ícono categoría */}
-                  <div style={{ width: 34, height: 34, borderRadius: "6px", background: `${cat.color}18`, border: `1px solid ${cat.color}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
-                    <span style={{ fontSize: "11px", color: cat.color, fontFamily: "var(--gj-font)", letterSpacing: "0px" }}>{m.category.slice(0,2).toUpperCase()}</span>
-                  </div>
-                  {/* Contenido */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "4px" }}>
-                      <p style={{ fontSize: "14px", fontWeight: 500, color: "var(--gj-cream)", fontFamily: "var(--gj-font)", lineHeight: 1.3 }}>{m.title}</p>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-                        <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${impact.color}12`, border: `1px solid ${impact.color}30`, color: impact.color, fontFamily: "var(--gj-font)" }}>{impact.label}</span>
-                        <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${status.color}12`, border: `1px solid ${status.color}30`, color: status.color, fontFamily: "var(--gj-font)" }}>{status.label}</span>
-                        <button onClick={() => { if (confirm("¿Eliminar hito?")) deleteMilestone.mutate({ id: m.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px", lineHeight: 1 }}>
-                          <Trash2 size={13} />
-                        </button>
+                <SortableItem key={m.id} id={m.id}>
+                  <div style={{ background: "rgba(154,230,180,0.03)", border: "1px solid rgba(154,230,180,0.08)", borderLeft: `3px solid ${status.color}`, borderRadius: "6px", padding: "14px 16px 14px 32px", display: "flex", gap: "14px", alignItems: "flex-start" }}>
+                    <div style={{ width: 34, height: 34, borderRadius: "6px", background: `${cat.color}18`, border: `1px solid ${cat.color}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                      <span style={{ fontSize: "11px", color: cat.color, fontFamily: "var(--gj-font)" }}>{m.category.slice(0,2).toUpperCase()}</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "4px" }}>
+                        <p style={{ fontSize: "14px", fontWeight: 500, color: "var(--gj-cream)", fontFamily: "var(--gj-font)", lineHeight: 1.3 }}>{m.title}</p>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                          <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${impact.color}12`, border: `1px solid ${impact.color}30`, color: impact.color, fontFamily: "var(--gj-font)" }}>{impact.label}</span>
+                          <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${status.color}12`, border: `1px solid ${status.color}30`, color: status.color, fontFamily: "var(--gj-font)" }}>{status.label}</span>
+                          <button onClick={() => { if (confirm("¿Eliminar hito?")) deleteMilestone.mutate({ id: m.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}>
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+                      {m.description && <p style={{ fontSize: "12px", color: "var(--gj-muted)", lineHeight: 1.5, marginBottom: "6px" }}>{m.description}</p>}
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <span style={{ fontSize: "9px", letterSpacing: "2px", color: cat.color, fontFamily: "var(--gj-font)" }}>{cat.label}</span>
+                        <span style={{ fontSize: "11px", color: "rgba(143,169,163,0.5)", fontFamily: "var(--gj-font)" }}>
+                          {new Date(m.date).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
+                        </span>
                       </div>
                     </div>
-                    {m.description && <p style={{ fontSize: "12px", color: "var(--gj-muted)", lineHeight: 1.5, marginBottom: "6px" }}>{m.description}</p>}
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <span style={{ fontSize: "9px", letterSpacing: "2px", color: cat.color, fontFamily: "var(--gj-font)" }}>{cat.label}</span>
-                      <span style={{ fontSize: "11px", color: "rgba(143,169,163,0.6)", fontFamily: "var(--gj-font)" }}>
-                        {new Date(m.date).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
-                      </span>
-                    </div>
                   </div>
-                </div>
+                </SortableItem>
               );
             })}
           </div>
-        </div>
-      ))}
+        </SortableContext>
+      </DndContext>
 
-      {milestones.length === 0 && !showForm && (
+      {items.length === 0 && !showForm && (
         <p style={{ fontSize: "13px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>No hay hitos registrados todavía.</p>
       )}
     </div>
@@ -438,7 +464,10 @@ const OKR_STATUS: Record<string, { label: string; color: string }> = {
 
 function OKRsTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
-  const { data: okrs = [] } = trpc.okrs.list.useQuery({ clientId });
+  const { data: serverOkrs = [] } = trpc.okrs.list.useQuery({ clientId });
+  const [items, setItems] = useState(serverOkrs);
+  useEffect(() => { setItems(serverOkrs); }, [serverOkrs]);
+
   const createOkr = trpc.okrs.create.useMutation({
     onSuccess: () => { utils.okrs.list.invalidate({ clientId }); toast.success("OKR creado."); setShowForm(false); setForm(EMPTY_OKR); },
     onError: (e) => toast.error(e.message),
@@ -447,16 +476,27 @@ function OKRsTab({ clientId }: { clientId: number }) {
     onSuccess: () => { utils.okrs.list.invalidate({ clientId }); toast.success("OKR eliminado."); },
     onError: (e) => toast.error(e.message),
   });
-  const updateOkr = trpc.okrs.update.useMutation({
-    onError: (e) => toast.error(e.message),
-  });
+  const updateOkr = trpc.okrs.update.useMutation({ onError: (e) => toast.error(e.message) });
+  const reorder = trpc.okrs.reorder.useMutation({ onError: (e) => toast.error(e.message) });
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = items.findIndex(o => o.id === active.id);
+    const newIndex = items.findIndex(o => o.id === over.id);
+    const newItems = arrayMove(items, oldIndex, newIndex);
+    setItems(newItems);
+    reorder.mutate({ clientId, ids: newItems.map(o => o.id) });
+  }
 
   const EMPTY_OKR = { objective: "", keyResult: "", targetValue: "", currentValue: "", unit: "", progressPct: 0, status: "on_track" as const, period: "", notes: "" };
   const [form, setForm] = useState(EMPTY_OKR);
   const [showForm, setShowForm] = useState(false);
 
-  // Agrupar por objetivo
-  const grouped = okrs.reduce<Record<string, typeof okrs>>((acc, okr) => {
+  // Agrupar por objetivo (preservando el orden de items)
+  const grouped = items.reduce<Record<string, typeof items>>((acc, okr) => {
     if (!acc[okr.objective]) acc[okr.objective] = [];
     acc[okr.objective].push(okr);
     return acc;
@@ -545,7 +585,67 @@ function OKRsTab({ clientId }: { clientId: number }) {
         );
       })}
 
-      {okrs.length === 0 && !showForm && (
+      {/* Wrap entire grouped view in DnD (reorders across objetivos también) */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={items.map(o => o.id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-8">
+            {Object.entries(grouped).map(([objective, keyResults]) => {
+              const avgProgress = Math.round(keyResults.reduce((s, kr) => s + kr.progressPct, 0) / keyResults.length);
+              return (
+                <div key={objective} style={{ background: "rgba(154,230,180,0.03)", border: "1px solid rgba(154,230,180,0.1)", borderRadius: "8px", padding: "22px" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", marginBottom: "16px" }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: "9px", letterSpacing: "4px", color: "var(--gj-mint)", fontFamily: "var(--gj-font)", marginBottom: "6px" }}>OBJETIVO</p>
+                      <p style={{ fontSize: "16px", fontWeight: 600, color: "var(--gj-cream)", fontFamily: "var(--gj-font)", lineHeight: 1.3 }}>{objective}</p>
+                      {keyResults[0]?.period && <p style={{ fontSize: "10px", letterSpacing: "2px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", marginTop: "4px" }}>{keyResults[0].period}</p>}
+                    </div>
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                      <p style={{ fontSize: "28px", fontWeight: 700, color: "var(--gj-mint)", fontFamily: "var(--gj-font)", lineHeight: 1 }}>{avgProgress}%</p>
+                      <p style={{ fontSize: "9px", letterSpacing: "2px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>PROGRESO</p>
+                    </div>
+                  </div>
+                  <div style={{ height: "4px", background: "rgba(154,230,180,0.1)", borderRadius: "2px", marginBottom: "18px", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${avgProgress}%`, background: "var(--gj-green)", borderRadius: "2px" }} />
+                  </div>
+                  <p style={{ fontSize: "9px", letterSpacing: "4px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", marginBottom: "12px" }}>RESULTADOS CLAVE</p>
+                  {keyResults.map((kr) => {
+                    const st = OKR_STATUS[kr.status];
+                    return (
+                      <SortableItem key={kr.id} id={kr.id}>
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", padding: "12px 12px 12px 32px", borderTop: "1px solid rgba(154,230,180,0.07)" }}>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: "13px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", lineHeight: 1.4, marginBottom: "6px" }}>{kr.keyResult}</p>
+                            {(kr.targetValue || kr.currentValue) && (
+                              <div style={{ display: "flex", gap: "12px" }}>
+                                {kr.targetValue && <span style={{ fontSize: "11px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>Meta: <strong style={{ color: "var(--gj-cream)" }}>{kr.targetValue}{kr.unit ? ` ${kr.unit}` : ""}</strong></span>}
+                                {kr.currentValue && <span style={{ fontSize: "11px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>Actual: <strong style={{ color: "var(--gj-mint)" }}>{kr.currentValue}{kr.unit ? ` ${kr.unit}` : ""}</strong></span>}
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                            <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${st.color}12`, border: `1px solid ${st.color}30`, color: st.color, fontFamily: "var(--gj-font)" }}>{st.label}</span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                              <input type="number" min="0" max="100" value={kr.progressPct}
+                                onChange={(e) => updateOkr.mutate({ id: kr.id, clientId, progressPct: parseInt(e.target.value) || 0 })}
+                                style={{ width: "48px", background: "rgba(154,230,180,0.08)", border: "1px solid rgba(154,230,180,0.2)", borderRadius: "3px", color: "var(--gj-mint)", fontFamily: "var(--gj-font)", fontSize: "12px", padding: "3px 6px", textAlign: "center" }} />
+                              <span style={{ fontSize: "11px", color: "var(--gj-muted)" }}>%</span>
+                            </div>
+                            <button onClick={() => { if (confirm("¿Eliminar OKR?")) deleteOkr.mutate({ id: kr.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}>
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      </SortableItem>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {items.length === 0 && !showForm && (
         <p style={{ fontSize: "13px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>No hay OKRs registrados todavía.</p>
       )}
     </div>
@@ -561,7 +661,23 @@ const L_TYPE: Record<string, { label: string; plural: string; color: string; bg:
 
 function LearningsTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
-  const { data: learnings = [] } = trpc.learnings.list.useQuery({ clientId });
+  const { data: serverLearnings = [] } = trpc.learnings.list.useQuery({ clientId });
+  const [items, setItems] = useState(serverLearnings);
+  useEffect(() => { setItems(serverLearnings); }, [serverLearnings]);
+
+  const reorder = trpc.learnings.reorder.useMutation({ onError: (e) => toast.error(e.message) });
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = items.findIndex(l => l.id === active.id);
+    const newIndex = items.findIndex(l => l.id === over.id);
+    const newItems = arrayMove(items, oldIndex, newIndex);
+    setItems(newItems);
+    reorder.mutate({ clientId, ids: newItems.map(l => l.id) });
+  }
+
   const createLearning = trpc.learnings.create.useMutation({
     onSuccess: () => { utils.learnings.list.invalidate({ clientId }); toast.success("Registro creado."); setShowForm(false); setForm(EMPTY_L); },
     onError: (e) => toast.error(e.message),
@@ -575,9 +691,9 @@ function LearningsTab({ clientId }: { clientId: number }) {
   const [form, setForm] = useState(EMPTY_L);
   const [showForm, setShowForm] = useState(false);
 
-  const wins = learnings.filter(l => l.type === "win");
-  const learningItems = learnings.filter(l => l.type === "learning");
-  const obstacles = learnings.filter(l => l.type === "obstacle");
+  const wins = items.filter(l => l.type === "win");
+  const learningItems = items.filter(l => l.type === "learning");
+  const obstacles = items.filter(l => l.type === "obstacle");
 
   return (
     <div className="space-y-8">
@@ -608,7 +724,7 @@ function LearningsTab({ clientId }: { clientId: number }) {
       )}
 
       {/* Contador resumen */}
-      {learnings.length > 0 && (
+      {items.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
           {[{ label: "LOGROS", count: wins.length, color: "#4eba8a" }, { label: "APRENDIZAJES", count: learningItems.length, color: "#4db6e8" }, { label: "OBSTÁCULOS", count: obstacles.length, color: "#E0913F" }].map(s => (
             <div key={s.label} style={{ background: `${s.color}08`, border: `1px solid ${s.color}25`, borderRadius: "6px", padding: "16px", textAlign: "center" }}>
@@ -619,54 +735,60 @@ function LearningsTab({ clientId }: { clientId: number }) {
         </div>
       )}
 
-      {/* Grupos por tipo */}
-      {(["win", "learning", "obstacle"] as const).map((type) => {
-        const items = learnings.filter(l => l.type === type);
-        if (items.length === 0) return null;
-        const cfg = L_TYPE[type];
-        return (
-          <div key={type}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
-              <div style={{ width: 28, height: 28, borderRadius: "6px", background: cfg.bg, border: `1px solid ${cfg.color}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <span style={{ fontSize: "10px", color: cfg.color, fontFamily: "var(--gj-font)" }}>{type === "win" ? "★" : type === "obstacle" ? "!" : "○"}</span>
-              </div>
-              <span style={{ fontSize: "9px", letterSpacing: "4px", color: cfg.color, fontFamily: "var(--gj-font)" }}>{cfg.plural}</span>
-              <div style={{ flex: 1, height: "1px", background: `${cfg.color}20` }} />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {items.map(item => (
-                <div key={item.id} style={{ background: cfg.bg, border: "1px solid rgba(154,230,180,0.08)", borderLeft: `3px solid ${cfg.color}60`, borderRadius: "6px", padding: "16px 18px" }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "6px" }}>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: "14px", fontWeight: 500, color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}>{item.title}</p>
-                      {item.type === "obstacle" && (
-                        <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 6px", borderRadius: "3px", marginTop: "4px", display: "inline-block", background: item.isResolved ? "rgba(78,186,138,0.12)" : "rgba(224,145,63,0.12)", border: `1px solid ${item.isResolved ? "#4eba8a" : "#E0913F"}40`, color: item.isResolved ? "#4eba8a" : "#E0913F", fontFamily: "var(--gj-font)" }}>
-                          {item.isResolved ? "RESUELTO" : "ACTIVO"}
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-                      <span style={{ fontSize: "11px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>{new Date(item.date).toLocaleDateString("es-AR", { day: "numeric", month: "short" })}</span>
-                      <button onClick={() => { if (confirm("¿Eliminar?")) deleteLearning.mutate({ id: item.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}>
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
+      {/* Grupos por tipo con drag-and-drop */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={items.map(l => l.id)} strategy={verticalListSortingStrategy}>
+          {(["win", "learning", "obstacle"] as const).map((type) => {
+            const typeItems = items.filter(l => l.type === type);
+            if (typeItems.length === 0) return null;
+            const cfg = L_TYPE[type];
+            return (
+              <div key={type}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "6px", background: cfg.bg, border: `1px solid ${cfg.color}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontSize: "10px", color: cfg.color, fontFamily: "var(--gj-font)" }}>{type === "win" ? "★" : type === "obstacle" ? "!" : "○"}</span>
                   </div>
-                  <p style={{ fontSize: "12px", color: "var(--gj-muted)", lineHeight: 1.6 }}>{item.description}</p>
-                  {item.resolution && (
-                    <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid rgba(154,230,180,0.08)" }}>
-                      <p style={{ fontSize: "9px", letterSpacing: "3px", color: "#4eba8a", fontFamily: "var(--gj-font)", marginBottom: "4px" }}>RESOLUCIÓN</p>
-                      <p style={{ fontSize: "12px", color: "rgba(154,230,180,0.7)" }}>{item.resolution}</p>
-                    </div>
-                  )}
+                  <span style={{ fontSize: "9px", letterSpacing: "4px", color: cfg.color, fontFamily: "var(--gj-font)" }}>{cfg.plural}</span>
+                  <div style={{ flex: 1, height: "1px", background: `${cfg.color}20` }} />
                 </div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {typeItems.map(item => (
+                    <SortableItem key={item.id} id={item.id}>
+                      <div style={{ background: cfg.bg, border: "1px solid rgba(154,230,180,0.08)", borderLeft: `3px solid ${cfg.color}60`, borderRadius: "6px", padding: "14px 16px 14px 32px" }}>
+                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", marginBottom: "6px" }}>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: "14px", fontWeight: 500, color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}>{item.title}</p>
+                            {item.type === "obstacle" && (
+                              <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 6px", borderRadius: "3px", marginTop: "4px", display: "inline-block", background: item.isResolved ? "rgba(78,186,138,0.12)" : "rgba(224,145,63,0.12)", border: `1px solid ${item.isResolved ? "#4eba8a" : "#E0913F"}40`, color: item.isResolved ? "#4eba8a" : "#E0913F", fontFamily: "var(--gj-font)" }}>
+                                {item.isResolved ? "RESUELTO" : "ACTIVO"}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                            <span style={{ fontSize: "11px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>{new Date(item.date).toLocaleDateString("es-AR", { day: "numeric", month: "short" })}</span>
+                            <button onClick={() => { if (confirm("¿Eliminar?")) deleteLearning.mutate({ id: item.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}>
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                        <p style={{ fontSize: "12px", color: "var(--gj-muted)", lineHeight: 1.6 }}>{item.description}</p>
+                        {item.resolution && (
+                          <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid rgba(154,230,180,0.08)" }}>
+                            <p style={{ fontSize: "9px", letterSpacing: "3px", color: "#4eba8a", fontFamily: "var(--gj-font)", marginBottom: "4px" }}>RESOLUCIÓN</p>
+                            <p style={{ fontSize: "12px", color: "rgba(154,230,180,0.7)" }}>{item.resolution}</p>
+                          </div>
+                        )}
+                      </div>
+                    </SortableItem>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </SortableContext>
+      </DndContext>
 
-      {learnings.length === 0 && !showForm && (
+      {items.length === 0 && !showForm && (
         <p style={{ fontSize: "13px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>No hay registros todavía.</p>
       )}
     </div>
