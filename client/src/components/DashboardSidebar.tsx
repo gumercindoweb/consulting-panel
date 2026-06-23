@@ -34,6 +34,11 @@ export default function DashboardSidebar({ client, activeSection, onSectionChang
   const primaryColor = branding?.primaryColor || "var(--rojo)";
   const accentColor = branding?.accentColor || "var(--ambar)";
 
+  const visibleSections = (client as any).visibleSections as string[] | null | undefined;
+  const filteredNav = visibleSections?.length
+    ? NAV_ITEMS.filter(item => visibleSections.includes(item.id))
+    : NAV_ITEMS;
+
   return (
     <aside
       className="w-72 flex-shrink-0 flex flex-col"
@@ -81,7 +86,7 @@ export default function DashboardSidebar({ client, activeSection, onSectionChang
           NAVEGACIÓN
         </p>
         <ul className="space-y-1">
-          {NAV_ITEMS.map((item) => {
+          {filteredNav.map((item) => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
             return (

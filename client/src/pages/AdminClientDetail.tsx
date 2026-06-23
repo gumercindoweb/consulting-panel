@@ -1113,7 +1113,33 @@ export default function AdminClientDetail() {
   const clientId = parseInt(params.clientId || "0");
   const [activeTab, setActiveTab] = useState<Tab>("updates");
 
+  const utils = trpc.useUtils();
   const { data: client } = trpc.clients.get.useQuery({ id: clientId }, { enabled: !!clientId && isAuthenticated });
+  const updateClientMutation = trpc.clients.update.useMutation({
+    onSuccess: () => utils.clients.get.invalidate({ id: clientId }),
+  });
+
+  const PORTAL_SECTIONS = [
+    { id: "overview",   label: "Resumen ejecutivo" },
+    { id: "updates",    label: "Actualizaciones" },
+    { id: "phases",     label: "Etapas del proyecto" },
+    { id: "milestones", label: "Hitos e implementaciones" },
+    { id: "okrs",       label: "OKRs y métricas" },
+    { id: "learnings",  label: "Aprendizajes y obstáculos" },
+    { id: "scope",      label: "Alcance del proyecto" },
+    { id: "resources",  label: "Recursos del equipo" },
+  ];
+
+  function toggleSection(sectionId: string) {
+    if (!client) return;
+    const current: string[] = (client as any).visibleSections ?? PORTAL_SECTIONS.map(s => s.id);
+    const next = current.includes(sectionId)
+      ? current.filter(s => s !== sectionId)
+      : [...current, sectionId];
+    // Always keep at least "overview" visible
+    const safe = next.includes("overview") ? next : ["overview", ...next];
+    updateClientMutation.mutate({ id: clientId, visibleSections: safe });
+  }
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate("/login");
@@ -1173,6 +1199,41 @@ export default function AdminClientDetail() {
               {client.name}
             </p>
           </div>
+        </div>
+
+        {/* Portal visibility toggles */}
+        <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(154,230,180,0.08)", borderBottom: "1px solid rgba(154,230,180,0.08)" }}>
+          <p style={{ fontSize: "9px", letterSpacing: "3px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", marginBottom: "10px" }}>
+            PORTAL DEL CLIENTE
+          </p>
+          {PORTAL_SECTIONS.map((sec) => {
+            const visible: string[] = (client as any).visibleSections ?? PORTAL_SECTIONS.map(s => s.id);
+            const isOn = visible.includes(sec.id);
+            const isOverview = sec.id === "overview";
+            return (
+              <div key={sec.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                <span style={{ fontSize: "10px", color: isOn ? "var(--gj-cream)" : "var(--gj-muted)", fontFamily: "var(--gj-font)", transition: "color 0.2s" }}>
+                  {sec.label}
+                </span>
+                <button
+                  title={isOverview ? "El resumen siempre está visible" : isOn ? "Ocultar al cliente" : "Mostrar al cliente"}
+                  disabled={isOverview}
+                  onClick={() => toggleSection(sec.id)}
+                  style={{
+                    width: 32, height: 18, borderRadius: 9, border: "none", cursor: isOverview ? "default" : "pointer",
+                    background: isOn ? "var(--gj-green)" : "rgba(154,230,180,0.15)",
+                    position: "relative", transition: "background 0.2s", flexShrink: 0,
+                    opacity: isOverview ? 0.4 : 1,
+                  }}
+                >
+                  <span style={{
+                    position: "absolute", top: 2, left: isOn ? 16 : 2, width: 14, height: 14,
+                    borderRadius: "50%", background: "var(--gj-cream)", transition: "left 0.2s",
+                  }} />
+                </button>
+              </div>
+            );
+          })}
         </div>
 
         {/* Nav */}

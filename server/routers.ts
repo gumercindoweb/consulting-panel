@@ -175,6 +175,7 @@ export const appRouter = router({
           branding: z.any().optional(),
           consultorName: z.string().optional(),
           isActive: z.boolean().optional(),
+          visibleSections: z.array(z.string()).optional(),
         })
       )
       .mutation(({ input }) => {

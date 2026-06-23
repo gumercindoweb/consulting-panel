@@ -59,6 +59,7 @@ export const clients = pgTable("clients", {
   consultorName: varchar("consultorName", { length: 255 }),
   startDate: timestamp("startDate"),
   isActive: boolean("isActive").default(true).notNull(),
+  visibleSections: json("visibleSections").$type<string[]>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });

@@ -130,6 +130,7 @@ var clients = pgTable("clients", {
   consultorName: varchar("consultorName", { length: 255 }),
   startDate: timestamp("startDate"),
   isActive: boolean("isActive").default(true).notNull(),
+  visibleSections: json("visibleSections").$type(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
@@ -1031,7 +1032,8 @@ var appRouter = router({
         logoUrl: z2.string().optional(),
         branding: z2.any().optional(),
         consultorName: z2.string().optional(),
-        isActive: z2.boolean().optional()
+        isActive: z2.boolean().optional(),
+        visibleSections: z2.array(z2.string()).optional()
       })
     ).mutation(({ input }) => {
       const { id, ...data } = input;

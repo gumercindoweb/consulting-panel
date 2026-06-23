@@ -50,6 +50,15 @@ export default function ClientDashboard() {
     }
   }, [loading, isAuthenticated, user, navigate, params.clientId]);
 
+  // If active section gets hidden, reset to overview
+  useEffect(() => {
+    if (!activeClient) return;
+    const visibleSections = (activeClient as any).visibleSections as string[] | null | undefined;
+    if (visibleSections?.length && !visibleSections.includes(activeSection)) {
+      setActiveSection("overview");
+    }
+  }, [activeClient, activeSection]);
+
   if (loading || clientsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--noir)" }}>
