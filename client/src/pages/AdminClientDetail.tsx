@@ -1314,6 +1314,10 @@ export default function AdminClientDetail() {
   const activeTabDef = TABS.find((t) => t.id === activeTab)!;
   const branding = (client as any).branding as any;
 
+  const [brandLogoUrl, setBrandLogoUrl] = useState<string>((client as any).logoUrl || "");
+  const [brandPrimary, setBrandPrimary] = useState<string>(branding?.primaryColor || "#3B6EA5");
+  const [brandAccent, setBrandAccent] = useState<string>(branding?.accentColor || "#7FB2D9");
+
   return (
     <div className="min-h-screen flex" style={{ background: "var(--gj-petrol-ink)" }}>
       {/* ── SIDEBAR ────────────────────────────────────────── */}
@@ -1391,6 +1395,52 @@ export default function AdminClientDetail() {
               </div>
             );
           })}
+        </div>
+
+        {/* IDENTIDAD DE MARCA */}
+        <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(154,230,180,0.08)" }}>
+          <p style={{ fontSize: "9px", letterSpacing: "3px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", marginBottom: "10px" }}>
+            IDENTIDAD DE MARCA
+          </p>
+          <div style={{ marginBottom: 10 }}>
+            <p style={{ fontSize: "9px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", marginBottom: 4, letterSpacing: "2px" }}>URL DEL LOGO</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {brandLogoUrl && (
+                <img src={brandLogoUrl} alt="preview" style={{ width: 28, height: 28, objectFit: "contain", borderRadius: 4, background: "rgba(255,255,255,0.08)" }} />
+              )}
+              <input
+                type="text" value={brandLogoUrl} onChange={e => setBrandLogoUrl(e.target.value)}
+                placeholder="https://..."
+                style={{ flex: 1, fontSize: "10px", padding: "4px 8px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 4, color: "var(--gj-cream)", fontFamily: "var(--gj-font)", outline: "none" }}
+              />
+            </div>
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <p style={{ fontSize: "9px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", marginBottom: 4, letterSpacing: "2px" }}>COLOR PRIMARIO</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <input type="color" value={brandPrimary} onChange={e => setBrandPrimary(e.target.value)}
+                style={{ width: 28, height: 28, border: "none", borderRadius: 4, cursor: "pointer", padding: 0 }} />
+              <span style={{ fontSize: "10px", color: "var(--gj-cream)", fontFamily: "monospace" }}>{brandPrimary}</span>
+            </div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <p style={{ fontSize: "9px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", marginBottom: 4, letterSpacing: "2px" }}>COLOR ACENTO</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <input type="color" value={brandAccent} onChange={e => setBrandAccent(e.target.value)}
+                style={{ width: 28, height: 28, border: "none", borderRadius: 4, cursor: "pointer", padding: 0 }} />
+              <span style={{ fontSize: "10px", color: "var(--gj-cream)", fontFamily: "monospace" }}>{brandAccent}</span>
+            </div>
+          </div>
+          <button
+            onClick={() => updateClientMutation.mutate({
+              id: clientId,
+              logoUrl: brandLogoUrl || undefined,
+              branding: { primaryColor: brandPrimary, accentColor: brandAccent, backgroundColor: "#111111", textColor: "#FFFFFF", fontDisplay: "Poppins", fontBody: "Poppins" },
+            })}
+            style={{ width: "100%", padding: "6px", fontSize: "9px", letterSpacing: "3px", fontFamily: "var(--gj-font)", background: "var(--gj-green)", color: "var(--gj-petrol-ink)", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: 600 }}
+          >
+            GUARDAR MARCA
+          </button>
         </div>
 
         {/* Nav */}
