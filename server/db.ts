@@ -33,6 +33,9 @@ import {
   resources,
   scopeItems,
   users,
+  digitalAssets,
+  DigitalAsset,
+  InsertDigitalAsset,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -139,8 +142,8 @@ export async function getClientBySlug(slug: string): Promise<Client | undefined>
 export async function createClient(data: InsertClient): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(clients).values(data);
-  return (result[0] as any).insertId;
+  const result = await db.insert(clients).values(data).returning();
+  return result[0]?.id || 0;
 }
 
 export async function updateClient(id: number, data: Partial<InsertClient>): Promise<void> {
@@ -179,8 +182,8 @@ export async function getPhasesByClient(clientId: number): Promise<ProjectPhase[
 export async function createPhase(data: InsertProjectPhase): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(projectPhases).values(data);
-  return (result[0] as any).insertId;
+  const result = await db.insert(projectPhases).values(data).returning();
+  return result[0]?.id || 0;
 }
 
 export async function updatePhase(id: number, data: Partial<InsertProjectPhase>): Promise<void> {
@@ -333,8 +336,8 @@ export async function getScopeByClient(clientId: number): Promise<ScopeItem[]> {
 export async function createScopeItem(data: InsertScopeItem): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(scopeItems).values(data);
-  return (result[0] as any).insertId;
+  const result = await db.insert(scopeItems).values(data).returning();
+  return result[0]?.id || 0;
 }
 
 export async function updateScopeItem(id: number, clientId: number, data: Partial<InsertScopeItem>): Promise<void> {
@@ -363,8 +366,8 @@ export async function getResourcesByClient(clientId: number): Promise<Resource[]
 export async function createResource(data: InsertResource): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(resources).values(data);
-  return (result[0] as any).insertId;
+  const result = await db.insert(resources).values(data).returning();
+  return result[0]?.id || 0;
 }
 
 export async function updateResource(id: number, clientId: number, data: Partial<InsertResource>): Promise<void> {
@@ -377,6 +380,36 @@ export async function deleteResource(id: number, clientId: number): Promise<void
   const db = await getDb();
   if (!db) return;
   await db.delete(resources).where(and(eq(resources.id, id), eq(resources.clientId, clientId)));
+}
+
+// ─── DIGITAL ASSETS ───────────────────────────────────────────────────────────
+export async function getDigitalAssetsByClient(clientId: number): Promise<DigitalAsset[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(digitalAssets)
+    .where(eq(digitalAssets.clientId, clientId))
+    .orderBy(asc(digitalAssets.order));
+}
+
+export async function createDigitalAsset(data: InsertDigitalAsset): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(digitalAssets).values(data).returning();
+  return result[0]?.id || 0;
+}
+
+export async function updateDigitalAsset(id: number, clientId: number, data: Partial<InsertDigitalAsset>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(digitalAssets).set(data).where(and(eq(digitalAssets.id, id), eq(digitalAssets.clientId, clientId)));
+}
+
+export async function deleteDigitalAsset(id: number, clientId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(digitalAssets).where(and(eq(digitalAssets.id, id), eq(digitalAssets.clientId, clientId)));
 }
 
 // ─── METRICS ──────────────────────────────────────────────────────────────────
@@ -393,8 +426,8 @@ export async function getMetricsByClient(clientId: number): Promise<Metric[]> {
 export async function createMetric(data: InsertMetric): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(metrics).values(data);
-  return (result[0] as any).insertId;
+  const result = await db.insert(metrics).values(data).returning();
+  return result[0]?.id || 0;
 }
 
 export async function updateMetric(id: number, clientId: number, data: Partial<InsertMetric>): Promise<void> {

@@ -18,6 +18,7 @@ export const milestoneCategoryEnum = pgEnum("milestone_category", ["strategy", "
 export const impactEnum = pgEnum("impact", ["high", "medium", "low"]);
 export const learningTypeEnum = pgEnum("learning_type", ["learning", "obstacle", "win"]);
 export const resourceCategoryEnum = pgEnum("resource_category", ["document", "template", "script", "training", "guide", "other"]);
+export const digitalAssetCategoryEnum = pgEnum("digital_asset_category", ["webpage", "design_system", "tool", "document", "brand_asset", "other"]);
 export const trendEnum = pgEnum("trend", ["up", "down", "stable"]);
 export const updateCategoryEnum = pgEnum("update_category", ["session", "result", "delivery", "insight", "blocker", "win", "general"]);
 export const updateStatusEnum = pgEnum("update_status", ["on_track", "at_risk", "blocked", "completed"]);
@@ -192,6 +193,25 @@ export const resources = pgTable("resources", {
 
 export type Resource = typeof resources.$inferSelect;
 export type InsertResource = typeof resources.$inferInsert;
+
+// ─── DIGITAL ASSETS ───────────────────────────────────────────────────────────
+export const digitalAssets = pgTable("digital_assets", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  clientId: integer("clientId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  category: digitalAssetCategoryEnum("category").default("other").notNull(),
+  externalUrl: text("externalUrl"),
+  fileUrl: text("fileUrl"),
+  notes: text("notes"),
+  isPublic: boolean("isPublic").default(true).notNull(),
+  order: integer("order").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type DigitalAsset = typeof digitalAssets.$inferSelect;
+export type InsertDigitalAsset = typeof digitalAssets.$inferInsert;
 
 // ─── METRICS ──────────────────────────────────────────────────────────────────
 export const metrics = pgTable("metrics", {

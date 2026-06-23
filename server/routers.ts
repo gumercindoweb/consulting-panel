@@ -19,6 +19,7 @@ import {
   createResource,
   createScopeItem,
   createUpdate,
+  createDigitalAsset,
   deleteLearning,
   deleteMetric,
   deleteMilestone,
@@ -27,6 +28,7 @@ import {
   deleteResource,
   deleteScopeItem,
   deleteUpdate,
+  deleteDigitalAsset,
   getAllClients,
   getClientAccessForUser,
   getClientById,
@@ -39,6 +41,7 @@ import {
   getResourcesByClient,
   getScopeByClient,
   getUpdatesByClient,
+  getDigitalAssetsByClient,
   grantClientAccess,
   reorderLearnings,
   reorderMilestones,
@@ -52,6 +55,7 @@ import {
   updateResource,
   updateScopeItem,
   updateUpdate,
+  updateDigitalAsset,
 } from "./db";
 
 // ─── ADMIN GUARD ──────────────────────────────────────────────────────────────
@@ -510,6 +514,60 @@ export const appRouter = router({
     delete: adminProcedure
       .input(z.object({ id: z.number(), clientId: z.number() }))
       .mutation(({ input }) => deleteResource(input.id, input.clientId)),
+  }),
+
+  // ─── DIGITAL ASSETS ──────────────────────────────────────────────────────
+  digitalAssets: router({
+    list: protectedProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+        return getDigitalAssetsByClient(input.clientId);
+      }),
+
+    create: adminProcedure
+      .input(
+        z.object({
+          clientId: z.number(),
+          title: z.string(),
+          description: z.string().optional(),
+          category: z
+            .enum(["webpage", "design_system", "tool", "document", "brand_asset", "other"])
+            .default("other"),
+          externalUrl: z.string().optional(),
+          fileUrl: z.string().optional(),
+          notes: z.string().optional(),
+          isPublic: z.boolean().default(true),
+          order: z.number().default(0),
+        })
+      )
+      .mutation(({ input }) => createDigitalAsset(input)),
+
+    update: adminProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          clientId: z.number(),
+          title: z.string().optional(),
+          description: z.string().optional(),
+          category: z
+            .enum(["webpage", "design_system", "tool", "document", "brand_asset", "other"])
+            .optional(),
+          externalUrl: z.string().optional(),
+          fileUrl: z.string().optional(),
+          notes: z.string().optional(),
+          isPublic: z.boolean().optional(),
+          order: z.number().optional(),
+        })
+      )
+      .mutation(({ input }) => {
+        const { id, clientId, ...data } = input;
+        return updateDigitalAsset(id, clientId, data);
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number(), clientId: z.number() }))
+      .mutation(({ input }) => deleteDigitalAsset(input.id, input.clientId)),
   }),
 
   // ─── METRICS ─────────────────────────────────────────────────────────────

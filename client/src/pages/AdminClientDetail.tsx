@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
-import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package } from "lucide-react";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -20,7 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type Tab = "phases" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates";
+type Tab = "phases" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates" | "digital_assets";
 
 const TABS: { id: Tab; label: string; icon: React.FC<any>; title: string; subtitle: string }[] = [
   { id: "updates", label: "ACTUALIZACIONES", icon: Rss, title: "Actualizaciones del Proyecto", subtitle: "Publicá avances diarios que el cliente puede ver en su portal." },
@@ -30,6 +30,7 @@ const TABS: { id: Tab; label: string; icon: React.FC<any>; title: string; subtit
   { id: "learnings", label: "APRENDIZAJES", icon: BookOpen, title: "Aprendizajes y Obstáculos", subtitle: "Registro de aprendizajes, obstáculos y logros." },
   { id: "scope", label: "ALCANCE", icon: FileText, title: "Alcance del Proyecto", subtitle: "Qué está incluido y qué queda fuera del proyecto." },
   { id: "resources", label: "RECURSOS", icon: FolderOpen, title: "Recursos del Equipo", subtitle: "Documentos, guías y materiales compartidos." },
+  { id: "digital_assets", label: "INSUMOS", icon: Package, title: "Insumos Digitales", subtitle: "Páginas web, herramientas, documentos y activos de marca entregados." },
   { id: "metrics", label: "MÉTRICAS", icon: LayoutDashboard, title: "Métricas del Negocio", subtitle: "Indicadores clave de performance del cliente." },
 ];
 
@@ -1037,6 +1038,80 @@ function ResourcesTab({ clientId }: { clientId: number }) {
   );
 }
 
+// ─── DIGITAL ASSETS TAB ───────────────────────────────────────────────────────
+function DigitalAssetsTab({ clientId }: { clientId: number }) {
+  const utils = trpc.useUtils();
+  const { data: assets = [] } = trpc.digitalAssets.list.useQuery({ clientId });
+  const createAsset = trpc.digitalAssets.create.useMutation({
+    onSuccess: () => { utils.digitalAssets.list.invalidate({ clientId }); toast.success("Insumo creado."); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteAsset = trpc.digitalAssets.delete.useMutation({
+    onSuccess: () => { utils.digitalAssets.list.invalidate({ clientId }); toast.success("Insumo eliminado."); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const EMPTY = { title: "", description: "", category: "webpage" as const, externalUrl: "", fileUrl: "", notes: "" };
+  const [form, setForm] = useState(EMPTY);
+
+  const CATEGORY_LABELS: Record<string, string> = {
+    webpage: "Página Web",
+    design_system: "Design System",
+    tool: "Herramienta Digital",
+    document: "Documento",
+    brand_asset: "Activo de Marca",
+    other: "Otro",
+  };
+
+  return (
+    <div className="space-y-4">
+      {assets.map((a) => (
+        <div key={a.id} className="gj-card p-4 flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <span className="text-xs" style={{ color: "var(--gj-mint)", letterSpacing: "2px" }}>{CATEGORY_LABELS[a.category]?.toUpperCase()}</span>
+            <p className="text-sm font-medium mt-1" style={{ color: "var(--gj-cream)" }}>{a.title}</p>
+            {a.description && <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{a.description}</p>}
+            {a.notes && <p className="text-xs mt-0.5 italic" style={{ color: "rgba(138,128,130,0.6)" }}>{a.notes}</p>}
+            <div className="flex gap-3 mt-1 flex-wrap">
+              {a.externalUrl && <a href={a.externalUrl} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-green)" }}>↗ {a.externalUrl}</a>}
+              {a.fileUrl && <a href={a.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-mint)" }}>↓ Archivo</a>}
+            </div>
+          </div>
+          <button onClick={() => deleteAsset.mutate({ id: a.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px", flexShrink: 0 }}>
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ))}
+
+      <div style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "20px" }}>
+        <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-muted)", letterSpacing: "3px" }}>AGREGAR INSUMO DIGITAL</p>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
+          <input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
+          <input value={form.externalUrl} onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL externa (página, herramienta, Drive...)" className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
+          <input value={form.fileUrl} onChange={(e) => setForm((f) => ({ ...f, fileUrl: e.target.value }))} placeholder="URL de archivo (PDF, imagen...)" className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
+          <input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Notas internas..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
+          <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}>
+            <option value="webpage">Página Web</option>
+            <option value="design_system">Design System</option>
+            <option value="tool">Herramienta Digital</option>
+            <option value="document">Documento</option>
+            <option value="brand_asset">Activo de Marca</option>
+            <option value="other">Otro</option>
+          </select>
+        </div>
+        <button
+          onClick={() => { if (form.title) { createAsset.mutate({ clientId, ...form, order: assets.length }); setForm(EMPTY); } }}
+          className="flex items-center gap-1 text-xs px-4 py-2 rounded"
+          style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
+        >
+          <Plus size={14} /> AGREGAR INSUMO
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── METRICS TAB ──────────────────────────────────────────────────────────────
 function MetricsTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
@@ -1127,7 +1202,8 @@ export default function AdminClientDetail() {
     { id: "okrs",       label: "OKRs y métricas" },
     { id: "learnings",  label: "Aprendizajes y obstáculos" },
     { id: "scope",      label: "Alcance del proyecto" },
-    { id: "resources",  label: "Recursos del equipo" },
+    { id: "resources",      label: "Recursos del equipo" },
+    { id: "digital_assets", label: "Insumos digitales" },
   ];
 
   function toggleSection(sectionId: string) {
@@ -1324,6 +1400,7 @@ export default function AdminClientDetail() {
           {activeTab === "learnings" && <LearningsTab clientId={clientId} />}
           {activeTab === "scope" && <ScopeTab clientId={clientId} />}
           {activeTab === "resources" && <ResourcesTab clientId={clientId} />}
+          {activeTab === "digital_assets" && <DigitalAssetsTab clientId={clientId} />}
           {activeTab === "metrics" && <MetricsTab clientId={clientId} />}
         </div>
       </main>

@@ -12,6 +12,7 @@ import SectionOKRs from "@/components/dashboard/SectionOKRs";
 import SectionLearnings from "@/components/dashboard/SectionLearnings";
 import SectionScope from "@/components/dashboard/SectionScope";
 import SectionResources from "@/components/dashboard/SectionResources";
+import SectionDigitalAssets from "@/components/dashboard/SectionDigitalAssets";
 
 export type DashboardSection =
   | "overview"
@@ -21,7 +22,8 @@ export type DashboardSection =
   | "okrs"
   | "learnings"
   | "scope"
-  | "resources";
+  | "resources"
+  | "digital_assets";
 
 export default function ClientDashboard() {
   const { user, loading, isAuthenticated, logout } = useAuth();
@@ -192,6 +194,9 @@ export default function ClientDashboard() {
           )}
           {activeSection === "resources" && (
             <SectionResources clientId={activeClient.id} />
+          )}
+          {activeSection === "digital_assets" && (
+            <SectionDigitalAssets clientId={activeClient.id} />
           )}
         </div>
       </main>

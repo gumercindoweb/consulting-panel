@@ -7,6 +7,7 @@ import {
   FileText,
   FolderOpen,
   LayoutDashboard,
+  Package,
   Rss,
   Target,
 } from "lucide-react";
@@ -27,6 +28,7 @@ const NAV_ITEMS: { id: DashboardSection; label: string; icon: React.FC<any> }[] 
   { id: "learnings", label: "APRENDIZAJES Y OBSTÁCULOS", icon: BookOpen },
   { id: "scope", label: "ALCANCE DEL PROYECTO", icon: FileText },
   { id: "resources", label: "RECURSOS DEL EQUIPO", icon: FolderOpen },
+  { id: "digital_assets", label: "INSUMOS DIGITALES", icon: Package },
 ];
 
 export default function DashboardSidebar({ client, activeSection, onSectionChange, user }: Props) {
