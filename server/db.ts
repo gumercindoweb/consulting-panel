@@ -222,8 +222,8 @@ export async function reorderOkrs(clientId: number, ids: number[]): Promise<void
 export async function createOkr(data: InsertOkr): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(okrs).values(data);
-  return (result[0] as any).insertId;
+  const result = await db.insert(okrs).values(data).returning();
+  return result[0]?.id || 0;
 }
 
 export async function updateOkr(id: number, clientId: number, data: Partial<InsertOkr>): Promise<void> {
@@ -265,8 +265,8 @@ export async function reorderMilestones(clientId: number, ids: number[]): Promis
 export async function createMilestone(data: InsertMilestone): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(milestones).values(data);
-  return (result[0] as any).insertId;
+  const result = await db.insert(milestones).values(data).returning();
+  return result[0]?.id || 0;
 }
 
 export async function updateMilestone(id: number, clientId: number, data: Partial<InsertMilestone>): Promise<void> {
@@ -303,8 +303,8 @@ export async function reorderLearnings(clientId: number, ids: number[]): Promise
 export async function createLearning(data: InsertLearning): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(learnings).values(data);
-  return (result[0] as any).insertId;
+  const result = await db.insert(learnings).values(data).returning();
+  return result[0]?.id || 0;
 }
 
 export async function updateLearning(id: number, clientId: number, data: Partial<InsertLearning>): Promise<void> {

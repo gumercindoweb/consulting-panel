@@ -394,8 +394,8 @@ async function reorderOkrs(clientId, ids) {
 async function createOkr(data) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(okrs).values(data);
-  return result[0].insertId;
+  const result = await db.insert(okrs).values(data).returning();
+  return result[0]?.id || 0;
 }
 async function updateOkr(id, clientId, data) {
   const db = await getDb();
@@ -428,8 +428,8 @@ async function reorderMilestones(clientId, ids) {
 async function createMilestone(data) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(milestones).values(data);
-  return result[0].insertId;
+  const result = await db.insert(milestones).values(data).returning();
+  return result[0]?.id || 0;
 }
 async function updateMilestone(id, clientId, data) {
   const db = await getDb();
@@ -456,8 +456,8 @@ async function reorderLearnings(clientId, ids) {
 async function createLearning(data) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(learnings).values(data);
-  return result[0].insertId;
+  const result = await db.insert(learnings).values(data).returning();
+  return result[0]?.id || 0;
 }
 async function updateLearning(id, clientId, data) {
   const db = await getDb();
