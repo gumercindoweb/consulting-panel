@@ -180,6 +180,7 @@ var milestones = pgTable("milestones", {
   status: milestoneStatusEnum("status").default("pending").notNull(),
   category: milestoneCategoryEnum("category").default("other").notNull(),
   impact: impactEnum("impact").default("medium").notNull(),
+  resultType: updateCategoryEnum("resultType"),
   sortOrder: integer("sortOrder"),
   isPaused: boolean("isPaused").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

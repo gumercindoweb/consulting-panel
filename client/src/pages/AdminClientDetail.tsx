@@ -378,7 +378,14 @@ function MilestonesTab({ clientId }: { clientId: number }) {
     reorder.mutate({ clientId, ids: newItems.map(m => m.id) });
   }
 
-  const EMPTY_M = { title: "", description: "", date: new Date().toISOString().split("T")[0], status: "completed" as const, category: "strategy" as const, impact: "medium" as const };
+  const EMPTY_M = { title: "", description: "", date: new Date().toISOString().split("T")[0], status: "completed" as const, category: "strategy" as const, impact: "medium" as const, resultType: null as any };
+  const RESULT_TYPES: Record<string, { label: string; color: string }> = {
+    result: { label: "RESULTADO", color: "var(--ambar)" },
+    delivery: { label: "ENTREGABLE", color: "#E0913F" },
+    win: { label: "LOGRO", color: "#4eba8a" },
+    insight: { label: "INSIGHT", color: "#b87fd4" },
+    blocker: { label: "BLOQUEADOR", color: "#B32825" },
+  };
   const [form, setForm] = useState(EMPTY_M);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -408,6 +415,16 @@ function MilestonesTab({ clientId }: { clientId: number }) {
             <select style={INP} value={form.impact} onChange={(e) => setForm(f => ({ ...f, impact: e.target.value as any }))}>
               <option value="high">Alto impacto</option><option value="medium">Impacto medio</option><option value="low">Bajo impacto</option>
             </select>
+            {form.status === "completed" && (
+              <select style={INP} value={form.resultType || ""} onChange={(e) => setForm(f => ({ ...f, resultType: e.target.value || null }))}>
+                <option value="">Sin clasificar</option>
+                <option value="result">Resultado</option>
+                <option value="delivery">Entregable</option>
+                <option value="win">Logro</option>
+                <option value="insight">Insight</option>
+                <option value="blocker">Bloqueador</option>
+              </select>
+            )}
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
             <button onClick={() => { if (form.title) createMilestone.mutate({ clientId, ...form, date: new Date(form.date) }); }} disabled={!form.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", opacity: form.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>GUARDAR</button>
@@ -454,11 +471,19 @@ function MilestonesTab({ clientId }: { clientId: number }) {
                                     {m.isPaused && (
                                       <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: "rgba(143,169,163,0.12)", border: "1px solid rgba(143,169,163,0.3)", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>PAUSADO</span>
                                     )}
+                                    {!m.isPaused && m.status === "completed" && m.resultType && (() => {
+                                      const rt = RESULT_TYPES[m.resultType];
+                                      return (
+                                        <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${rt.color}22`, border: `1px solid ${rt.color}50`, color: rt.color, fontFamily: "var(--gj-font)", fontWeight: 600 }}>
+                                          {m.resultType === "win" ? "⭐ " : ""}{rt.label}
+                                        </span>
+                                      );
+                                    })()}
                                     {!m.isPaused && <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${impact.color}12`, border: `1px solid ${impact.color}30`, color: impact.color, fontFamily: "var(--gj-font)" }}>{impact.label}</span>}
                                     {!m.isPaused && <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${status.color}12`, border: `1px solid ${status.color}30`, color: status.color, fontFamily: "var(--gj-font)" }}>{status.label}</span>}
                                     <button
                                       title="Editar"
-                                      onClick={() => { setEditingId(m.id); setEditForm({ title: m.title, description: m.description || "", date: m.date.split("T")[0], status: m.status, category: m.category, impact: m.impact }); }}
+                                      onClick={() => { setEditingId(m.id); setEditForm({ title: m.title, description: m.description || "", date: m.date.split("T")[0], status: m.status, category: m.category, impact: m.impact, resultType: m.resultType }); }}
                                       style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}
                                     >
                                       <Edit3 size={14} />
@@ -491,6 +516,16 @@ function MilestonesTab({ clientId }: { clientId: number }) {
                                       <select style={INP} value={editForm.impact} onChange={(e) => setEditForm(f => ({ ...f, impact: e.target.value as any }))}>
                                         <option value="high">Alto impacto</option><option value="medium">Impacto medio</option><option value="low">Bajo impacto</option>
                                       </select>
+                                      {editForm.status === "completed" && (
+                                        <select style={INP} value={editForm.resultType || ""} onChange={(e) => setEditForm(f => ({ ...f, resultType: e.target.value || null }))}>
+                                          <option value="">Sin clasificar</option>
+                                          <option value="result">Resultado</option>
+                                          <option value="delivery">Entregable</option>
+                                          <option value="win">Logro</option>
+                                          <option value="insight">Insight</option>
+                                          <option value="blocker">Bloqueador</option>
+                                        </select>
+                                      )}
                                     </div>
                                     <div style={{ display: "flex", gap: "6px" }}>
                                       <button onClick={() => { if (editForm.title) updateMilestone.mutate({ id: m.id, clientId, ...editForm, date: new Date(editForm.date) }); }} disabled={!editForm.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "6px 12px", fontSize: "10px", letterSpacing: "1px", cursor: "pointer", opacity: editForm.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>GUARDAR</button>
