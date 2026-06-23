@@ -25,12 +25,12 @@ export default function SectionDigitalAssets({ clientId }: Props) {
   return (
     <div className="space-y-8 animate-fade-up">
       <div>
-        <p className="sdt-section-label mb-3">INSUMOS DIGITALES</p>
+        <p className="sdt-section-label mb-3">ACTIVOS DIGITALES</p>
         <h1 className="font-display text-4xl font-bold mb-2" style={{ color: "var(--creme)" }}>
           Activos Digitales
         </h1>
         <p className="font-serif text-lg" style={{ color: "var(--oro-pale)", fontStyle: "italic" }}>
-          Todo lo construido: páginas, herramientas, documentos y activos de marca de tu proyecto.
+          Las piezas del engranaje que sostienen la cadena de valor de tu marketing. Cada activo es una palanca esencial que hace posible que todo el sistema funcione.
         </p>
       </div>
       <div className="sdt-divider" />
@@ -43,7 +43,7 @@ export default function SectionDigitalAssets({ clientId }: Props) {
       ) : assets.length === 0 ? (
         <div className="sdt-card p-12 text-center">
           <p className="font-serif text-xl" style={{ color: "var(--creme)", fontStyle: "italic" }}>
-            Los insumos digitales se irán agregando aquí.
+            Los activos digitales se irán agregando aquí.
           </p>
           <p className="text-sm mt-2" style={{ color: "var(--gris)" }}>
             Páginas web, design system, herramientas, documentos y activos de marca.

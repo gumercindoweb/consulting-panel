@@ -1,15 +1,15 @@
 import { trpc } from "@/lib/trpc";
-import { FileText, Link2, BookOpen, Video, FileCode, HelpCircle, ExternalLink, Download } from "lucide-react";
+import { FileText, BookOpen, Video, FileCode, HelpCircle, ExternalLink, Download, Bookmark } from "lucide-react";
 
 interface Props { clientId: number; }
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; Icon: any }> = {
-  document: { label: "Documento", color: "var(--ambar)", Icon: FileText },
-  template: { label: "Plantilla", color: "#7c6fcd", Icon: FileCode },
-  script: { label: "Guión", color: "var(--rojo)", Icon: BookOpen },
-  training: { label: "Capacitación", color: "#4eba8a", Icon: Video },
-  guide: { label: "Guía", color: "#4db6e8", Icon: BookOpen },
-  other: { label: "Otro", color: "var(--gris)", Icon: HelpCircle },
+  script:   { label: "Videotutorial",     color: "#e05252", Icon: Video },
+  training: { label: "Curso",             color: "#b87fd4", Icon: BookOpen },
+  document: { label: "Presentación",      color: "var(--ambar)", Icon: FileText },
+  guide:    { label: "Referencia",        color: "#4db6e8", Icon: Bookmark },
+  template: { label: "Material de Apoyo", color: "#7c6fcd", Icon: FileCode },
+  other:    { label: "Otro",              color: "var(--gris)", Icon: HelpCircle },
 };
 
 export default function SectionResources({ clientId }: Props) {
@@ -27,10 +27,10 @@ export default function SectionResources({ clientId }: Props) {
       <div>
         <p className="sdt-section-label mb-3">RECURSOS DEL EQUIPO</p>
         <h1 className="font-display text-4xl font-bold mb-2" style={{ color: "var(--creme)" }}>
-          Biblioteca de Recursos
+          Biblioteca de Formación
         </h1>
         <p className="font-serif text-lg" style={{ color: "var(--oro-pale)", fontStyle: "italic" }}>
-          Documentos, guiones, plantillas y materiales de capacitación para el equipo.
+          Videotutoriales, cursos, referencias y presentaciones para que el equipo entienda y aplique cada etapa del proyecto.
         </p>
       </div>
       <div className="sdt-divider" />
@@ -43,10 +43,10 @@ export default function SectionResources({ clientId }: Props) {
       ) : resources.length === 0 ? (
         <div className="sdt-card p-12 text-center">
           <p className="font-serif text-xl" style={{ color: "var(--creme)", fontStyle: "italic" }}>
-            Los recursos del equipo se irán agregando aquí.
+            Los materiales de formación se irán agregando aquí.
           </p>
           <p className="text-sm mt-2" style={{ color: "var(--gris)" }}>
-            Documentos, guiones de venta, plantillas y materiales de capacitación.
+            Videotutoriales, cursos, referencias y presentaciones de capacitación.
           </p>
         </div>
       ) : (

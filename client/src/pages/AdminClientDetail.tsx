@@ -29,8 +29,8 @@ const TABS: { id: Tab; label: string; icon: React.FC<any>; title: string; subtit
   { id: "okrs", label: "OKRs", icon: Target, title: "OKRs y Resultados Clave", subtitle: "Objetivos medibles y su progreso actual." },
   { id: "learnings", label: "APRENDIZAJES", icon: BookOpen, title: "Aprendizajes y Obstáculos", subtitle: "Registro de aprendizajes, obstáculos y logros." },
   { id: "scope", label: "ALCANCE", icon: FileText, title: "Alcance del Proyecto", subtitle: "Qué está incluido y qué queda fuera del proyecto." },
-  { id: "resources", label: "RECURSOS", icon: FolderOpen, title: "Recursos del Equipo", subtitle: "Documentos, guías y materiales compartidos." },
-  { id: "digital_assets", label: "INSUMOS", icon: Package, title: "Insumos Digitales", subtitle: "Páginas web, herramientas, documentos y activos de marca entregados." },
+  { id: "resources", label: "RECURSOS", icon: FolderOpen, title: "Biblioteca de Formación", subtitle: "Videotutoriales, cursos, referencias y presentaciones para el equipo." },
+  { id: "digital_assets", label: "ACTIVOS", icon: Package, title: "Activos Digitales", subtitle: "Las piezas del engranaje que sostienen la cadena de valor del marketing." },
   { id: "metrics", label: "MÉTRICAS", icon: LayoutDashboard, title: "Métricas del Negocio", subtitle: "Indicadores clave de performance del cliente." },
 ];
 
@@ -1018,11 +1018,11 @@ function ResourcesTab({ clientId }: { clientId: number }) {
           <input value={form.externalUrl} onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL (opcional)" className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
           <textarea value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} placeholder="Contenido de texto (opcional)..." rows={3} className="col-span-2 px-3 py-2 text-sm resize-none" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
           <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}>
-            <option value="document">Documento</option>
-            <option value="template">Plantilla</option>
-            <option value="script">Guión</option>
-            <option value="training">Capacitación</option>
-            <option value="guide">Guía</option>
+            <option value="script">Videotutorial</option>
+            <option value="training">Curso</option>
+            <option value="document">Presentación</option>
+            <option value="guide">Referencia</option>
+            <option value="template">Material de Apoyo</option>
             <option value="other">Otro</option>
           </select>
         </div>
@@ -1043,11 +1043,11 @@ function DigitalAssetsTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
   const { data: assets = [] } = trpc.digitalAssets.list.useQuery({ clientId });
   const createAsset = trpc.digitalAssets.create.useMutation({
-    onSuccess: () => { utils.digitalAssets.list.invalidate({ clientId }); toast.success("Insumo creado."); },
+    onSuccess: () => { utils.digitalAssets.list.invalidate({ clientId }); toast.success("Activo creado."); },
     onError: (e) => toast.error(e.message),
   });
   const deleteAsset = trpc.digitalAssets.delete.useMutation({
-    onSuccess: () => { utils.digitalAssets.list.invalidate({ clientId }); toast.success("Insumo eliminado."); },
+    onSuccess: () => { utils.digitalAssets.list.invalidate({ clientId }); toast.success("Activo eliminado."); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -1084,7 +1084,7 @@ function DigitalAssetsTab({ clientId }: { clientId: number }) {
       ))}
 
       <div style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "20px" }}>
-        <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-muted)", letterSpacing: "3px" }}>AGREGAR INSUMO DIGITAL</p>
+        <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-muted)", letterSpacing: "3px" }}>AGREGAR ACTIVO DIGITAL</p>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
           <input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }} />
@@ -1105,7 +1105,7 @@ function DigitalAssetsTab({ clientId }: { clientId: number }) {
           className="flex items-center gap-1 text-xs px-4 py-2 rounded"
           style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
         >
-          <Plus size={14} /> AGREGAR INSUMO
+          <Plus size={14} /> AGREGAR ACTIVO
         </button>
       </div>
     </div>
@@ -1202,8 +1202,8 @@ export default function AdminClientDetail() {
     { id: "okrs",       label: "OKRs y métricas" },
     { id: "learnings",  label: "Aprendizajes y obstáculos" },
     { id: "scope",      label: "Alcance del proyecto" },
-    { id: "resources",      label: "Recursos del equipo" },
-    { id: "digital_assets", label: "Insumos digitales" },
+    { id: "resources",      label: "Biblioteca de formación" },
+    { id: "digital_assets", label: "Activos digitales" },
   ];
 
   function toggleSection(sectionId: string) {
