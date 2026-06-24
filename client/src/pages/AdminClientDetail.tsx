@@ -1428,18 +1428,6 @@ export default function AdminClientDetail() {
           </ul>
         </nav>
 
-        {/* Footer */}
-        <div className="px-6 py-5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <a
-            href={`/dashboard/${clientId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 text-xs py-2 rounded w-full"
-            style={{ background: "rgba(10,135,105,0.1)", color: "var(--gj-green)", border: "1px solid rgba(10,135,105,0.2)", textDecoration: "none", letterSpacing: "2px", fontFamily: "var(--font-label)" }}
-          >
-            VER COMO CLIENTE →
-          </a>
-        </div>
       </aside>
 
       {/* ── MAIN CONTENT ──────────────────────────────────── */}
@@ -1457,7 +1445,18 @@ export default function AdminClientDetail() {
               Gestión de consultoría estratégica
             </p>
           </div>
-          <img src="/gj-logo.png" alt="GJ" style={{ height: 24, width: "auto", opacity: 0.6 }} />
+          <div className="flex items-center gap-4">
+            <a
+              href={`/dashboard/${clientId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-xs py-2 px-4 rounded"
+              style={{ background: "rgba(10,135,105,0.1)", color: "var(--gj-green)", border: "1px solid rgba(10,135,105,0.2)", textDecoration: "none", letterSpacing: "2px", fontFamily: "var(--font-label)" }}
+            >
+              VER COMO CLIENTE →
+            </a>
+            <img src="/gj-logo.png" alt="GJ" style={{ height: 24, width: "auto", opacity: 0.6 }} />
+          </div>
         </div>
 
         {/* Section content */}
