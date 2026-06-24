@@ -6,6 +6,9 @@ interface Props {
   client: Client;
 }
 
+const FUTURA = "'Futura Std', 'Futura', sans-serif";
+const FUTURA_CONDENSED = "'Futura Std Condensed', 'Futura Std', 'Futura', sans-serif";
+
 export default function SectionOverview({ clientId, client }: Props) {
   const { data: metrics = [] } = trpc.metrics.list.useQuery({ clientId });
   const { data: okrs = [] } = trpc.okrs.list.useQuery({ clientId });
@@ -18,8 +21,9 @@ export default function SectionOverview({ clientId, client }: Props) {
 
   const branding = (client as any).branding as any;
   const isPrimaryRed = branding?.primaryColor === "#D01C1F";
+  const isFlyFree = branding?.primaryColor === "#FFD100";
 
-  if (!isPrimaryRed) {
+  if (!isPrimaryRed && !isFlyFree) {
     return (
       <div className="space-y-8 animate-fade-up">
         <div>
@@ -45,6 +49,135 @@ export default function SectionOverview({ clientId, client }: Props) {
             <p className="font-label text-xs mb-2" style={{ color: "var(--gris)", letterSpacing: "2px" }}>RECURSOS</p>
             <p className="font-display text-3xl font-bold">{metrics.length}</p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isFlyFree) {
+    const cells = [
+      {
+        label: "ETAPAS",
+        value: `${completedPhases}/${phases.length}`,
+        sub: phases.length === 0 ? "Sin fases definidas" : `${phases.length - completedPhases} pendiente${phases.length - completedPhases !== 1 ? "s" : ""}`,
+      },
+      {
+        label: "HITOS",
+        value: `${completedMilestones}/${milestones.length}`,
+        sub: milestones.length === 0 ? "Sin hitos" : `${milestones.length} en timeline`,
+      },
+      {
+        label: "OKRs",
+        value: `${avgOkrProgress}%`,
+        sub: okrs.length === 0 ? "Sin OKRs" : `${okrs.length} key results`,
+      },
+      {
+        label: "ACTIVOS",
+        value: `${metrics.length}`,
+        sub: "Recursos y materiales",
+      },
+    ];
+
+    return (
+      <div style={{ marginTop: "-1.5rem", marginLeft: "-1.5rem", marginRight: "-1.5rem" }}>
+        {/* DARK ENERGY HERO */}
+        <div
+          style={{
+            background: "#231F20",
+            padding: "48px 32px 40px",
+            borderBottom: "4px solid #FFD100",
+            marginBottom: "2px",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: FUTURA_CONDENSED,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.3em",
+              color: "#FFD100",
+              textTransform: "uppercase",
+              marginBottom: 14,
+            }}
+          >
+            {">> ALWAYS ROLLING"}
+          </p>
+          <h1
+            style={{
+              fontFamily: FUTURA,
+              fontSize: 52,
+              fontWeight: 900,
+              textTransform: "uppercase",
+              letterSpacing: "-0.02em",
+              color: "#FFFFFF",
+              lineHeight: 0.9,
+              marginBottom: 16,
+            }}
+          >
+            {client.name}
+          </h1>
+          {client.consultorName && (
+            <p
+              style={{
+                fontFamily: FUTURA_CONDENSED,
+                fontSize: 11,
+                letterSpacing: "0.2em",
+                color: "#4a4647",
+                textTransform: "uppercase",
+              }}
+            >
+              Consultor: {client.consultorName}
+            </p>
+          )}
+        </div>
+
+        {/* GRID 2x2 — fondo amarillo como separador flat entre celdas */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, background: "#FFD100" }}>
+          {cells.map((cell, i) => (
+            <div
+              key={cell.label}
+              style={{
+                padding: "28px 24px",
+                background: i % 2 === 0 ? "#1b1818" : "#201d1d",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: FUTURA_CONDENSED,
+                  fontSize: 9,
+                  letterSpacing: "0.25em",
+                  textTransform: "uppercase",
+                  color: "#FFD100",
+                  marginBottom: 10,
+                  fontWeight: 700,
+                }}
+              >
+                {cell.label}
+              </p>
+              <p
+                style={{
+                  fontFamily: FUTURA_CONDENSED,
+                  fontSize: 40,
+                  fontWeight: 900,
+                  color: "#FFFFFF",
+                  lineHeight: 0.9,
+                  marginBottom: 8,
+                }}
+              >
+                {cell.value}
+              </p>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: "#4a4647",
+                  lineHeight: 1.5,
+                  fontFamily: FUTURA,
+                }}
+              >
+                {cell.sub}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     );

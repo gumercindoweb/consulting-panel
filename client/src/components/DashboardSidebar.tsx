@@ -39,7 +39,9 @@ const FUTURA_CONDENSED = "'Futura Std Condensed', 'Futura Std', 'Futura', sans-s
 export default function DashboardSidebar({ client, activeSection, onSectionChange, user }: Props) {
   const branding = client.branding as any;
   const primaryColor = branding?.primaryColor || "var(--rojo)";
-  const isNMRoller = branding?.fontDisplay === "Futura Std";
+  const isNMRoller = branding?.primaryColor === "#D01C1F";
+  const isFlyFree = branding?.primaryColor === "#FFD100";
+  const isFuturaBrand = isNMRoller || isFlyFree;
 
   const visibleSections = (client as any).visibleSections as string[] | null | undefined;
   const filteredNav = visibleSections?.length
@@ -72,7 +74,7 @@ export default function DashboardSidebar({ client, activeSection, onSectionChang
           />
         )}
 
-        {isNMRoller ? (
+        {isFuturaBrand ? (
           <h2
             style={{
               fontFamily: FUTURA,
@@ -80,7 +82,7 @@ export default function DashboardSidebar({ client, activeSection, onSectionChang
               fontSize: 20,
               textTransform: "uppercase",
               letterSpacing: "0.08em",
-              color: "#ffffff",
+              color: isFlyFree ? "#FFD100" : "#ffffff",
               lineHeight: 1.2,
             }}
           >
@@ -96,7 +98,7 @@ export default function DashboardSidebar({ client, activeSection, onSectionChang
         )}
 
         {client.consultorName && (
-          isNMRoller ? (
+          isFuturaBrand ? (
             <p
               style={{
                 fontFamily: FUTURA_CONDENSED,
@@ -120,7 +122,7 @@ export default function DashboardSidebar({ client, activeSection, onSectionChang
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-6">
-        {isNMRoller ? (
+        {isFuturaBrand ? (
           <p
             style={{
               fontFamily: FUTURA_CONDENSED,
@@ -155,13 +157,13 @@ export default function DashboardSidebar({ client, activeSection, onSectionChang
                   className="w-full flex items-center gap-3 px-3 py-3 text-left transition-all duration-150"
                   style={{
                     background: isActive
-                      ? isNMRoller ? "rgba(208,28,31,0.10)" : "rgba(179,40,37,0.12)"
+                      ? isNMRoller ? "rgba(208,28,31,0.10)" : isFlyFree ? "rgba(255,209,0,0.10)" : "rgba(179,40,37,0.12)"
                       : "transparent",
                     borderLeft: isActive ? `2px solid ${primaryColor}` : "2px solid transparent",
-                    color: isActive ? "#ffffff" : isNMRoller ? "#767676" : "var(--gris)",
+                    color: isActive ? "#ffffff" : isFuturaBrand ? "#767676" : "var(--gris)",
                     cursor: "pointer",
                     border: "none",
-                    borderRadius: isNMRoller ? 0 : 4,
+                    borderRadius: isFuturaBrand ? 0 : 4,
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
@@ -172,7 +174,7 @@ export default function DashboardSidebar({ client, activeSection, onSectionChang
                   onMouseLeave={(e) => {
                     if (!isActive) {
                       (e.currentTarget as HTMLElement).style.background = "transparent";
-                      (e.currentTarget as HTMLElement).style.color = isNMRoller ? "#767676" : "var(--gris)";
+                      (e.currentTarget as HTMLElement).style.color = isFuturaBrand ? "#767676" : "var(--gris)";
                     }
                   }}
                 >
@@ -180,7 +182,7 @@ export default function DashboardSidebar({ client, activeSection, onSectionChang
                     size={14}
                     style={{ color: isActive ? primaryColor : "inherit", flexShrink: 0 }}
                   />
-                  {isNMRoller ? (
+                  {isFuturaBrand ? (
                     <span
                       style={{
                         fontFamily: FUTURA_CONDENSED,
@@ -216,12 +218,12 @@ export default function DashboardSidebar({ client, activeSection, onSectionChang
         {client.startDate && (
           <p
             style={{
-              fontFamily: isNMRoller ? FUTURA_CONDENSED : undefined,
+              fontFamily: isFuturaBrand ? FUTURA_CONDENSED : undefined,
               fontSize: 10,
-              letterSpacing: isNMRoller ? "0.08em" : undefined,
-              color: isNMRoller ? "#404040" : "var(--gris)",
+              letterSpacing: isFuturaBrand ? "0.08em" : undefined,
+              color: isFuturaBrand ? "#404040" : "var(--gris)",
               marginBottom: 4,
-              textTransform: isNMRoller ? "uppercase" : undefined,
+              textTransform: isFuturaBrand ? "uppercase" : undefined,
             }}
           >
             Desde:{" "}
@@ -233,11 +235,11 @@ export default function DashboardSidebar({ client, activeSection, onSectionChang
         )}
         <p
           style={{
-            fontFamily: isNMRoller ? FUTURA_CONDENSED : undefined,
+            fontFamily: isFuturaBrand ? FUTURA_CONDENSED : undefined,
             fontSize: 10,
-            letterSpacing: isNMRoller ? "0.08em" : undefined,
+            letterSpacing: isFuturaBrand ? "0.08em" : undefined,
             color: "rgba(138,128,130,0.4)",
-            textTransform: isNMRoller ? "uppercase" : undefined,
+            textTransform: isFuturaBrand ? "uppercase" : undefined,
           }}
         >
           © Consultoría Estratégica

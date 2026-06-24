@@ -36,6 +36,7 @@ var milestoneCategoryEnum = pgEnum("milestone_category", ["strategy", "implement
 var impactEnum = pgEnum("impact", ["high", "medium", "low"]);
 var learningTypeEnum = pgEnum("learning_type", ["learning", "obstacle", "win"]);
 var resourceCategoryEnum = pgEnum("resource_category", ["document", "template", "script", "training", "guide", "other"]);
+var digitalAssetCategoryEnum = pgEnum("digital_asset_category", ["webpage", "design_system", "tool", "document", "brand_asset", "other"]);
 var trendEnum = pgEnum("trend", ["up", "down", "stable"]);
 var updateCategoryEnum = pgEnum("update_category", ["session", "result", "delivery", "insight", "blocker", "win", "general"]);
 var updateStatusEnum = pgEnum("update_status", ["on_track", "at_risk", "blocked", "completed"]);
@@ -158,6 +159,20 @@ var resources = pgTable("resources", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
+var digitalAssets = pgTable("digital_assets", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  clientId: integer("clientId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  category: digitalAssetCategoryEnum("category").default("other").notNull(),
+  externalUrl: text("externalUrl"),
+  fileUrl: text("fileUrl"),
+  notes: text("notes"),
+  isPublic: boolean("isPublic").default(true).notNull(),
+  order: integer("order").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull()
+});
 var metrics = pgTable("metrics", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   clientId: integer("clientId").notNull(),
@@ -183,6 +198,16 @@ var projectUpdates = pgTable("project_updates", {
   impact: impactEnum("impact").default("medium").notNull(),
   isPublic: boolean("isPublic").default(true).notNull(),
   date: timestamp("date").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull()
+});
+var backlogItems = pgTable("backlog_items", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  clientId: integer("clientId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  status: varchar("status", { length: 32 }).notNull().default("idea"),
+  priority: varchar("priority", { length: 16 }).notNull().default("media"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull()
 });
@@ -281,8 +306,8 @@ async function getClientById(id) {
 async function createClient(data) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(clients).values(data);
-  return result[0].insertId;
+  const result = await db.insert(clients).values(data).returning();
+  return result[0]?.id || 0;
 }
 async function updateClient(id, data) {
   const db = await getDb();
@@ -310,8 +335,8 @@ async function getPhasesByClient(clientId) {
 async function createPhase(data) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(projectPhases).values(data);
-  return result[0].insertId;
+  const result = await db.insert(projectPhases).values(data).returning();
+  return result[0]?.id || 0;
 }
 async function updatePhase(id, data) {
   const db = await getDb();
@@ -427,8 +452,8 @@ async function getScopeByClient(clientId) {
 async function createScopeItem(data) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(scopeItems).values(data);
-  return result[0].insertId;
+  const result = await db.insert(scopeItems).values(data).returning();
+  return result[0]?.id || 0;
 }
 async function updateScopeItem(id, clientId, data) {
   const db = await getDb();
@@ -448,8 +473,8 @@ async function getResourcesByClient(clientId) {
 async function createResource(data) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(resources).values(data);
-  return result[0].insertId;
+  const result = await db.insert(resources).values(data).returning();
+  return result[0]?.id || 0;
 }
 async function updateResource(id, clientId, data) {
   const db = await getDb();
@@ -461,6 +486,27 @@ async function deleteResource(id, clientId) {
   if (!db) return;
   await db.delete(resources).where(and(eq(resources.id, id), eq(resources.clientId, clientId)));
 }
+async function getDigitalAssetsByClient(clientId) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(digitalAssets).where(eq(digitalAssets.clientId, clientId)).orderBy(asc(digitalAssets.order));
+}
+async function createDigitalAsset(data) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(digitalAssets).values(data).returning();
+  return result[0]?.id || 0;
+}
+async function updateDigitalAsset(id, clientId, data) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(digitalAssets).set(data).where(and(eq(digitalAssets.id, id), eq(digitalAssets.clientId, clientId)));
+}
+async function deleteDigitalAsset(id, clientId) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(digitalAssets).where(and(eq(digitalAssets.id, id), eq(digitalAssets.clientId, clientId)));
+}
 async function getMetricsByClient(clientId) {
   const db = await getDb();
   if (!db) return [];
@@ -469,8 +515,8 @@ async function getMetricsByClient(clientId) {
 async function createMetric(data) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
-  const result = await db.insert(metrics).values(data);
-  return result[0].insertId;
+  const result = await db.insert(metrics).values(data).returning();
+  return result[0]?.id || 0;
 }
 async function updateMetric(id, clientId, data) {
   const db = await getDb();
@@ -502,6 +548,27 @@ async function deleteUpdate(id, clientId) {
   const db = await getDb();
   if (!db) return;
   await db.delete(projectUpdates).where(and(eq(projectUpdates.id, id), eq(projectUpdates.clientId, clientId)));
+}
+async function getBacklogByClient(clientId) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(backlogItems).where(eq(backlogItems.clientId, clientId)).orderBy(desc(backlogItems.createdAt));
+}
+async function createBacklogItem(data) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(backlogItems).values(data).returning();
+  return result[0]?.id || 0;
+}
+async function updateBacklogItem(id, clientId, data) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(backlogItems).set({ ...data, updatedAt: /* @__PURE__ */ new Date() }).where(and(eq(backlogItems.id, id), eq(backlogItems.clientId, clientId)));
+}
+async function deleteBacklogItem(id, clientId) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(backlogItems).where(and(eq(backlogItems.id, id), eq(backlogItems.clientId, clientId)));
 }
 
 // server/_core/cookies.ts
@@ -1351,6 +1418,44 @@ var appRouter = router({
     }),
     delete: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number() })).mutation(({ input }) => deleteResource(input.id, input.clientId))
   }),
+  // ─── DIGITAL ASSETS ──────────────────────────────────────────────────────
+  digitalAssets: router({
+    list: protectedProcedure.input(z2.object({ clientId: z2.number() })).query(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+      return getDigitalAssetsByClient(input.clientId);
+    }),
+    create: adminProcedure2.input(
+      z2.object({
+        clientId: z2.number(),
+        title: z2.string(),
+        description: z2.string().optional(),
+        category: z2.enum(["webpage", "design_system", "tool", "document", "brand_asset", "other"]).default("other"),
+        externalUrl: z2.string().optional(),
+        fileUrl: z2.string().optional(),
+        notes: z2.string().optional(),
+        isPublic: z2.boolean().default(true),
+        order: z2.number().default(0)
+      })
+    ).mutation(({ input }) => createDigitalAsset(input)),
+    update: adminProcedure2.input(
+      z2.object({
+        id: z2.number(),
+        clientId: z2.number(),
+        title: z2.string().optional(),
+        description: z2.string().optional(),
+        category: z2.enum(["webpage", "design_system", "tool", "document", "brand_asset", "other"]).optional(),
+        externalUrl: z2.string().optional(),
+        fileUrl: z2.string().optional(),
+        notes: z2.string().optional(),
+        isPublic: z2.boolean().optional(),
+        order: z2.number().optional()
+      })
+    ).mutation(({ input }) => {
+      const { id, clientId, ...data } = input;
+      return updateDigitalAsset(id, clientId, data);
+    }),
+    delete: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number() })).mutation(({ input }) => deleteDigitalAsset(input.id, input.clientId))
+  }),
   // ─── METRICS ─────────────────────────────────────────────────────────────
   metrics: router({
     list: protectedProcedure.input(z2.object({ clientId: z2.number() })).query(async ({ ctx, input }) => {
@@ -1427,6 +1532,32 @@ var appRouter = router({
       return updateUpdate(id, clientId, { ...rest, ...date ? { date: new Date(date) } : {} });
     }),
     delete: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number() })).mutation(({ input }) => deleteUpdate(input.id, input.clientId))
+  }),
+  // ─── BACKLOG ─────────────────────────────────────────────────────────────
+  backlog: router({
+    list: protectedProcedure.input(z2.object({ clientId: z2.number() })).query(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+      return getBacklogByClient(input.clientId);
+    }),
+    create: adminProcedure2.input(z2.object({
+      clientId: z2.number(),
+      title: z2.string().min(1).max(255),
+      description: z2.string().optional(),
+      status: z2.enum(["idea", "en_revision", "aprobada", "en_progreso", "descartada"]).default("idea"),
+      priority: z2.enum(["alta", "media", "baja"]).default("media")
+    })).mutation(({ input }) => createBacklogItem(input)),
+    update: adminProcedure2.input(z2.object({
+      id: z2.number(),
+      clientId: z2.number(),
+      title: z2.string().optional(),
+      description: z2.string().optional(),
+      status: z2.enum(["idea", "en_revision", "aprobada", "en_progreso", "descartada"]).optional(),
+      priority: z2.enum(["alta", "media", "baja"]).optional()
+    })).mutation(({ input }) => {
+      const { id, clientId, ...data } = input;
+      return updateBacklogItem(id, clientId, data);
+    }),
+    delete: adminProcedure2.input(z2.object({ id: z2.number(), clientId: z2.number() })).mutation(({ input }) => deleteBacklogItem(input.id, input.clientId))
   })
 });
 
