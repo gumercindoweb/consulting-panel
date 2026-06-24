@@ -250,3 +250,18 @@ export const projectUpdates = pgTable("project_updates", {
 
 export type ProjectUpdate = typeof projectUpdates.$inferSelect;
 export type InsertProjectUpdate = typeof projectUpdates.$inferInsert;
+
+// ─── BACKLOG ITEMS ────────────────────────────────────────────────────────────
+export const backlogItems = pgTable("backlog_items", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  clientId: integer("clientId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  status: varchar("status", { length: 32 }).notNull().default("idea"),
+  priority: varchar("priority", { length: 16 }).notNull().default("media"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type BacklogItem = typeof backlogItems.$inferSelect;
+export type InsertBacklogItem = typeof backlogItems.$inferInsert;

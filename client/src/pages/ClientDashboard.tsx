@@ -13,6 +13,7 @@ import SectionLearnings from "@/components/dashboard/SectionLearnings";
 import SectionScope from "@/components/dashboard/SectionScope";
 import SectionResources from "@/components/dashboard/SectionResources";
 import SectionDigitalAssets from "@/components/dashboard/SectionDigitalAssets";
+import SectionBacklog from "@/components/dashboard/SectionBacklog";
 
 export type DashboardSection =
   | "overview"
@@ -23,7 +24,8 @@ export type DashboardSection =
   | "learnings"
   | "scope"
   | "resources"
-  | "digital_assets";
+  | "digital_assets"
+  | "backlog";
 
 export default function ClientDashboard() {
   const { user, loading, isAuthenticated, logout } = useAuth();
@@ -215,6 +217,9 @@ export default function ClientDashboard() {
           )}
           {activeSection === "digital_assets" && (
             <SectionDigitalAssets clientId={activeClient.id} />
+          )}
+          {activeSection === "backlog" && (
+            <SectionBacklog clientId={activeClient.id} />
           )}
         </div>
       </main>

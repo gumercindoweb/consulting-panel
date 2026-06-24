@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
-import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -20,7 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type Tab = "phases" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates" | "digital_assets";
+type Tab = "phases" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates" | "digital_assets" | "backlog";
 
 const TABS: { id: Tab; label: string; icon: React.FC<any>; title: string; subtitle: string }[] = [
   { id: "updates", label: "ACTUALIZACIONES", icon: Rss, title: "Actualizaciones del Proyecto", subtitle: "Publicá avances diarios que el cliente puede ver en su portal." },
@@ -32,6 +32,7 @@ const TABS: { id: Tab; label: string; icon: React.FC<any>; title: string; subtit
   { id: "resources", label: "RECURSOS", icon: FolderOpen, title: "Biblioteca de Formación", subtitle: "Videotutoriales, cursos, referencias y presentaciones para el equipo." },
   { id: "digital_assets", label: "ACTIVOS", icon: Package, title: "Activos Digitales", subtitle: "Las piezas del engranaje que sostienen la cadena de valor del marketing." },
   { id: "metrics", label: "MÉTRICAS", icon: LayoutDashboard, title: "Métricas del Negocio", subtitle: "Indicadores clave de performance del cliente." },
+  { id: "backlog", label: "BACKLOG", icon: Lightbulb, title: "Backlog de Ideas", subtitle: "Registrá ideas, mejoras y oportunidades para el proyecto del cliente." },
 ];
 
 // ─── UPDATES TAB ──────────────────────────────────────────────────────────────
@@ -1262,6 +1263,151 @@ function MetricsTab({ clientId }: { clientId: number }) {
 }
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+// ─── BACKLOG TAB ──────────────────────────────────────────────────────────────
+const STATUS_META: Record<string, { label: string; color: string }> = {
+  idea:         { label: "IDEA",         color: "var(--gj-muted)" },
+  en_revision:  { label: "EN REVISIÓN",  color: "#E0913F" },
+  aprobada:     { label: "APROBADA",     color: "#4eba8a" },
+  en_progreso:  { label: "EN PROGRESO",  color: "#4db6e8" },
+  descartada:   { label: "DESCARTADA",   color: "var(--rojo-vivo)" },
+};
+const PRIORITY_META: Record<string, { label: string; color: string }> = {
+  alta:  { label: "ALTA",  color: "var(--rojo-vivo)" },
+  media: { label: "MEDIA", color: "#E0913F" },
+  baja:  { label: "BAJA",  color: "var(--gj-muted)" },
+};
+const EMPTY_BACKLOG = { title: "", description: "", status: "idea" as const, priority: "media" as const };
+
+function BacklogTab({ clientId }: { clientId: number }) {
+  const utils = trpc.useUtils();
+  const { data: items = [] } = trpc.backlog.list.useQuery({ clientId });
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(EMPTY_BACKLOG);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editData, setEditData] = useState<Partial<typeof EMPTY_BACKLOG>>({});
+
+  const createItem = trpc.backlog.create.useMutation({
+    onSuccess: () => { utils.backlog.list.invalidate({ clientId }); toast.success("Idea agregada."); setShowForm(false); setForm(EMPTY_BACKLOG); },
+    onError: (e) => toast.error(e.message),
+  });
+  const updateItem = trpc.backlog.update.useMutation({
+    onSuccess: () => { utils.backlog.list.invalidate({ clientId }); toast.success("Idea actualizada."); setEditingId(null); setEditData({}); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteItem = trpc.backlog.delete.useMutation({
+    onSuccess: () => { utils.backlog.list.invalidate({ clientId }); toast.success("Idea eliminada."); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const inp = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", fontSize: "13px", padding: "7px 10px", width: "100%", outline: "none" };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <p className="text-xs tracking-widest" style={{ color: "var(--gj-mint)", letterSpacing: "3px" }}>
+          {items.length} IDEA{items.length !== 1 ? "S" : ""}
+        </p>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="flex items-center gap-1 text-xs px-4 py-2 rounded"
+          style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
+        >
+          <Plus size={12} /> NUEVA IDEA
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="gj-card p-5 mb-6">
+          <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-mint)", letterSpacing: "3px" }}>NUEVA IDEA</p>
+          <div className="space-y-3">
+            <input placeholder="Título de la idea *" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} style={inp} />
+            <textarea placeholder="Descripción (opcional)" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} style={{ ...inp, resize: "vertical" }} />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>ESTADO</p>
+                <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))} style={inp}>
+                  {Object.entries(STATUS_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <p className="text-xs mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>PRIORIDAD</p>
+                <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value as any }))} style={inp}>
+                  {Object.entries(PRIORITY_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => { if (form.title) createItem.mutate({ clientId, ...form }); }}
+                disabled={!form.title}
+                className="flex items-center gap-1 text-xs px-4 py-2 rounded"
+                style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px", opacity: form.title ? 1 : 0.5 }}
+              >
+                <Save size={12} /> GUARDAR
+              </button>
+              <button onClick={() => { setShowForm(false); setForm(EMPTY_BACKLOG); }} className="text-xs px-4 py-2 rounded" style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "var(--gj-muted)", cursor: "pointer", letterSpacing: "2px" }}>
+                CANCELAR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {items.map((item) => {
+          const st = STATUS_META[item.status] ?? STATUS_META.idea;
+          const pr = PRIORITY_META[item.priority] ?? PRIORITY_META.media;
+          const isEditing = editingId === item.id;
+          return (
+            <div key={item.id} className="gj-card p-4">
+              {isEditing ? (
+                <div className="space-y-3">
+                  <input value={editData.title ?? item.title} onChange={e => setEditData(d => ({ ...d, title: e.target.value }))} style={inp} />
+                  <textarea value={editData.description ?? item.description ?? ""} onChange={e => setEditData(d => ({ ...d, description: e.target.value }))} rows={3} style={{ ...inp, resize: "vertical" }} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <select value={editData.status ?? item.status} onChange={e => setEditData(d => ({ ...d, status: e.target.value as any }))} style={inp}>
+                      {Object.entries(STATUS_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                    </select>
+                    <select value={editData.priority ?? item.priority} onChange={e => setEditData(d => ({ ...d, priority: e.target.value as any }))} style={inp}>
+                      {Object.entries(PRIORITY_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => updateItem.mutate({ id: item.id, clientId, ...editData })} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
+                      <Save size={12} /> GUARDAR
+                    </button>
+                    <button onClick={() => { setEditingId(null); setEditData({}); }} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "var(--gj-muted)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
+                      <X size={12} /> CANCELAR
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs px-2 py-0.5 rounded" style={{ color: st.color, background: `${st.color}18`, border: `1px solid ${st.color}40`, letterSpacing: "1px" }}>{st.label}</span>
+                      <span className="text-xs px-2 py-0.5 rounded" style={{ color: pr.color, background: `${pr.color}18`, border: `1px solid ${pr.color}40`, letterSpacing: "1px" }}>{pr.label}</span>
+                    </div>
+                    <p className="text-sm font-medium" style={{ color: "var(--gj-cream)" }}>{item.title}</p>
+                    {item.description && <p className="text-xs mt-1" style={{ color: "var(--gj-muted)", lineHeight: 1.5 }}>{item.description}</p>}
+                  </div>
+                  <div className="flex gap-1 flex-shrink-0">
+                    <button onClick={() => { setEditingId(item.id); setEditData({}); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}><Edit3 size={13} /></button>
+                    <button onClick={() => { if (confirm("¿Eliminar esta idea?")) deleteItem.mutate({ id: item.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "4px" }}><Trash2 size={13} /></button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {items.length === 0 && (
+          <p className="text-xs" style={{ color: "var(--gj-muted)" }}>Sin ideas en el backlog todavía.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminClientDetail() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
@@ -1276,15 +1422,16 @@ export default function AdminClientDetail() {
   });
 
   const PORTAL_SECTIONS = [
-    { id: "overview",   label: "Resumen ejecutivo" },
-    { id: "updates",    label: "Actualizaciones" },
-    { id: "phases",     label: "Etapas del proyecto" },
-    { id: "milestones", label: "Hitos e implementaciones" },
-    { id: "okrs",       label: "OKRs y métricas" },
-    { id: "learnings",  label: "Aprendizajes y obstáculos" },
-    { id: "scope",      label: "Alcance del proyecto" },
+    { id: "overview",       label: "Resumen ejecutivo" },
+    { id: "updates",        label: "Actualizaciones" },
+    { id: "phases",         label: "Etapas del proyecto" },
+    { id: "milestones",     label: "Hitos e implementaciones" },
+    { id: "okrs",           label: "OKRs y métricas" },
+    { id: "learnings",      label: "Aprendizajes y obstáculos" },
+    { id: "scope",          label: "Alcance del proyecto" },
     { id: "resources",      label: "Biblioteca de formación" },
     { id: "digital_assets", label: "Activos digitales" },
+    { id: "backlog",        label: "Backlog de ideas" },
   ];
 
   function toggleSection(sectionId: string) {
@@ -1482,6 +1629,7 @@ export default function AdminClientDetail() {
           {activeTab === "resources" && <ResourcesTab clientId={clientId} />}
           {activeTab === "digital_assets" && <DigitalAssetsTab clientId={clientId} />}
           {activeTab === "metrics" && <MetricsTab clientId={clientId} />}
+          {activeTab === "backlog" && <BacklogTab clientId={clientId} />}
         </div>
       </main>
     </div>

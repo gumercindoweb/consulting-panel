@@ -2,8 +2,10 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
+  BacklogItem,
   Client,
   ClientAccess,
+  InsertBacklogItem,
   InsertClient,
   InsertLearning,
   InsertMetric,
@@ -22,6 +24,7 @@ import {
   ProjectUpdate,
   Resource,
   ScopeItem,
+  backlogItems,
   clientAccess,
   clients,
   learnings,
@@ -466,4 +469,34 @@ export async function deleteUpdate(id: number, clientId: number): Promise<void> 
   const db = await getDb();
   if (!db) return;
   await db.delete(projectUpdates).where(and(eq(projectUpdates.id, id), eq(projectUpdates.clientId, clientId)));
+}
+
+// ─── BACKLOG ITEMS ────────────────────────────────────────────────────────────
+export async function getBacklogByClient(clientId: number): Promise<BacklogItem[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(backlogItems)
+    .where(eq(backlogItems.clientId, clientId))
+    .orderBy(desc(backlogItems.createdAt));
+}
+
+export async function createBacklogItem(data: InsertBacklogItem): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const result = await db.insert(backlogItems).values(data).returning();
+  return result[0]?.id || 0;
+}
+
+export async function updateBacklogItem(id: number, clientId: number, data: Partial<InsertBacklogItem>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(backlogItems).set({ ...data, updatedAt: new Date() }).where(and(eq(backlogItems.id, id), eq(backlogItems.clientId, clientId)));
+}
+
+export async function deleteBacklogItem(id: number, clientId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(backlogItems).where(and(eq(backlogItems.id, id), eq(backlogItems.clientId, clientId)));
 }

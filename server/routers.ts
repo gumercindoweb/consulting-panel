@@ -8,6 +8,7 @@ import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
+  createBacklogItem,
   createClient,
   createLearning,
   createMetric,
@@ -20,6 +21,7 @@ import {
   createScopeItem,
   createUpdate,
   createDigitalAsset,
+  deleteBacklogItem,
   deleteLearning,
   deleteMetric,
   deleteMilestone,
@@ -30,6 +32,7 @@ import {
   deleteUpdate,
   deleteDigitalAsset,
   getAllClients,
+  getBacklogByClient,
   getClientAccessForUser,
   getClientById,
   getUserByEmail,
@@ -46,6 +49,7 @@ import {
   reorderLearnings,
   reorderMilestones,
   reorderOkrs,
+  updateBacklogItem,
   updateClient,
   updateLearning,
   updateMetric,
@@ -669,6 +673,44 @@ export const appRouter = router({
     delete: adminProcedure
       .input(z.object({ id: z.number(), clientId: z.number() }))
       .mutation(({ input }) => deleteUpdate(input.id, input.clientId)),
+  }),
+
+  // ─── BACKLOG ─────────────────────────────────────────────────────────────
+  backlog: router({
+    list: protectedProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+        return getBacklogByClient(input.clientId);
+      }),
+
+    create: adminProcedure
+      .input(z.object({
+        clientId: z.number(),
+        title: z.string().min(1).max(255),
+        description: z.string().optional(),
+        status: z.enum(["idea", "en_revision", "aprobada", "en_progreso", "descartada"]).default("idea"),
+        priority: z.enum(["alta", "media", "baja"]).default("media"),
+      }))
+      .mutation(({ input }) => createBacklogItem(input)),
+
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        clientId: z.number(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        status: z.enum(["idea", "en_revision", "aprobada", "en_progreso", "descartada"]).optional(),
+        priority: z.enum(["alta", "media", "baja"]).optional(),
+      }))
+      .mutation(({ input }) => {
+        const { id, clientId, ...data } = input;
+        return updateBacklogItem(id, clientId, data);
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number(), clientId: z.number() }))
+      .mutation(({ input }) => deleteBacklogItem(input.id, input.clientId)),
   }),
 });
 

@@ -7,6 +7,7 @@ import {
   FileText,
   FolderOpen,
   LayoutDashboard,
+  Lightbulb,
   Package,
   Rss,
   Target,
@@ -29,6 +30,7 @@ const NAV_ITEMS: { id: DashboardSection; label: string; icon: React.FC<any> }[] 
   { id: "scope", label: "ALCANCE DEL PROYECTO", icon: FileText },
   { id: "resources", label: "RECURSOS DEL EQUIPO", icon: FolderOpen },
   { id: "digital_assets", label: "ACTIVOS DIGITALES", icon: Package },
+  { id: "backlog", label: "BACKLOG DE IDEAS", icon: Lightbulb },
 ];
 
 const FUTURA = "'Futura Std', 'Futura', sans-serif";
