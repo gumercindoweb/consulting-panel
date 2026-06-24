@@ -79,105 +79,141 @@ export default function SectionOverview({ clientId, client }: Props) {
     ];
 
     return (
-      <div style={{ marginTop: "-1.5rem", marginLeft: "-1.5rem", marginRight: "-1.5rem" }}>
-        {/* DARK ENERGY HERO */}
+      <div className="animate-fade-up">
+        {/* URBAN BOARD — white card con flat yellow shadow sobre fondo oscuro */}
         <div
           style={{
-            background: "#231F20",
-            padding: "48px 32px 40px",
-            borderBottom: "4px solid #FFD100",
-            marginBottom: "2px",
+            border: "2px solid #231F20",
+            boxShadow: "6px 6px 0 #FFD100",
+            overflow: "hidden",
           }}
         >
-          <p
+          {/* Barra superior amarilla */}
+          <div
             style={{
-              fontFamily: FUTURA_CONDENSED,
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: "0.3em",
-              color: "#FFD100",
-              textTransform: "uppercase",
-              marginBottom: 14,
+              background: "#FFD100",
+              padding: "10px 24px",
+              borderBottom: "2px solid #231F20",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
-            {">> ALWAYS ROLLING"}
-          </p>
-          <h1
-            style={{
-              fontFamily: FUTURA,
-              fontSize: 52,
-              fontWeight: 900,
-              textTransform: "uppercase",
-              letterSpacing: "-0.02em",
-              color: "#FFFFFF",
-              lineHeight: 0.9,
-              marginBottom: 16,
-            }}
-          >
-            {client.name}
-          </h1>
-          {client.consultorName && (
             <p
               style={{
                 fontFamily: FUTURA_CONDENSED,
                 fontSize: 11,
+                fontWeight: 900,
                 letterSpacing: "0.2em",
-                color: "#4a4647",
                 textTransform: "uppercase",
+                color: "#231F20",
               }}
             >
-              Consultor: {client.consultorName}
+              {">> ALWAYS ROLLING"}
             </p>
-          )}
-        </div>
+            {client.consultorName && (
+              <p
+                style={{
+                  fontFamily: FUTURA_CONDENSED,
+                  fontSize: 10,
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                  color: "rgba(35,31,32,0.5)",
+                }}
+              >
+                {client.consultorName}
+              </p>
+            )}
+          </div>
 
-        {/* GRID 2x2 — fondo amarillo como separador flat entre celdas */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, background: "#FFD100" }}>
-          {cells.map((cell, i) => (
+          {/* Hero — nombre del cliente en itálica oblicua (skewX -12deg, DS motion type) */}
+          <div
+            style={{
+              background: "#FFFFFF",
+              padding: "32px 28px 28px",
+              borderBottom: "2px solid #231F20",
+              borderLeft: "6px solid #FFD100",
+            }}
+          >
             <div
-              key={cell.label}
               style={{
-                padding: "28px 24px",
-                background: i % 2 === 0 ? "#1b1818" : "#201d1d",
+                display: "inline-block",
+                transform: "skewX(-12deg)",
+                transformOrigin: "left bottom",
               }}
             >
-              <p
+              <h1
                 style={{
                   fontFamily: FUTURA_CONDENSED,
-                  fontSize: 9,
-                  letterSpacing: "0.25em",
-                  textTransform: "uppercase",
-                  color: "#FFD100",
-                  marginBottom: 10,
-                  fontWeight: 700,
-                }}
-              >
-                {cell.label}
-              </p>
-              <p
-                style={{
-                  fontFamily: FUTURA_CONDENSED,
-                  fontSize: 40,
+                  fontSize: 64,
                   fontWeight: 900,
-                  color: "#FFFFFF",
-                  lineHeight: 0.9,
-                  marginBottom: 8,
+                  textTransform: "uppercase",
+                  letterSpacing: "-0.02em",
+                  color: "#231F20",
+                  lineHeight: 0.85,
                 }}
               >
-                {cell.value}
-              </p>
-              <p
-                style={{
-                  fontSize: 12,
-                  color: "#4a4647",
-                  lineHeight: 1.5,
-                  fontFamily: FUTURA,
-                }}
-              >
-                {cell.sub}
-              </p>
+                {client.name}
+              </h1>
             </div>
-          ))}
+          </div>
+
+          {/* Grid 2x2 — separador negro como gap, celdas blancas/amarillas alternadas */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 2,
+              background: "#231F20",
+            }}
+          >
+            {cells.map((cell, i) => (
+              <div
+                key={cell.label}
+                style={{
+                  padding: "24px 20px",
+                  background: i % 2 === 0 ? "#FFFFFF" : "#FFD100",
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: FUTURA_CONDENSED,
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: "0.25em",
+                    textTransform: "uppercase",
+                    color: "#231F20",
+                    opacity: i % 2 === 0 ? 0.4 : 0.65,
+                    marginBottom: 8,
+                  }}
+                >
+                  {cell.label}
+                </p>
+                <p
+                  style={{
+                    fontFamily: FUTURA_CONDENSED,
+                    fontSize: 40,
+                    fontWeight: 900,
+                    color: "#231F20",
+                    lineHeight: 0.9,
+                    marginBottom: 8,
+                  }}
+                >
+                  {cell.value}
+                </p>
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: i % 2 === 0 ? "#888" : "rgba(35,31,32,0.55)",
+                    lineHeight: 1.5,
+                    fontFamily: FUTURA,
+                  }}
+                >
+                  {cell.sub}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
