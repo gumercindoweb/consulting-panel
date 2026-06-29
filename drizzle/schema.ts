@@ -237,6 +237,7 @@ export const projectUpdates = pgTable("project_updates", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   clientId: integer("clientId").notNull(),
   phaseId: integer("phaseId"),
+  milestoneId: integer("milestoneId"),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body").notNull(),
   category: updateCategoryEnum("category").default("general").notNull(),

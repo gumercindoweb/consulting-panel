@@ -83,6 +83,8 @@ function FileUploadButton({ clientId, onUploaded, label = "SUBIR ARCHIVO" }: {
 function UpdatesTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
   const { data: updates = [] } = trpc.updates.list.useQuery({ clientId });
+  const { data: phases = [] } = trpc.phases.list.useQuery({ clientId });
+  const { data: milestones = [] } = trpc.milestones.list.useQuery({ clientId });
   const createUpdate = trpc.updates.create.useMutation({
     onSuccess: () => { utils.updates.list.invalidate({ clientId }); toast.success("Actualización publicada."); setShowForm(false); setForm(EMPTY); },
     onError: (e) => toast.error(e.message),
@@ -96,7 +98,7 @@ function UpdatesTab({ clientId }: { clientId: number }) {
     onError: (e) => toast.error(e.message),
   });
 
-  const EMPTY = { title: "", body: "", category: "general" as const, status: "on_track" as const, impact: "medium" as const, isPublic: true, date: new Date().toISOString().split("T")[0] };
+  const EMPTY = { title: "", body: "", category: "general" as const, status: "on_track" as const, impact: "medium" as const, isPublic: true, date: new Date().toISOString().split("T")[0], phaseId: undefined as number | undefined, milestoneId: undefined as number | undefined };
   const [form, setForm] = useState(EMPTY);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -105,6 +107,15 @@ function UpdatesTab({ clientId }: { clientId: number }) {
   const inp = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", fontSize: "13px", padding: "7px 10px", width: "100%", outline: "none" };
 
   const CAT_LABELS: Record<string, string> = { session: "SESIÓN", result: "RESULTADO", delivery: "ENTREGABLE", insight: "INSIGHT", blocker: "BLOQUEADOR", win: "LOGRO", general: "ACTUALIZACIÓN" };
+
+  const milestonesForPhase = (phaseId: number | undefined) =>
+    phaseId ? milestones.filter((m) => m.phaseId === phaseId) : milestones;
+
+  const getMilestoneName = (milestoneId: number | null | undefined) =>
+    milestones.find((m) => m.id === milestoneId)?.title;
+
+  const getPhaseName = (phaseId: number | null | undefined) =>
+    phases.find((p) => p.id === phaseId)?.name;
 
   return (
     <div className="space-y-4">
@@ -128,6 +139,14 @@ function UpdatesTab({ clientId }: { clientId: number }) {
               <option value="high">IMPACTO ALTO</option><option value="medium">IMPACTO MEDIO</option><option value="low">IMPACTO BAJO</option>
             </select>
             <input type="date" style={inp} value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
+            <select style={inp} value={form.phaseId ?? ""} onChange={(e) => setForm((f) => ({ ...f, phaseId: e.target.value ? Number(e.target.value) : undefined, milestoneId: undefined }))}>
+              <option value="">— Etapa (opcional) —</option>
+              {phases.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            <select style={inp} value={form.milestoneId ?? ""} onChange={(e) => { const mid = e.target.value ? Number(e.target.value) : undefined; const m = milestones.find((x) => x.id === mid); setForm((f) => ({ ...f, milestoneId: mid, phaseId: m?.phaseId ?? f.phaseId })); }}>
+              <option value="">— Hito (opcional) —</option>
+              {milestonesForPhase(form.phaseId).map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
+            </select>
           </div>
           <label className="flex items-center gap-2 text-xs" style={{ color: "var(--gj-muted)", cursor: "pointer" }}>
             <input type="checkbox" checked={form.isPublic} onChange={(e) => setForm((f) => ({ ...f, isPublic: e.target.checked }))} />
@@ -144,50 +163,65 @@ function UpdatesTab({ clientId }: { clientId: number }) {
         </div>
       )}
 
-      {updates.map((u) => (
-        <div key={u.id} style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "16px" }}>
-          {editingId === u.id ? (
-            <div className="space-y-3">
-              <input style={inp} value={editData.title ?? u.title} onChange={(e) => setEditData((d: any) => ({ ...d, title: e.target.value }))} />
-              <textarea style={{ ...inp, minHeight: "70px", resize: "vertical" }} value={editData.body ?? u.body} onChange={(e) => setEditData((d: any) => ({ ...d, body: e.target.value }))} />
-              <div className="grid grid-cols-2 gap-2">
-                <select style={inp} value={editData.category ?? u.category} onChange={(e) => setEditData((d: any) => ({ ...d, category: e.target.value }))}>
-                  {Object.entries(CAT_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                </select>
-                <select style={inp} value={editData.status ?? u.status} onChange={(e) => setEditData((d: any) => ({ ...d, status: e.target.value }))}>
-                  <option value="on_track">EN CURSO</option><option value="at_risk">EN RIESGO</option><option value="blocked">BLOQUEADO</option><option value="completed">COMPLETADO</option>
-                </select>
-                <input type="date" style={inp} value={editData.date ?? new Date(u.date).toISOString().split("T")[0]} onChange={(e) => setEditData((d: any) => ({ ...d, date: e.target.value }))} />
-                <label className="flex items-center gap-2 text-xs" style={{ color: "var(--gj-muted)", cursor: "pointer" }}>
-                  <input type="checkbox" checked={editData.isPublic ?? u.isPublic} onChange={(e) => setEditData((d: any) => ({ ...d, isPublic: e.target.checked }))} />
-                  Visible para el cliente
-                </label>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => updateUpdate.mutate({ id: u.id, clientId, ...editData })} className="flex items-center gap-1 text-xs px-3 py-1 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}><Save size={12} /> GUARDAR</button>
-                <button onClick={() => { setEditingId(null); setEditData({}); }} className="text-xs px-3 py-1 rounded" style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "var(--gj-muted)", cursor: "pointer", letterSpacing: "2px" }}>CANCELAR</button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="text-xs" style={{ color: "var(--gj-mint)", letterSpacing: "2px" }}>{CAT_LABELS[u.category]}</span>
-                  <span className="text-xs" style={{ color: "var(--gj-muted)" }}>·</span>
-                  <span className="text-xs" style={{ color: "var(--gj-muted)" }}>{new Date(u.date).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" })}</span>
-                  {!u.isPublic && <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(138,128,130,0.15)", color: "var(--gj-muted)", letterSpacing: "1px" }}>PRIVADO</span>}
+      {updates.map((u) => {
+        const milestoneName = getMilestoneName(u.milestoneId);
+        const phaseName = getPhaseName(u.phaseId);
+        const editPhaseId = editData.phaseId !== undefined ? editData.phaseId : u.phaseId;
+        return (
+          <div key={u.id} style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "16px" }}>
+            {editingId === u.id ? (
+              <div className="space-y-3">
+                <input style={inp} value={editData.title ?? u.title} onChange={(e) => setEditData((d: any) => ({ ...d, title: e.target.value }))} />
+                <textarea style={{ ...inp, minHeight: "70px", resize: "vertical" }} value={editData.body ?? u.body} onChange={(e) => setEditData((d: any) => ({ ...d, body: e.target.value }))} />
+                <div className="grid grid-cols-2 gap-2">
+                  <select style={inp} value={editData.category ?? u.category} onChange={(e) => setEditData((d: any) => ({ ...d, category: e.target.value }))}>
+                    {Object.entries(CAT_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                  <select style={inp} value={editData.status ?? u.status} onChange={(e) => setEditData((d: any) => ({ ...d, status: e.target.value }))}>
+                    <option value="on_track">EN CURSO</option><option value="at_risk">EN RIESGO</option><option value="blocked">BLOQUEADO</option><option value="completed">COMPLETADO</option>
+                  </select>
+                  <input type="date" style={inp} value={editData.date ?? new Date(u.date).toISOString().split("T")[0]} onChange={(e) => setEditData((d: any) => ({ ...d, date: e.target.value }))} />
+                  <label className="flex items-center gap-2 text-xs" style={{ color: "var(--gj-muted)", cursor: "pointer" }}>
+                    <input type="checkbox" checked={editData.isPublic ?? u.isPublic} onChange={(e) => setEditData((d: any) => ({ ...d, isPublic: e.target.checked }))} />
+                    Visible para el cliente
+                  </label>
+                  <select style={inp} value={editPhaseId ?? ""} onChange={(e) => setEditData((d: any) => ({ ...d, phaseId: e.target.value ? Number(e.target.value) : null, milestoneId: null }))}>
+                    <option value="">— Etapa (opcional) —</option>
+                    {phases.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                  <select style={inp} value={editData.milestoneId !== undefined ? (editData.milestoneId ?? "") : (u.milestoneId ?? "")} onChange={(e) => { const mid = e.target.value ? Number(e.target.value) : null; const m = milestones.find((x) => x.id === mid); setEditData((d: any) => ({ ...d, milestoneId: mid, phaseId: m?.phaseId ?? d.phaseId })); }}>
+                    <option value="">— Hito (opcional) —</option>
+                    {milestonesForPhase(editPhaseId).map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
+                  </select>
                 </div>
-                <p className="text-sm font-medium" style={{ color: "var(--gj-cream)" }}>{u.title}</p>
-                <p className="text-xs mt-1" style={{ color: "var(--gj-muted)", lineHeight: 1.5 }}>{u.body.slice(0, 120)}{u.body.length > 120 ? "…" : ""}</p>
+                <div className="flex gap-2">
+                  <button onClick={() => updateUpdate.mutate({ id: u.id, clientId, ...editData })} className="flex items-center gap-1 text-xs px-3 py-1 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}><Save size={12} /> GUARDAR</button>
+                  <button onClick={() => { setEditingId(null); setEditData({}); }} className="text-xs px-3 py-1 rounded" style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "var(--gj-muted)", cursor: "pointer", letterSpacing: "2px" }}>CANCELAR</button>
+                </div>
               </div>
-              <div className="flex gap-1 flex-shrink-0">
-                <button onClick={() => { setEditingId(u.id); setEditData({}); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}><Edit3 size={13} /></button>
-                <button onClick={() => { if (confirm("¿Eliminar?")) deleteUpdate.mutate({ id: u.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}><Trash2 size={13} /></button>
+            ) : (
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="text-xs" style={{ color: "var(--gj-mint)", letterSpacing: "2px" }}>{CAT_LABELS[u.category]}</span>
+                    <span className="text-xs" style={{ color: "var(--gj-muted)" }}>·</span>
+                    <span className="text-xs" style={{ color: "var(--gj-muted)" }}>{new Date(u.date).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" })}</span>
+                    {milestoneName && <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(100,180,120,0.15)", color: "var(--gj-mint)", letterSpacing: "1px" }}>→ {milestoneName}</span>}
+                    {!milestoneName && phaseName && <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(245,240,232,0.06)", color: "var(--gj-muted)", letterSpacing: "1px" }}>{phaseName}</span>}
+                    {!u.isPublic && <span className="text-xs px-2 py-0.5 rounded" style={{ background: "rgba(138,128,130,0.15)", color: "var(--gj-muted)", letterSpacing: "1px" }}>PRIVADO</span>}
+                  </div>
+                  <p className="text-sm font-medium" style={{ color: "var(--gj-cream)" }}>{u.title}</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--gj-muted)", lineHeight: 1.5 }}>{u.body.slice(0, 120)}{u.body.length > 120 ? "…" : ""}</p>
+                </div>
+                <div className="flex gap-1 flex-shrink-0">
+                  <button onClick={() => { setEditingId(u.id); setEditData({}); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}><Edit3 size={13} /></button>
+                  <button onClick={() => { if (confirm("¿Eliminar?")) deleteUpdate.mutate({ id: u.id, clientId }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}><Trash2 size={13} /></button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      ))}
+            )}
+          </div>
+        );
+      })}
 
       {updates.length === 0 && !showForm && (
         <p className="text-xs" style={{ color: "var(--gj-muted)" }}>Sin actualizaciones publicadas todavía.</p>
@@ -1620,16 +1654,15 @@ export default function AdminClientDetail() {
   const PORTAL_SECTIONS = [
     { id: "overview",       label: "Resumen ejecutivo" },
     { id: "updates",        label: "Actualizaciones" },
-    { id: "phases",         label: "Etapas del proyecto" },
+    { id: "timeline",       label: "Hoja de Ruta" },
     { id: "milestones",     label: "Hitos e implementaciones" },
-    { id: "okrs",           label: "OKRs y métricas" },
+    { id: "okrs",           label: "Objetivos" },
+    { id: "metrics",        label: "Métricas del negocio" },
     { id: "learnings",      label: "Aprendizajes y obstáculos" },
     { id: "scope",          label: "Alcance del proyecto" },
     { id: "resources",      label: "Biblioteca de formación" },
     { id: "digital_assets", label: "Activos digitales" },
     { id: "backlog",        label: "Backlog de ideas" },
-    { id: "metrics",        label: "Métricas del negocio" },
-    { id: "timeline",       label: "Línea de tiempo" },
   ];
 
   function toggleSection(sectionId: string) {

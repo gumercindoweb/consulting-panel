@@ -642,6 +642,7 @@ export const appRouter = router({
       .input(z.object({
         clientId: z.number(),
         phaseId: z.number().optional(),
+        milestoneId: z.number().optional(),
         title: z.string().min(1).max(255),
         body: z.string().min(1),
         category: z.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).default("general"),
@@ -666,6 +667,7 @@ export const appRouter = router({
         impact: z.enum(["high", "medium", "low"]).optional(),
         isPublic: z.boolean().optional(),
         phaseId: z.number().optional(),
+        milestoneId: z.number().optional(),
         date: z.string().optional(),
       }))
       .mutation(({ input }) => {

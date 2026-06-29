@@ -29,16 +29,15 @@ interface Props {
 const NAV_ITEMS: { id: DashboardSection; label: string; icon: React.FC<any> }[] = [
   { id: "overview", label: "RESUMEN EJECUTIVO", icon: LayoutDashboard },
   { id: "updates", label: "ACTUALIZACIONES", icon: Rss },
-  { id: "phases", label: "ETAPAS DEL PROYECTO", icon: CheckSquare },
+  { id: "timeline", label: "HOJA DE RUTA", icon: CalendarRange },
   { id: "milestones", label: "HITOS E IMPLEMENTACIONES", icon: BarChart3 },
-  { id: "okrs", label: "OKRs Y MÉTRICAS", icon: Target },
+  { id: "okrs", label: "OBJETIVOS", icon: Target },
+  { id: "metrics", label: "MÉTRICAS", icon: TrendingUp },
   { id: "learnings", label: "APRENDIZAJES Y OBSTÁCULOS", icon: BookOpen },
   { id: "scope", label: "ALCANCE DEL PROYECTO", icon: FileText },
   { id: "resources", label: "RECURSOS DEL EQUIPO", icon: FolderOpen },
   { id: "digital_assets", label: "ACTIVOS DIGITALES", icon: Package },
   { id: "backlog", label: "BACKLOG DE IDEAS", icon: Lightbulb },
-  { id: "metrics", label: "MÉTRICAS", icon: TrendingUp },
-  { id: "timeline", label: "LÍNEA DE TIEMPO", icon: CalendarRange },
 ];
 
 const FUTURA = "'Futura Std', 'Futura', sans-serif";
