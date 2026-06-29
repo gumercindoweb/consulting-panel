@@ -11,6 +11,8 @@ import {
   Package,
   Rss,
   Target,
+  TrendingUp,
+  CalendarRange,
   X,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/useMobile";
@@ -35,6 +37,8 @@ const NAV_ITEMS: { id: DashboardSection; label: string; icon: React.FC<any> }[] 
   { id: "resources", label: "RECURSOS DEL EQUIPO", icon: FolderOpen },
   { id: "digital_assets", label: "ACTIVOS DIGITALES", icon: Package },
   { id: "backlog", label: "BACKLOG DE IDEAS", icon: Lightbulb },
+  { id: "metrics", label: "MÉTRICAS", icon: TrendingUp },
+  { id: "timeline", label: "LÍNEA DE TIEMPO", icon: CalendarRange },
 ];
 
 const FUTURA = "'Futura Std', 'Futura', sans-serif";

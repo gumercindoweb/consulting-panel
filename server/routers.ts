@@ -750,6 +750,35 @@ export const appRouter = router({
       .input(z.object({ userId: z.number(), clientId: z.number() }))
       .mutation(({ input }) => revokeClientAccess(input.userId, input.clientId)),
   }),
+
+  // ─── STORAGE ─────────────────────────────────────────────────────────────
+  storage: router({
+    getUploadUrl: adminProcedure
+      .input(z.object({
+        clientId: z.number(),
+        filename: z.string().min(1).max(255),
+        contentType: z.string().min(1),
+      }))
+      .mutation(async ({ input }) => {
+        if (!ENV.supabaseUrl || !ENV.supabaseServiceKey) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Storage no configurado. Agregá SUPABASE_URL y SUPABASE_SERVICE_KEY en Vercel." });
+        }
+        const { StorageClient } = await import("@supabase/storage-js");
+        const storage = new StorageClient(`${ENV.supabaseUrl}/storage/v1`, {
+          Authorization: `Bearer ${ENV.supabaseServiceKey}`,
+          apikey: ENV.supabaseServiceKey,
+        });
+        const ext = input.filename.split(".").pop() ?? "";
+        const safeName = input.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `client-${input.clientId}/${Date.now()}_${safeName}`;
+        const { data, error } = await storage.from("panel-assets").createSignedUploadUrl(path);
+        if (error || !data) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `Error al generar URL de subida: ${error?.message ?? "sin respuesta"}` });
+        }
+        const publicUrl = `${ENV.supabaseUrl}/storage/v1/object/public/panel-assets/${path}`;
+        return { signedUrl: data.signedUrl, path, publicUrl, ext };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

@@ -16,6 +16,8 @@ import SectionScope from "@/components/dashboard/SectionScope";
 import SectionResources from "@/components/dashboard/SectionResources";
 import SectionDigitalAssets from "@/components/dashboard/SectionDigitalAssets";
 import SectionBacklog from "@/components/dashboard/SectionBacklog";
+import SectionMetrics from "@/components/dashboard/SectionMetrics";
+import SectionTimeline from "@/components/dashboard/SectionTimeline";
 
 export type DashboardSection =
   | "overview"
@@ -27,7 +29,9 @@ export type DashboardSection =
   | "scope"
   | "resources"
   | "digital_assets"
-  | "backlog";
+  | "backlog"
+  | "metrics"
+  | "timeline";
 
 export default function ClientDashboard() {
   const { user, loading, isAuthenticated, logout } = useAuth();
@@ -242,6 +246,12 @@ export default function ClientDashboard() {
           )}
           {activeSection === "backlog" && (
             <SectionBacklog clientId={activeClient.id} />
+          )}
+          {activeSection === "metrics" && (
+            <SectionMetrics clientId={activeClient.id} />
+          )}
+          {activeSection === "timeline" && (
+            <SectionTimeline clientId={activeClient.id} />
           )}
         </div>
       </main>

@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
-import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff, Upload, Paperclip } from "lucide-react";
 import { useIsMobile } from "@/hooks/useMobile";
 import { toast } from "sonner";
 import {
@@ -36,6 +36,58 @@ const TABS: { id: Tab; label: string; icon: React.FC<any>; title: string; subtit
   { id: "backlog", label: "BACKLOG", icon: Lightbulb, title: "Backlog de Ideas", subtitle: "Registrá ideas, mejoras y oportunidades para el proyecto del cliente." },
   { id: "users", label: "ACCESOS", icon: Users, title: "Gestión de Accesos", subtitle: "Creá y administrá los usuarios que tienen acceso al portal de este cliente." },
 ];
+
+// ─── FILE UPLOAD BUTTON ───────────────────────────────────────────────────────
+function FileUploadButton({ clientId, onUploaded, label = "SUBIR ARCHIVO" }: {
+  clientId: number;
+  onUploaded: (publicUrl: string, filename: string) => void;
+  label?: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const getUploadUrl = trpc.storage.getUploadUrl.useMutation();
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { signedUrl, publicUrl } = await getUploadUrl.mutateAsync({
+        clientId,
+        filename: file.name,
+        contentType: file.type || "application/octet-stream",
+      });
+      const res = await fetch(signedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+      onUploaded(publicUrl, file.name);
+      toast.success("Archivo subido correctamente.");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Error al subir el archivo.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  return (
+    <label
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        background: "rgba(255,255,255,0.06)", border: "1px dashed rgba(255,255,255,0.2)",
+        borderRadius: "4px", cursor: uploading ? "wait" : "pointer",
+        padding: "6px 12px", fontSize: "11px", letterSpacing: "2px", color: "var(--gj-muted)",
+        opacity: uploading ? 0.6 : 1, transition: "all 0.2s",
+      }}
+    >
+      {uploading ? <Upload size={12} className="animate-spin" /> : <Paperclip size={12} />}
+      {uploading ? "SUBIENDO..." : label}
+      <input type="file" style={{ display: "none" }} onChange={handleFile} disabled={uploading} />
+    </label>
+  );
+}
 
 // ─── UPDATES TAB ──────────────────────────────────────────────────────────────
 function UpdatesTab({ clientId }: { clientId: number }) {
@@ -999,7 +1051,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
     onError: (e) => toast.error(e.message),
   });
 
-  const EMPTY_R = { title: "", description: "", category: "script" as const, externalUrl: "", content: "" };
+  const EMPTY_R = { title: "", description: "", category: "script" as const, externalUrl: "", fileUrl: "", content: "" };
   const [form, setForm] = useState(EMPTY_R);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState(EMPTY_R);
@@ -1016,7 +1068,13 @@ function ResourcesTab({ clientId }: { clientId: number }) {
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <input value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
                 <input value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
-                <input value={editForm.externalUrl} onChange={(e) => setEditForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL (opcional)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+                <input value={editForm.externalUrl} onChange={(e) => setEditForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL externa (opcional)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+                <div className="col-span-2 flex items-center gap-3">
+                  {editForm.fileUrl
+                    ? <span className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}><Paperclip size={12} /> {editForm.fileUrl.split("/").pop()}<button type="button" onClick={() => setEditForm(f => ({ ...f, fileUrl: "" }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button></span>
+                    : <FileUploadButton clientId={clientId} onUploaded={(url) => setEditForm(f => ({ ...f, fileUrl: url }))} />
+                  }
+                </div>
                 <textarea value={editForm.content} onChange={(e) => setEditForm((f) => ({ ...f, content: e.target.value }))} placeholder="Contenido de texto (opcional)..." rows={3} className="col-span-2 px-3 py-2 text-sm resize-none" style={inputStyle} />
                 <select value={editForm.category} onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={inputStyle}>
                   <option value="script">Videotutorial</option>
@@ -1028,7 +1086,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
                 </select>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => { if (editForm.title) updateResource.mutate({ id: r.id, clientId, ...editForm }); }} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
+                <button onClick={() => { if (editForm.title) updateResource.mutate({ id: r.id, clientId, title: editForm.title, description: editForm.description, category: editForm.category, externalUrl: editForm.externalUrl || undefined, fileUrl: editForm.fileUrl || undefined, content: editForm.content || undefined }); }} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
                   <Save size={13} /> GUARDAR
                 </button>
                 <button onClick={() => setEditingId(null)} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "var(--gj-muted)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
@@ -1045,7 +1103,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
                 {r.externalUrl && <a href={r.externalUrl} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 block" style={{ color: "var(--gj-green)" }}>{r.externalUrl}</a>}
               </div>
               <div className="flex gap-1 flex-shrink-0">
-                <button onClick={() => { setEditingId(r.id); setEditForm({ title: r.title, description: r.description || "", category: r.category as any, externalUrl: r.externalUrl || "", content: (r as any).content || "" }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-mint)", padding: "4px" }}>
+                <button onClick={() => { setEditingId(r.id); setEditForm({ title: r.title, description: r.description || "", category: r.category as any, externalUrl: r.externalUrl || "", fileUrl: (r as any).fileUrl || "", content: (r as any).content || "" }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-mint)", padding: "4px" }}>
                   <Edit3 size={14} />
                 </button>
                 <button onClick={() => deleteResource.mutate({ id: r.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}>
@@ -1062,7 +1120,13 @@ function ResourcesTab({ clientId }: { clientId: number }) {
         <div className="grid grid-cols-2 gap-3 mb-3">
           <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título del recurso..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
           <input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
-          <input value={form.externalUrl} onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL (opcional)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+          <input value={form.externalUrl} onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL externa (opcional)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+          <div className="col-span-2 flex items-center gap-3">
+            {form.fileUrl
+              ? <span className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}><Paperclip size={12} /> {form.fileUrl.split("/").pop()}<button type="button" onClick={() => setForm(f => ({ ...f, fileUrl: "" }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button></span>
+              : <FileUploadButton clientId={clientId} onUploaded={(url) => setForm(f => ({ ...f, fileUrl: url }))} />
+            }
+          </div>
           <textarea value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} placeholder="Contenido de texto (opcional)..." rows={3} className="col-span-2 px-3 py-2 text-sm resize-none" style={inputStyle} />
           <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={inputStyle}>
             <option value="script">Videotutorial</option>
@@ -1074,7 +1138,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
           </select>
         </div>
         <button
-          onClick={() => { if (form.title) { createResource.mutate({ clientId, ...form, order: resources.length }); setForm(EMPTY_R); } }}
+          onClick={() => { if (form.title) { createResource.mutate({ clientId, title: form.title, description: form.description || undefined, category: form.category, externalUrl: form.externalUrl || undefined, fileUrl: form.fileUrl || undefined, content: form.content || undefined, order: resources.length }); setForm(EMPTY_R); } }}
           className="flex items-center gap-1 text-xs px-4 py-2 rounded"
           style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
         >
@@ -1136,7 +1200,12 @@ function DigitalAssetsTab({ clientId }: { clientId: number }) {
                 <input value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
                 <input value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
                 <input value={editForm.externalUrl} onChange={(e) => setEditForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL externa (página, herramienta, Drive...)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
-                <input value={editForm.fileUrl} onChange={(e) => setEditForm((f) => ({ ...f, fileUrl: e.target.value }))} placeholder="URL de archivo (PDF, imagen...)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+                <div className="col-span-2 flex items-center gap-3">
+                  {editForm.fileUrl
+                    ? <span className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}><Paperclip size={12} /> {editForm.fileUrl.split("/").pop()}<button type="button" onClick={() => setEditForm(f => ({ ...f, fileUrl: "" }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button></span>
+                    : <FileUploadButton clientId={clientId} onUploaded={(url) => setEditForm(f => ({ ...f, fileUrl: url }))} label="SUBIR ARCHIVO / PDF" />
+                  }
+                </div>
                 <input value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Notas internas..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
                 <CategorySelect value={editForm.category} onChange={(v) => setEditForm((f) => ({ ...f, category: v as any }))} />
               </div>
@@ -1180,7 +1249,12 @@ function DigitalAssetsTab({ clientId }: { clientId: number }) {
           <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
           <input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
           <input value={form.externalUrl} onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL externa (página, herramienta, Drive...)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
-          <input value={form.fileUrl} onChange={(e) => setForm((f) => ({ ...f, fileUrl: e.target.value }))} placeholder="URL de archivo (PDF, imagen...)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
+          <div className="col-span-2 flex items-center gap-3">
+            {form.fileUrl
+              ? <span className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}><Paperclip size={12} /> {form.fileUrl.split("/").pop()}<button type="button" onClick={() => setForm(f => ({ ...f, fileUrl: "" }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button></span>
+              : <FileUploadButton clientId={clientId} onUploaded={(url) => setForm(f => ({ ...f, fileUrl: url }))} label="SUBIR ARCHIVO / PDF" />
+            }
+          </div>
           <input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Notas internas..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
           <CategorySelect value={form.category} onChange={(v) => setForm((f) => ({ ...f, category: v as any }))} />
         </div>
@@ -1564,6 +1638,8 @@ export default function AdminClientDetail() {
     { id: "resources",      label: "Biblioteca de formación" },
     { id: "digital_assets", label: "Activos digitales" },
     { id: "backlog",        label: "Backlog de ideas" },
+    { id: "metrics",        label: "Métricas del negocio" },
+    { id: "timeline",       label: "Línea de tiempo" },
   ];
 
   function toggleSection(sectionId: string) {

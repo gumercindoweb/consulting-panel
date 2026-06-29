@@ -11,4 +11,6 @@ export const ENV = {
   devAutoLogin: process.env.DEV_AUTOLOGIN === "1",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  supabaseUrl: process.env.SUPABASE_URL ?? "",
+  supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY ?? "",
 };
