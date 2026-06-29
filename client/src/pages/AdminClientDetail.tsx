@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
-import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff } from "lucide-react";
 import { useIsMobile } from "@/hooks/useMobile";
 import { toast } from "sonner";
 import {
@@ -21,7 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type Tab = "phases" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates" | "digital_assets" | "backlog";
+type Tab = "phases" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates" | "digital_assets" | "backlog" | "users";
 
 const TABS: { id: Tab; label: string; icon: React.FC<any>; title: string; subtitle: string }[] = [
   { id: "updates", label: "ACTUALIZACIONES", icon: Rss, title: "Actualizaciones del Proyecto", subtitle: "Publicá avances diarios que el cliente puede ver en su portal." },
@@ -34,6 +34,7 @@ const TABS: { id: Tab; label: string; icon: React.FC<any>; title: string; subtit
   { id: "digital_assets", label: "ACTIVOS", icon: Package, title: "Activos Digitales", subtitle: "Las piezas del engranaje que sostienen la cadena de valor del marketing." },
   { id: "metrics", label: "MÉTRICAS", icon: LayoutDashboard, title: "Métricas del Negocio", subtitle: "Indicadores clave de performance del cliente." },
   { id: "backlog", label: "BACKLOG", icon: Lightbulb, title: "Backlog de Ideas", subtitle: "Registrá ideas, mejoras y oportunidades para el proyecto del cliente." },
+  { id: "users", label: "ACCESOS", icon: Users, title: "Gestión de Accesos", subtitle: "Creá y administrá los usuarios que tienen acceso al portal de este cliente." },
 ];
 
 // ─── UPDATES TAB ──────────────────────────────────────────────────────────────
@@ -1409,6 +1410,136 @@ function BacklogTab({ clientId }: { clientId: number }) {
   );
 }
 
+// ─── USERS TAB ────────────────────────────────────────────────────────────────
+function UsersTab({ clientId }: { clientId: number }) {
+  const utils = trpc.useUtils();
+  const { data: userList = [], isLoading } = trpc.users.listByClient.useQuery({ clientId });
+  const createUser = trpc.users.createWithAccess.useMutation({
+    onSuccess: (res) => {
+      utils.users.listByClient.invalidate({ clientId });
+      toast.success(res.created ? "Usuario creado y acceso otorgado." : "Acceso otorgado al usuario existente.");
+      setShowForm(false);
+      setForm(EMPTY_FORM);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const revokeAccess = trpc.users.revokeAccess.useMutation({
+    onSuccess: () => { utils.users.listByClient.invalidate({ clientId }); toast.success("Acceso revocado."); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const EMPTY_FORM = { name: "", email: "", password: "" };
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [showForm, setShowForm] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [revokingId, setRevokingId] = useState<number | null>(null);
+
+  const inp = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", fontSize: "13px", padding: "8px 12px", width: "100%", outline: "none" };
+
+  return (
+    <div className="space-y-6">
+      {!showForm ? (
+        <button
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-2 text-xs px-4 py-2 rounded"
+          style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
+        >
+          <Plus size={14} /> NUEVO ACCESO
+        </button>
+      ) : (
+        <div className="gj-card p-5 space-y-4" style={{ maxWidth: 480 }}>
+          <p className="text-xs tracking-widest" style={{ color: "var(--gj-mint)", letterSpacing: "3px", fontWeight: 600 }}>CREAR ACCESO</p>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs block mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>NOMBRE</label>
+              <input style={inp} placeholder="Nombre del usuario" value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-xs block mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>EMAIL</label>
+              <input style={inp} type="email" placeholder="correo@ejemplo.com" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-xs block mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>CONTRASEÑA</label>
+              <div style={{ position: "relative" }}>
+                <input
+                  style={{ ...inp, paddingRight: 40 }}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Mínimo 6 caracteres"
+                  value={form.password}
+                  onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(s => !s)}
+                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: 0 }}
+                >
+                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }} style={{ flex: 1, padding: "8px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: "var(--gj-muted)", cursor: "pointer", fontSize: "12px", letterSpacing: "2px" }}>
+              CANCELAR
+            </button>
+            <button
+              onClick={() => { if (form.name && form.email && form.password) createUser.mutate({ clientId, ...form }); }}
+              disabled={!form.name || !form.email || form.password.length < 6 || createUser.isPending}
+              style={{ flex: 1, padding: "8px", background: "var(--gj-green)", border: "none", borderRadius: "4px", color: "var(--gj-cream)", cursor: "pointer", fontSize: "12px", letterSpacing: "2px", opacity: (!form.name || !form.email || form.password.length < 6) ? 0.5 : 1 }}
+            >
+              {createUser.isPending ? "CREANDO..." : "CREAR ACCESO"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Users list */}
+      <div className="space-y-2">
+        {isLoading && <p className="text-xs" style={{ color: "var(--gj-muted)" }}>Cargando...</p>}
+        {!isLoading && userList.length === 0 && (
+          <div className="gj-card p-8 text-center">
+            <p className="text-sm" style={{ color: "var(--gj-muted)", fontStyle: "italic" }}>
+              Este cliente no tiene usuarios con acceso todavía.
+            </p>
+          </div>
+        )}
+        {userList.map((u) => (
+          <div key={u.id} className="gj-card p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(10,135,105,0.15)", border: "1px solid rgba(10,135,105,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Users size={16} style={{ color: "var(--gj-green)" }} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm truncate" style={{ color: "var(--gj-cream)", fontWeight: 600 }}>{u.name || "—"}</p>
+                <p className="text-xs truncate" style={{ color: "var(--gj-muted)" }}>{u.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                if (revokingId === u.id) {
+                  revokeAccess.mutate({ userId: u.id, clientId });
+                  setRevokingId(null);
+                } else {
+                  setRevokingId(u.id);
+                  setTimeout(() => setRevokingId(null), 3000);
+                }
+              }}
+              style={{
+                background: revokingId === u.id ? "rgba(220,38,38,0.15)" : "transparent",
+                border: `1px solid ${revokingId === u.id ? "rgba(220,38,38,0.4)" : "rgba(255,255,255,0.1)"}`,
+                borderRadius: "4px", cursor: "pointer", padding: "6px 12px", flexShrink: 0,
+                color: revokingId === u.id ? "#ef4444" : "var(--gj-muted)", fontSize: "11px", letterSpacing: "1px",
+              }}
+            >
+              {revokingId === u.id ? "¿CONFIRMAR?" : "REVOCAR"}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminClientDetail() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
@@ -1662,6 +1793,7 @@ export default function AdminClientDetail() {
           {activeTab === "digital_assets" && <DigitalAssetsTab clientId={clientId} />}
           {activeTab === "metrics" && <MetricsTab clientId={clientId} />}
           {activeTab === "backlog" && <BacklogTab clientId={clientId} />}
+          {activeTab === "users" && <UsersTab clientId={clientId} />}
         </div>
       </main>
     </div>

@@ -3,13 +3,16 @@ import { z } from "zod";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
-import { verifyPassword } from "./_core/password";
+import { hashPassword, verifyPassword } from "./_core/password";
 import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
   createBacklogItem,
   createClient,
+  createUserWithPassword,
+  getUsersWithAccessToClient,
+  revokeClientAccess,
   createLearning,
   createMetric,
   createMilestone,
@@ -711,6 +714,41 @@ export const appRouter = router({
     delete: adminProcedure
       .input(z.object({ id: z.number(), clientId: z.number() }))
       .mutation(({ input }) => deleteBacklogItem(input.id, input.clientId)),
+  }),
+
+  // ─── USERS (admin only) ──────────────────────────────────────────────────
+  users: router({
+    listByClient: adminProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(({ input }) => getUsersWithAccessToClient(input.clientId)),
+
+    createWithAccess: adminProcedure
+      .input(z.object({
+        clientId: z.number(),
+        name: z.string().min(2).max(255),
+        email: z.string().email("Email inválido"),
+        password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+      }))
+      .mutation(async ({ input }) => {
+        const existingUser = await (await import("./db")).getUserByEmail(input.email);
+        if (existingUser) {
+          // User exists — just grant access if not already granted
+          await grantClientAccess(existingUser.id, input.clientId);
+          return { userId: existingUser.id, created: false };
+        }
+        const passwordHash = await hashPassword(input.password);
+        const userId = await createUserWithPassword({
+          email: input.email,
+          passwordHash,
+          name: input.name,
+        });
+        await grantClientAccess(userId, input.clientId);
+        return { userId, created: true };
+      }),
+
+    revokeAccess: adminProcedure
+      .input(z.object({ userId: z.number(), clientId: z.number() }))
+      .mutation(({ input }) => revokeClientAccess(input.userId, input.clientId)),
   }),
 });
 

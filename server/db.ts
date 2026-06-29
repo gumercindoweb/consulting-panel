@@ -1,4 +1,5 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
@@ -169,6 +170,51 @@ export async function grantClientAccess(userId: number, clientId: number): Promi
   if (existing.length === 0) {
     await db.insert(clientAccess).values({ userId, clientId });
   }
+}
+
+export async function getUsersWithAccessToClient(clientId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const accesses = await db.select().from(clientAccess).where(eq(clientAccess.clientId, clientId));
+  if (accesses.length === 0) return [];
+  const userIds = accesses.map((a) => a.userId);
+  const userRows = await db.select({
+    id: users.id,
+    name: users.name,
+    email: users.email,
+    role: users.role,
+    createdAt: users.createdAt,
+    accessId: clientAccess.id,
+  })
+    .from(users)
+    .innerJoin(clientAccess, and(eq(clientAccess.userId, users.id), eq(clientAccess.clientId, clientId)))
+    .where(inArray(users.id, userIds));
+  return userRows;
+}
+
+export async function createUserWithPassword(data: {
+  email: string;
+  passwordHash: string;
+  name: string;
+}): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const openId = `pwd_${randomBytes(16).toString("hex")}`;
+  const result = await db.insert(users).values({
+    openId,
+    email: data.email.trim().toLowerCase(),
+    passwordHash: data.passwordHash,
+    name: data.name,
+    loginMethod: "password",
+    role: "user",
+  }).returning();
+  return result[0].id;
+}
+
+export async function revokeClientAccess(userId: number, clientId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(clientAccess).where(and(eq(clientAccess.userId, userId), eq(clientAccess.clientId, clientId)));
 }
 
 // ─── PROJECT PHASES ───────────────────────────────────────────────────────────
