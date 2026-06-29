@@ -3,7 +3,9 @@ import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { getLoginUrl } from "@/const";
+import { Menu } from "lucide-react";
 import DashboardSidebar from "@/components/DashboardSidebar";
+import { useIsMobile } from "@/hooks/useMobile";
 import SectionOverview from "@/components/dashboard/SectionOverview";
 import SectionFeed from "@/components/dashboard/SectionFeed";
 import SectionPhases from "@/components/dashboard/SectionPhases";
@@ -32,6 +34,8 @@ export default function ClientDashboard() {
   const [, navigate] = useLocation();
   const params = useParams<{ clientId?: string }>();
   const [activeSection, setActiveSection] = useState<DashboardSection>("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const { data: myClients, isLoading: clientsLoading } = trpc.clients.myClients.useQuery(
     undefined,
@@ -144,31 +148,49 @@ export default function ClientDashboard() {
         activeSection={activeSection}
         onSectionChange={setActiveSection}
         user={user}
+        isOpen={isMobile ? sidebarOpen : true}
+        onClose={() => setSidebarOpen(false)}
       />
 
       {/* Main content */}
       <main className="flex-1 overflow-auto" style={{ minWidth: 0 }}>
         {/* Top bar */}
         <div
-          className="sticky top-0 z-20 flex items-center justify-between px-8 py-4"
+          className="sticky top-0 z-20 flex items-center justify-between py-4"
           style={{
+            padding: isMobile ? "12px 16px" : "16px 32px",
             background: "rgba(8,5,7,0.95)",
             borderBottom: "1px solid rgba(255,255,255,0.06)",
             backdropFilter: "blur(12px)",
           }}
         >
-          <div>
-            <p className="font-label text-xs tracking-widest" style={{ color: "var(--ambar)", letterSpacing: "5px" }}>
-              {activeClient.name.toUpperCase()}
-            </p>
-            <p className="font-body text-xs mt-0.5" style={{ color: "var(--gris)" }}>
-              Panel de seguimiento estratégico
-            </p>
+          <div className="flex items-center gap-3">
+            {/* Hamburger on mobile */}
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.6)", padding: 4, flexShrink: 0 }}
+              >
+                <Menu size={20} />
+              </button>
+            )}
+            <div>
+              <p className="font-label text-xs tracking-widest" style={{ color: "var(--ambar)", letterSpacing: isMobile ? "2px" : "5px", fontSize: isMobile ? 9 : 11 }}>
+                {activeClient.name.toUpperCase()}
+              </p>
+              {!isMobile && (
+                <p className="font-body text-xs mt-0.5" style={{ color: "var(--gris)" }}>
+                  Panel de seguimiento estratégico
+                </p>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-xs" style={{ color: "var(--gris)" }}>
-              {user?.name || user?.email}
-            </span>
+          <div className="flex items-center gap-3">
+            {!isMobile && (
+              <span className="text-xs" style={{ color: "var(--gris)" }}>
+                {user?.name || user?.email}
+              </span>
+            )}
             <button
               onClick={async () => {
                 await logout();
@@ -190,7 +212,7 @@ export default function ClientDashboard() {
         </div>
 
         {/* Section content */}
-        <div className="p-8">
+        <div style={{ padding: isMobile ? "16px" : "32px" }}>
           {activeSection === "overview" && (
             <SectionOverview clientId={activeClient.id} client={activeClient} />
           )}

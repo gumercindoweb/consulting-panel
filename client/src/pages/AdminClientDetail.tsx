@@ -2,7 +2,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
-import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu } from "lucide-react";
+import { useIsMobile } from "@/hooks/useMobile";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -1445,6 +1446,9 @@ export default function AdminClientDetail() {
     updateClientMutation.mutate({ id: clientId, visibleSections: safe });
   }
 
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate("/login");
     if (!loading && isAuthenticated && user?.role !== "admin") navigate("/dashboard");
@@ -1463,19 +1467,30 @@ export default function AdminClientDetail() {
 
   return (
     <div className="min-h-screen flex" style={{ background: "var(--gj-petrol-ink)" }}>
+      {/* ── SIDEBAR OVERLAY BACKDROP (mobile) ── */}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(2px)" }}
+        />
+      )}
+
       {/* ── SIDEBAR ────────────────────────────────────────── */}
+      {(!isMobile || sidebarOpen) && (
       <aside
         className="flex-shrink-0 flex flex-col"
         style={{
           background: "rgb(12,8,10)",
           borderRight: "1px solid rgba(255,255,255,0.06)",
           minHeight: "100vh",
-          position: "sticky",
-          top: 0,
           height: "100vh",
           overflowY: "auto",
-          width: "clamp(240px, 100%, 288px)",
-          maxWidth: "calc(100vw - 60px)",
+          width: 288,
+          ...(isMobile ? {
+            position: "fixed", top: 0, left: 0, zIndex: 50,
+          } : {
+            position: "sticky", top: 0,
+          }),
         }}
       >
         {/* Back + GJ brand */}
@@ -1578,38 +1593,53 @@ export default function AdminClientDetail() {
         </nav>
 
       </aside>
+      )}
 
       {/* ── MAIN CONTENT ──────────────────────────────────── */}
       <main className="flex-1 overflow-auto" style={{ minWidth: 0 }}>
         {/* Topbar */}
         <div
-          className="sticky top-0 z-20 flex items-center justify-between px-8 py-4"
-          style={{ background: "rgba(8,5,7,0.95)", borderBottom: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(12px)" }}
+          className="sticky top-0 z-20 flex items-center justify-between"
+          style={{
+            padding: isMobile ? "10px 14px" : "16px 32px",
+            background: "rgba(8,5,7,0.95)",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            backdropFilter: "blur(12px)",
+          }}
         >
-          <div>
-            <p className="font-label text-xs tracking-widest" style={{ color: "var(--gj-mint)", letterSpacing: "5px" }}>
+          <div className="flex items-center gap-2">
+            {isMobile && (
+              <button onClick={() => setSidebarOpen(true)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.5)", padding: 4 }}>
+                <Menu size={18} />
+              </button>
+            )}
+            <div>
+            <p className="font-label text-xs tracking-widest" style={{ color: "var(--gj-mint)", letterSpacing: isMobile ? "2px" : "5px", fontSize: isMobile ? 9 : 11 }}>
               {client.name.toUpperCase()}
             </p>
-            <p className="font-body text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>
-              Gestión de consultoría estratégica
-            </p>
+            {!isMobile && (
+              <p className="font-body text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>
+                Gestión de consultoría estratégica
+              </p>
+            )}
+            </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <a
               href={`/dashboard/${clientId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs py-2 px-4 rounded"
-              style={{ background: "rgba(10,135,105,0.1)", color: "var(--gj-green)", border: "1px solid rgba(10,135,105,0.2)", textDecoration: "none", letterSpacing: "2px", fontFamily: "var(--font-label)" }}
+              className="flex items-center gap-2 text-xs py-2 px-3 rounded"
+              style={{ background: "rgba(10,135,105,0.1)", color: "var(--gj-green)", border: "1px solid rgba(10,135,105,0.2)", textDecoration: "none", letterSpacing: isMobile ? "1px" : "2px", fontFamily: "var(--font-label)", fontSize: isMobile ? 9 : 11 }}
             >
-              VER COMO CLIENTE →
+              {isMobile ? "VER →" : "VER COMO CLIENTE →"}
             </a>
-            <img src="/gj-logo.png" alt="GJ" style={{ height: 24, width: "auto", opacity: 0.6 }} />
+            {!isMobile && <img src="/gj-logo.png" alt="GJ" style={{ height: 24, width: "auto", opacity: 0.6 }} />}
           </div>
         </div>
 
         {/* Section content */}
-        <div className="p-8">
+        <div style={{ padding: isMobile ? "16px" : "32px" }}>
           {/* Section header */}
           <p className="font-label" style={{ fontSize: "10px", letterSpacing: "4px", color: "var(--gj-green)", marginBottom: "6px" }}>
             {activeTabDef.label}

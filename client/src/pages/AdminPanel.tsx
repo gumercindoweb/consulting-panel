@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 import { Plus, Users, BarChart3, Settings, ExternalLink, ChevronRight } from "lucide-react";
+import { useIsMobile } from "@/hooks/useMobile";
 import { toast } from "sonner";
 
 function ClientCard({ client, onManage }: { client: any; onManage: () => void }) {
@@ -165,6 +166,7 @@ export default function AdminPanel() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [, navigate] = useLocation();
   const [showCreate, setShowCreate] = useState(false);
+  const isMobile = useIsMobile();
 
   const { data: clients = [], isLoading, refetch } = trpc.clients.list.useQuery(
     undefined,
@@ -188,68 +190,72 @@ export default function AdminPanel() {
     <div className="min-h-screen" style={{ background: "var(--gj-petrol-ink)", fontFamily: "var(--gj-font)" }}>
       {/* Header */}
       <header
-        className="sticky top-0 z-20 flex items-center justify-between px-8 py-5"
+        className="sticky top-0 z-20"
         style={{
           background: "rgba(6,26,25,0.97)",
           borderBottom: "1px solid rgba(154,230,180,0.10)",
           backdropFilter: "blur(12px)",
+          padding: isMobile ? "12px 16px" : "20px 32px",
         }}
       >
-        <div className="flex items-center gap-4">
-          <img src="/gj-logo.png" alt="Gumercindo Jiménez" style={{ height: 34, width: "auto" }} />
-          <div style={{ borderLeft: "1px solid rgba(154,230,180,0.15)", paddingLeft: 16 }}>
-            <p className="text-xs tracking-widest" style={{ color: "var(--gj-mint)", letterSpacing: "5px", fontWeight: 600 }}>
-              PANEL DE ADMINISTRACIÓN
-            </p>
-            <h1 className="text-lg" style={{ color: "var(--gj-cream)", fontWeight: 700 }}>
-              Gumercindo Jiménez · Consultoría
-            </h1>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <img src="/gj-logo.png" alt="Gumercindo Jiménez" style={{ height: isMobile ? 28 : 34, width: "auto", flexShrink: 0 }} />
+            <div style={{ borderLeft: "1px solid rgba(154,230,180,0.15)", paddingLeft: isMobile ? 10 : 16, minWidth: 0 }}>
+              <p className="text-xs tracking-widest" style={{ color: "var(--gj-mint)", letterSpacing: isMobile ? "2px" : "5px", fontWeight: 600, fontSize: isMobile ? 8 : 11 }}>
+                {isMobile ? "ADMIN" : "PANEL DE ADMINISTRACIÓN"}
+              </p>
+              {!isMobile && (
+                <h1 className="text-lg" style={{ color: "var(--gj-cream)", fontWeight: 700 }}>
+                  Gumercindo Jiménez · Consultoría
+                </h1>
+              )}
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-xs" style={{ color: "var(--gj-muted)" }}>
-            {user?.name || user?.email}
-          </span>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 text-xs tracking-widest px-5 py-2.5"
-            style={{
-              background: "var(--gj-green)",
-              color: "var(--gj-cream)",
-              borderRadius: "6px",
-              border: "none",
-              cursor: "pointer",
-              letterSpacing: "3px",
-              fontWeight: 600,
-            }}
-          >
-            <Plus size={14} />
-            NUEVO CLIENTE
-          </button>
-          <button
-            onClick={async () => {
-              await logout();
-              navigate("/login");
-            }}
-            className="text-xs tracking-widest px-5 py-2.5 transition-all"
-            style={{
-              background: "transparent",
-              color: "var(--gj-muted)",
-              borderRadius: "6px",
-              border: "1px solid rgba(154,230,180,0.20)",
-              cursor: "pointer",
-              letterSpacing: "3px",
-              fontWeight: 600,
-            }}
-          >
-            SALIR
-          </button>
+          <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-2 text-xs tracking-widest"
+              style={{
+                background: "var(--gj-green)",
+                color: "var(--gj-cream)",
+                borderRadius: "6px",
+                border: "none",
+                cursor: "pointer",
+                letterSpacing: isMobile ? "1px" : "3px",
+                fontWeight: 600,
+                padding: isMobile ? "8px 12px" : "10px 20px",
+              }}
+            >
+              <Plus size={14} />
+              {!isMobile && "NUEVO CLIENTE"}
+            </button>
+            <button
+              onClick={async () => {
+                await logout();
+                navigate("/login");
+              }}
+              className="text-xs tracking-widest transition-all"
+              style={{
+                background: "transparent",
+                color: "var(--gj-muted)",
+                borderRadius: "6px",
+                border: "1px solid rgba(154,230,180,0.20)",
+                cursor: "pointer",
+                letterSpacing: isMobile ? "1px" : "3px",
+                fontWeight: 600,
+                padding: isMobile ? "8px 12px" : "10px 20px",
+              }}
+            >
+              SALIR
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-8 py-12">
+      <main style={{ maxWidth: 900, margin: "0 auto", padding: isMobile ? "16px" : "48px 32px" }}>
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-12">
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: 12, marginBottom: isMobile ? 24 : 48 }}>
           {[
             { label: "CLIENTES ACTIVOS", value: clients.length, color: "var(--gj-green)", Icon: Users },
             { label: "PROYECTOS EN CURSO", value: clients.length, color: "var(--gj-mint)", Icon: BarChart3 },
