@@ -24,17 +24,20 @@ import { CSS } from "@dnd-kit/utilities";
 
 type Tab = "phases" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates" | "digital_assets" | "backlog" | "users";
 
+// Los labels coinciden 1:1 con las secciones del portal del cliente (ver
+// DashboardSidebar NAV_ITEMS y PORTAL_SECTIONS). El orden también espeja al portal.
+// Única pestaña admin-only: ACCESOS (gestión de usuarios, el cliente no la ve).
 const TABS: { id: Tab; label: string; icon: React.FC<any>; title: string; subtitle: string }[] = [
   { id: "updates", label: "ACTUALIZACIONES", icon: Rss, title: "Actualizaciones del Proyecto", subtitle: "Publicá avances diarios que el cliente puede ver en su portal." },
-  { id: "phases", label: "ETAPAS", icon: CheckSquare, title: "Etapas del Proyecto", subtitle: "Fases estratégicas con fechas, estado y progreso." },
-  { id: "milestones", label: "HITOS", icon: BarChart3, title: "Hitos e Implementaciones", subtitle: "Logros y entregas clave del proyecto." },
-  { id: "okrs", label: "OKRs", icon: Target, title: "OKRs y Resultados Clave", subtitle: "Objetivos medibles y su progreso actual." },
-  { id: "learnings", label: "APRENDIZAJES", icon: BookOpen, title: "Aprendizajes y Obstáculos", subtitle: "Registro de aprendizajes, obstáculos y logros." },
-  { id: "scope", label: "ALCANCE", icon: FileText, title: "Alcance del Proyecto", subtitle: "Qué está incluido y qué queda fuera del proyecto." },
-  { id: "resources", label: "RECURSOS", icon: FolderOpen, title: "Biblioteca de Formación", subtitle: "Videotutoriales, cursos, referencias y presentaciones para el equipo." },
-  { id: "digital_assets", label: "ACTIVOS", icon: Package, title: "Activos Digitales", subtitle: "Las piezas del engranaje que sostienen la cadena de valor del marketing." },
-  { id: "metrics", label: "MÉTRICAS", icon: LayoutDashboard, title: "Métricas del Negocio", subtitle: "Indicadores clave de performance del cliente." },
-  { id: "backlog", label: "BACKLOG", icon: Lightbulb, title: "Backlog de Ideas", subtitle: "Registrá ideas, mejoras y oportunidades para el proyecto del cliente." },
+  { id: "phases", label: "HOJA DE RUTA", icon: CheckSquare, title: "Hoja de Ruta", subtitle: "Etapas estratégicas del proyecto. Los hitos y las actualizaciones se conectan a cada etapa y arman la Hoja de Ruta que ve el cliente." },
+  { id: "milestones", label: "HITOS E IMPLEMENTACIONES", icon: BarChart3, title: "Hitos e Implementaciones", subtitle: "Logros y entregas clave que cuelgan de cada etapa." },
+  { id: "okrs", label: "OBJETIVOS", icon: Target, title: "Objetivos", subtitle: "Objetivos medibles y su progreso actual." },
+  { id: "metrics", label: "MÉTRICAS DEL NEGOCIO", icon: LayoutDashboard, title: "Métricas del Negocio", subtitle: "Indicadores clave de performance del cliente." },
+  { id: "learnings", label: "APRENDIZAJES Y OBSTÁCULOS", icon: BookOpen, title: "Aprendizajes y Obstáculos", subtitle: "Registro de aprendizajes, obstáculos y logros." },
+  { id: "scope", label: "ALCANCE DEL PROYECTO", icon: FileText, title: "Alcance del Proyecto", subtitle: "Qué está incluido y qué queda fuera del proyecto." },
+  { id: "resources", label: "BIBLIOTECA DE FORMACIÓN", icon: FolderOpen, title: "Biblioteca de Formación", subtitle: "Videotutoriales, cursos, referencias y presentaciones para el equipo." },
+  { id: "digital_assets", label: "ACTIVOS DIGITALES", icon: Package, title: "Activos Digitales", subtitle: "Las piezas del engranaje que sostienen la cadena de valor del marketing." },
+  { id: "backlog", label: "BACKLOG DE IDEAS", icon: Lightbulb, title: "Backlog de Ideas", subtitle: "Registrá ideas, mejoras y oportunidades para el proyecto del cliente." },
   { id: "users", label: "ACCESOS", icon: Users, title: "Gestión de Accesos", subtitle: "Creá y administrá los usuarios que tienen acceso al portal de este cliente." },
 ];
 

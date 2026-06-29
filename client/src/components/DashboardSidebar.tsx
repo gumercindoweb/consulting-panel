@@ -32,10 +32,10 @@ const NAV_ITEMS: { id: DashboardSection; label: string; icon: React.FC<any> }[] 
   { id: "timeline", label: "HOJA DE RUTA", icon: CalendarRange },
   { id: "milestones", label: "HITOS E IMPLEMENTACIONES", icon: BarChart3 },
   { id: "okrs", label: "OBJETIVOS", icon: Target },
-  { id: "metrics", label: "MÉTRICAS", icon: TrendingUp },
+  { id: "metrics", label: "MÉTRICAS DEL NEGOCIO", icon: TrendingUp },
   { id: "learnings", label: "APRENDIZAJES Y OBSTÁCULOS", icon: BookOpen },
   { id: "scope", label: "ALCANCE DEL PROYECTO", icon: FileText },
-  { id: "resources", label: "RECURSOS DEL EQUIPO", icon: FolderOpen },
+  { id: "resources", label: "BIBLIOTECA DE FORMACIÓN", icon: FolderOpen },
   { id: "digital_assets", label: "ACTIVOS DIGITALES", icon: Package },
   { id: "backlog", label: "BACKLOG DE IDEAS", icon: Lightbulb },
 ];
