@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Social Post Anatomy" subtitle="Instagram post templates: yellow full-bleed, left-bar, black" viewport="700x212" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-CondensedExtraBd.otf") format("opentype"); font-weight: 900; }
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-CondensedBold.otf") format("opentype"); font-weight: 700; }
+  @font-face { font-family: "FuturaStd"; src: url("../fonts/FuturaStd-Book.otf") format("opentype"); font-weight: 400; }
+  @font-face { font-family: "FuturaStd"; src: url("../fonts/FuturaStd-Bold.otf") format("opentype"); font-weight: 700; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #f0f0f0; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
+  .post { width: 200px; height: 200px; position: relative; overflow: hidden; flex-shrink: 0; border: 2px solid #231F20; }
+  .post-bg-yellow { background: #FFD100; }
+  .post-bg-black { background: #231F20; }
+  .post-bg-white { background: #fff; }
+  .hazard-corner { position: absolute; width: 52px; height: 52px; }
+  .tl { top: 0; left: 0; }
+  .br { bottom: 0; right: 0; }
+  .post-content { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 18px; gap: 6px; }
+  .post-label-yellow { background: #FFD100; display: inline-block; padding: 4px 9px; align-self: flex-start; }
+  .post-label-black { background: #231F20; display: inline-block; padding: 4px 9px; align-self: flex-start; }
+  .post-title { font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 30px; line-height: 0.9; text-transform: uppercase; letter-spacing: -0.01em; }
+  .post-sub { font-family: "FuturaStd", sans-serif; font-weight: 400; font-size: 11px; line-height: 1.4; }
+  .yellow-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 8px; background: #FFD100; }
+  .num { position: absolute; bottom: 12px; right: 12px; font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 40px; color: #231F20; line-height: 1; }
+  /* Logo lockup pushed below hazard, never overlapping */
+  .logo-lockup { display: flex; flex-direction: column; align-items: flex-start; margin-top: 56px; }
+  .logo-lockup .l1 { font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 13px; letter-spacing: 0.04em; line-height: 1; color: #FFD100; }
+  .logo-lockup .l2 { font-family: "FuturaStdCondensed", sans-serif; font-weight: 400; font-size: 8px; letter-spacing: 0.4em; color: #FFD100; margin-top: 3px; }
+</style>
+</head>
+<body>
+  <!-- 1. YELLOW promo (no rodar/rolar variants) -->
+  <div class="post post-bg-yellow">
+    <div class="hazard-corner tl" style="background-image:repeating-linear-gradient(-45deg,#231F20 0,#231F20 6px,#FFD100 6px,#FFD100 12px);"></div>
+    <div class="hazard-corner br" style="background-image:repeating-linear-gradient(-45deg,#231F20 0,#231F20 6px,#FFD100 6px,#FFD100 12px);"></div>
+    <div class="post-content">
+      <div class="post-label-black"><span style="font-family:'FuturaStdCondensed',sans-serif;font-weight:900;font-size:13px;color:#FFD100;text-transform:uppercase;font-style:italic;">Oferta especial</span></div>
+      <div class="post-title" style="color:#231F20;">Sumate a<br/>la calle</div>
+      <div class="post-sub" style="color:#231F20;font-weight:700;">Equipate · Patiná · Disfrutá</div>
+    </div>
+  </div>
+
+  <!-- 2. WHITE with yellow left bar -->
+  <div class="post post-bg-white">
+    <div class="yellow-bar"></div>
+    <div class="post-content" style="padding-left:22px;">
+      <div class="post-label-black"><span style="font-family:'FuturaStdCondensed',sans-serif;font-weight:900;font-size:13px;color:#FFD100;text-transform:uppercase;font-style:italic;">Rodilleras</span></div>
+      <div class="post-title" style="color:#231F20;font-size:24px;">Protege tus rodillas.</div>
+      <div class="post-sub" style="color:#555;">Cruciales para evitar lesiones en caídas.</div>
+      <div class="num">2</div>
+    </div>
+  </div>
+
+  <!-- 3. BLACK — hazard corner now smaller + logo dropped clear of it -->
+  <div class="post post-bg-black">
+    <div class="hazard-corner tl" style="width:44px;height:44px;background-image:repeating-linear-gradient(-45deg,#FFD100 0,#FFD100 6px,#231F20 6px,#231F20 12px);"></div>
+    <div class="post-content">
+      <div class="logo-lockup">
+        <div class="l1">&laquo; FLYFREE &raquo;</div>
+        <div class="l2">U R B A N</div>
+      </div>
+      <div class="post-title" style="color:#FFD100;font-size:38px;margin-top:12px;">SIEMPRE<br/>ROLLEANDO</div>
+    </div>
+  </div>
+</body>
+</html>

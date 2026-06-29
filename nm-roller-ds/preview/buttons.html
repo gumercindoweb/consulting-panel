@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Bold.otf') format('opentype'); font-weight:700; }
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Book.otf') format('opentype'); font-weight:400; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; display:flex; align-items:center; gap:16px; padding:28px 32px; font-family:'Futura Std',sans-serif; flex-wrap:wrap; }
+  .group { display:flex; flex-direction:column; gap:8px; }
+  .glabel { font-weight:700; font-size:8px; letter-spacing:.2em; text-transform:uppercase; color:#444; margin-bottom:4px; }
+  /* Base button */
+  .btn { display:inline-flex; align-items:center; justify-content:center; font-family:'Futura Std',sans-serif; font-weight:700; font-size:11px; letter-spacing:.18em; text-transform:uppercase; border:none; cursor:pointer; padding:12px 24px; border-radius:0; text-decoration:none; }
+  /* Variants */
+  .btn-primary { background:oklch(50% 0.26 26); color:#fff; box-shadow:0 4px 24px rgba(208,28,31,0.35); }
+  .btn-primary-hover { background:oklch(44% 0.24 24); color:#fff; transform:translateY(-1px); box-shadow:0 6px 28px rgba(208,28,31,0.5); }
+  .btn-outline { background:transparent; color:#fff; border:2px solid #fff; }
+  .btn-outline-hover { background:#fff; color:#111; border:2px solid #fff; }
+  .btn-teal { background:oklch(74% 0.13 185); color:#fff; }
+  .btn-teal-hover { background:oklch(58% 0.12 185); color:#fff; }
+  .btn-ghost { background:transparent; color:#767676; border:1px solid #333; }
+  .btn-sm { font-size:9px; padding:8px 16px; letter-spacing:.15em; }
+  .btn-lg { font-size:13px; padding:16px 40px; letter-spacing:.2em; }
+  .divider { width:1px; height:80px; background:#222; }
+</style>
+</head>
+<body>
+  <div class="group">
+    <div class="glabel">Primary</div>
+    <div class="btn btn-primary">COMPRAR PLAN</div>
+    <div class="btn btn-primary-hover">Hover ↑</div>
+  </div>
+  <div class="divider"></div>
+  <div class="group">
+    <div class="glabel">Outline</div>
+    <div class="btn btn-outline">NECESITO AYUDA</div>
+    <div class="btn btn-outline-hover">Hover ↑</div>
+  </div>
+  <div class="divider"></div>
+  <div class="group">
+    <div class="glabel">Teal Accent</div>
+    <div class="btn btn-teal">RESERVAR</div>
+    <div class="btn btn-teal-hover">Hover ↑</div>
+  </div>
+  <div class="divider"></div>
+  <div class="group">
+    <div class="glabel">Tamaños</div>
+    <div class="btn btn-primary btn-sm">PEQUEÑO</div>
+    <div class="btn btn-primary btn-lg">GRANDE</div>
+  </div>
+  <div class="divider"></div>
+  <div class="group">
+    <div class="glabel">Ghost</div>
+    <div class="btn btn-ghost">VER MÁS</div>
+  </div>
+</body>
+</html>

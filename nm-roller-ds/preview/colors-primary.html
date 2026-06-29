@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Bold.otf') format('opentype'); font-weight:700; }
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Book.otf') format('opentype'); font-weight:400; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; display:flex; align-items:stretch; min-height:160px; font-family:'Futura Std',sans-serif; }
+  .swatch { flex:1; display:flex; flex-direction:column; justify-content:flex-end; padding:10px 12px; min-height:140px; }
+  .swatch-name { font-weight:700; font-size:9px; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:2px; }
+  .swatch-hex  { font-weight:400; font-size:9px; opacity:0.7; }
+  .dark { color:#fff; }
+  .light { color:#111; }
+</style>
+</head>
+<body>
+  <div class="swatch dark" style="background:oklch(96% 0.03 20)"><span class="swatch-name light">Red 100</span><span class="swatch-hex light">#FEF0F0</span></div>
+  <div class="swatch dark" style="background:oklch(88% 0.09 20)"><span class="swatch-name light">Red 200</span><span class="swatch-hex light">#F5C0C0</span></div>
+  <div class="swatch dark" style="background:oklch(75% 0.16 22)"><span class="swatch-name light">Red 300</span><span class="swatch-hex light">#E87070</span></div>
+  <div class="swatch dark" style="background:oklch(62% 0.22 24)"><span class="swatch-name">Red 400</span><span class="swatch-hex">#D84040</span></div>
+  <div class="swatch dark" style="background:oklch(50% 0.26 26); outline:2px solid #fff; outline-offset:-2px; position:relative;">
+    <span class="swatch-name">Red 500</span><span class="swatch-hex">#D01C1F</span>
+    <span style="position:absolute;top:8px;right:8px;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;color:#D01C1F;padding:2px 6px;">PANTONE 1795 C</span>
+  </div>
+  <div class="swatch dark" style="background:oklch(40% 0.22 24)"><span class="swatch-name">Red 600</span><span class="swatch-hex">#A01520</span></div>
+  <div class="swatch dark" style="background:oklch(30% 0.17 22); outline:2px solid #fff; outline-offset:-2px; position:relative;">
+    <span class="swatch-name">Red 700</span><span class="swatch-hex">#7C2F2A</span>
+    <span style="position:absolute;top:8px;right:8px;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;color:#7C2F2A;padding:2px 6px;">PANTONE 181 C</span>
+  </div>
+  <div class="swatch dark" style="background:oklch(22% 0.12 20)"><span class="swatch-name">Red 800</span><span class="swatch-hex">#4A1A1A</span></div>
+  <div class="swatch dark" style="background:oklch(14% 0.07 20)"><span class="swatch-name">Red 900</span><span class="swatch-hex">#280D0D</span></div>
+</body>
+</html>

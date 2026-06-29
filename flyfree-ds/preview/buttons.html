@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Buttons & Tags" subtitle="Primary, dark, outline buttons + tag/badge variants" viewport="700x200" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: "FuturaStd"; src: url("../fonts/FuturaStd-Bold.otf") format("opentype"); font-weight: 700; }
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-CondensedBold.otf") format("opentype"); font-weight: 700; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #f0f0f0; padding: 20px; font-family: "FuturaStd", sans-serif; display: flex; flex-direction: column; gap: 16px; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #888; min-width: 70px; }
+  /* Primary CTA — yellow */
+  .btn { display: inline-flex; align-items: center; justify-content: center; font-family: "FuturaStd", sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border: none; padding: 10px 20px; transition: background 0.15s; }
+  .btn-primary { background: #FFD100; color: #231F20; box-shadow: 3px 3px 0 #231F20; }
+  .btn-dark { background: #231F20; color: #FFD100; box-shadow: 3px 3px 0 #FFD100; }
+  .btn-outline { background: transparent; color: #231F20; border: 2px solid #231F20; }
+  .btn-outline-yellow { background: transparent; color: #FFD100; border: 2px solid #FFD100; }
+  .btn-sm { padding: 6px 14px; font-size: 11px; }
+  .btn-lg { padding: 14px 28px; font-size: 15px; letter-spacing: 0.1em; }
+  /* Tag/badge */
+  .tag { display: inline-block; background: #FFD100; color: #231F20; font-family: "FuturaStdCondensed", sans-serif; font-weight: 700; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; padding: 3px 8px; }
+  .tag-dark { background: #231F20; color: #FFD100; }
+  .tag-outline { border: 1.5px solid #231F20; color: #231F20; background: transparent; }
+  .bg-dark { background: #231F20; padding: 12px; display: flex; gap: 10px; align-items: center; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="label">Primary</div>
+    <button class="btn btn-primary">Agregar al carrito</button>
+    <button class="btn btn-primary btn-sm">Ver más</button>
+    <button class="btn btn-primary btn-lg">Contáctanos</button>
+  </div>
+  <div class="row">
+    <div class="label">Dark</div>
+    <button class="btn btn-dark">Comprar ahora</button>
+    <button class="btn btn-dark btn-sm">Tienda</button>
+  </div>
+  <div class="row">
+    <div class="label">Outline</div>
+    <button class="btn btn-outline">Ver colección</button>
+    <div class="bg-dark">
+      <button class="btn btn-outline-yellow">Always Rolling</button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="label">Tags</div>
+    <span class="tag">Nuevo</span>
+    <span class="tag">Oferta</span>
+    <span class="tag tag-dark">Agotado</span>
+    <span class="tag tag-outline">Accesorios</span>
+    <span class="tag tag-dark">Kids</span>
+  </div>
+</body>
+</html>

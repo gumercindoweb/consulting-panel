@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Social Posts — Accent Families" subtitle="Mismo sistema, 3 familias de acento aplicadas: Electric / Sunset / Outdoor" viewport="760x440" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-CondensedExtraBd.otf") format("opentype"); font-weight: 900; }
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-CondensedBold.otf") format("opentype"); font-weight: 700; }
+  @font-face { font-family: "FuturaStd"; src: url("../fonts/FuturaStd-Book.otf") format("opentype"); font-weight: 400; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "FuturaStd", sans-serif; background: #f0f0f0; padding: 20px; display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+
+  .col { display: flex; flex-direction: column; gap: 8px; }
+  .col-label { font-family: "FuturaStdCondensed", sans-serif; font-weight: 700; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #888; padding-left: 2px; }
+
+  .post { width: 220px; height: 220px; position: relative; overflow: hidden; border: 2px solid #231F20; }
+
+  /* motion italic */
+  .italic { display: inline-block; transform: skewX(-12deg); transform-origin: left bottom; font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; line-height: 0.9; }
+  .speed { position: relative; display: inline-block; margin-left: 22px; }
+  .speed::before { content: ""; position: absolute; left: -22px; top: 16%; width: 16px; height: 66%; transform: skewX(-12deg); }
+
+  .content { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 20px; gap: 8px; }
+  .label-tag { font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 13px; text-transform: uppercase; padding: 4px 10px; align-self: flex-start; transform: skewX(-10deg); }
+  .sub { font-family: "FuturaStd", sans-serif; font-weight: 700; font-size: 11px; line-height: 1.4; }
+  .corner { position: absolute; width: 46px; height: 46px; }
+  .tl { top: 0; left: 0; } .br { bottom: 0; right: 0; }
+  .logo-wm { position: absolute; top: 14px; left: 16px; font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+  <!-- ELECTRIC STREET -->
+  <div class="col">
+    <div class="col-label">Electric Street · Lime + Violet</div>
+    <div class="post" style="background:#231F20;">
+      <div class="corner tl" style="background-image:repeating-linear-gradient(-45deg,#C4FF1F 0,#C4FF1F 6px,#231F20 6px,#231F20 12px);"></div>
+      <div class="content">
+        <div class="label-tag" style="background:#7C3AED; color:#fff;">Roller Fitness</div>
+        <div class="speed" style="margin-top:4px;">
+          <span class="speed-lines" style="position:absolute; left:-22px; top:16%; width:16px; height:66%; transform:skewX(-12deg); background:repeating-linear-gradient(to bottom,#C4FF1F 0,#C4FF1F 4px,transparent 4px,transparent 10px);"></span>
+          <span class="italic" style="font-size:42px; color:#C4FF1F;">Move<br/>Freely</span>
+        </div>
+        <div class="sub" style="color:#fff; margin-top:6px;">Clases todos los sábados · 10h</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUNSET ENERGY -->
+  <div class="col">
+    <div class="col-label">Sunset Energy · Coral + Magenta</div>
+    <div class="post" style="background:#FF5A1F;">
+      <div class="corner br" style="background-image:repeating-linear-gradient(-45deg,#231F20 0,#231F20 6px,#FF5A1F 6px,#FF5A1F 12px);"></div>
+      <div class="logo-wm" style="color:#231F20;">&laquo; FLYFREE &raquo;</div>
+      <div class="content">
+        <div class="label-tag" style="background:#231F20; color:#FFD100;">−30% · Solo hoy</div>
+        <div class="italic" style="font-size:50px; color:#231F20;">Last<br/>Drop</div>
+        <div class="sub" style="color:#231F20; max-width:140px;">Rollers seleccionados · Stock final</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTDOOR TRAIL -->
+  <div class="col">
+    <div class="col-label">Outdoor Trail · Forest + Sand</div>
+    <div class="post" style="background:#1F6F54;">
+      <div class="content">
+        <div class="label-tag" style="background:#FFD100; color:#231F20;">Comunidad</div>
+        <div class="italic" style="font-size:44px; color:#E9E2D0;">Salí a<br/>rodar</div>
+        <div class="sub" style="color:#E9E2D0; max-width:150px;">Encuentro al aire libre · Todos los niveles</div>
+      </div>
+      <div style="position:absolute; bottom:0; left:0; right:0; height:8px; background:#FFD100;"></div>
+    </div>
+  </div>
+
+</body>
+</html>

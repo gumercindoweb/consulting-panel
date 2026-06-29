@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: landscape; margin: 1cm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: sans-serif; background: #e8e8e8; display: flex; flex-direction: column; }
+  .logo-row { display: flex; }
+  .logo-box { flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px 40px; min-height: 280px; }
+  .on-white  { background: #FFFFFF; border-right: 1px solid #ddd; }
+  .on-black  { background: #231F20; border-right: 1px solid #111; }
+  .on-yellow { background: #FFD100; }
+  .label-row { display: flex; }
+  .label-item { flex: 1; text-align: center; font-size: 14px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 14px 4px; border-top: 1px solid rgba(0,0,0,0.12); }
+  img.logo { width: 360px; height: auto; display: block; }
+  img.logo.allblack { filter: brightness(0) saturate(100%); }
+  @media print {
+    body { background: #fff; }
+    .logo-row, .label-row { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+  <div class="logo-row">
+    <div class="logo-box on-white">
+      <img class="logo" src="../assets/logo-black-real.webp" alt="FlyFree Urban — black on white">
+    </div>
+    <div class="logo-box on-black">
+      <img class="logo" src="../assets/logo-white-real.png" alt="FlyFree Urban — white on black">
+    </div>
+    <div class="logo-box on-yellow">
+      <img class="logo allblack" src="../assets/logo-black-real.webp" alt="FlyFree Urban — all black on yellow">
+    </div>
+  </div>
+  <div class="label-row">
+    <div class="label-item" style="background:#fff;color:#231F20;">On White</div>
+    <div class="label-item" style="background:#231F20;color:#FFD100;">On Black</div>
+    <div class="label-item" style="background:#FFD100;color:#231F20;">On Yellow</div>
+  </div>
+<script>
+  window.addEventListener('load', () => {
+    Promise.all([
+      document.fonts ? document.fonts.ready : Promise.resolve(),
+      ...Array.from(document.images).map(img =>
+        img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })
+      )
+    ]).then(() => setTimeout(() => window.print(), 500));
+  });
+</script>
+</body>
+</html>

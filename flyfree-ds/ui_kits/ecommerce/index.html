@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Ecommerce" name="Ecommerce UI Kit" subtitle="Full interactive ecommerce prototype — Home, Shop, Product Detail, Cart" viewport="1280x700" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlyFree Urban — Ecommerce UI Kit</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../../fonts/FuturaStd-CondensedExtraBd.otf") format("opentype"); font-weight: 900; }
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../../fonts/FuturaStd-CondensedBold.otf") format("opentype"); font-weight: 700; }
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../../fonts/FuturaStd-Condensed.otf") format("opentype"); font-weight: 400; }
+  @font-face { font-family: "FuturaStd"; src: url("../../fonts/FuturaStd-Bold.otf") format("opentype"); font-weight: 700; }
+  @font-face { font-family: "FuturaStd"; src: url("../../fonts/FuturaStd-Book.otf") format("opentype"); font-weight: 400; }
+  @font-face { font-family: "FuturaStd"; src: url("../../fonts/FuturaStd-Medium.otf") format("opentype"); font-weight: 500; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f5f5f5; font-family: "FuturaStd", sans-serif; color: #231F20; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="Header.jsx"></script>
+<script type="text/babel" src="Hero.jsx"></script>
+<script type="text/babel" src="ProductCard.jsx"></script>
+<script type="text/babel" src="Footer.jsx"></script>
+<script type="text/babel">
+
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const PRODUCTS = [
+  { id:1, name:"Stark Billionz",      category:"Rollers Adultos",    price:"$ 349.000", badge:"Nuevo",  img:"../../assets/product-rollers.png" },
+  { id:2, name:"Pack Ruedas 80mm",    category:"Accesorios",         price:"$ 89.000",  badge:null,     img:null },
+  { id:3, name:"Kit Principiantes",   category:"Combos",             price:"$ 520.000", badge:"Oferta", img:null },
+  { id:4, name:"Protecciones Pro",    category:"Protecciones",       price:"$ 74.000",  badge:null,     img:null },
+  { id:5, name:"Rollers Adultos X100",category:"Rollers Adultos",    price:"$ 287.000", badge:null,     img:null },
+  { id:6, name:"Mochila Stark",       category:"Accesorios",         price:"$ 52.000",  badge:"Nuevo",  img:null },
+  { id:7, name:"Protec. Urbanas",     category:"Protecciones",       price:"$ 62.000",  badge:null,     img:null },
+  { id:8, name:"Rollers Kids",        category:"Rollers Kids",       price:"$ 199.000", badge:null,     img:null },
+];
+
+const CATEGORIES = ["Todos","Rollers Adultos","Rollers Kids","Accesorios","Protecciones","Combos"];
+
+// ─── TRUST BAR ──────────────────────────────────────────────────────────────
+const TrustBar = () => (
+  <div style={tbStyles.root}>
+    <div style={tbStyles.inner}>
+      {[
+        { icon:"▦", title:"Cuotas sin interés", desc:"3 y 6 cuotas en productos seleccionados" },
+        { icon:"⬡", title:"Envíos a todo el País", desc:"Despachos rápidos, sin cantidad mínima" },
+        { icon:"⊡", title:"Pago seguro", desc:"Proceso de pago encriptado y métodos de confianza" },
+      ].map(item => (
+        <div key={item.title} style={tbStyles.item}>
+          <div style={tbStyles.icon}>{item.icon}</div>
+          <div>
+            <div style={tbStyles.title}>{item.title}</div>
+            <div style={tbStyles.desc}>{item.desc}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+const tbStyles = {
+  root: { background:"#FFFFFF", borderTop:"1.5px solid #e0e0e0", borderBottom:"1.5px solid #e0e0e0" },
+  inner: { maxWidth:1200, margin:"0 auto", padding:"20px 40px", display:"flex", justifyContent:"space-around", gap:24, flexWrap:"wrap" },
+  item: { display:"flex", alignItems:"center", gap:14 },
+  icon: { fontSize:28, color:"#231F20", lineHeight:1 },
+  title: { fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:700, fontSize:14, textTransform:"uppercase", letterSpacing:"0.05em", color:"#231F20" },
+  desc: { fontFamily:"'FuturaStd',sans-serif", fontWeight:400, fontSize:12, color:"#666", marginTop:2, maxWidth:200 },
+};
+
+// ─── CATEGORY GRID ──────────────────────────────────────────────────────────
+const CategoryGrid = ({ onNav }) => {
+  const cats = [
+    { label:"Kit Principiantes", sub:"Todo para arrancar", bg:"#FFD100", color:"#231F20" },
+    { label:"Rollers Adultos",   sub:"Performance urbana", bg:"#231F20", color:"#FFFFFF" },
+    { label:"Rollers Kids",      sub:"Para los más chicos", bg:"#FFFFFF", color:"#231F20" },
+    { label:"Protecciones",      sub:"Seguridad primero",  bg:"#f5f5f5", color:"#231F20" },
+  ];
+  return (
+    <section style={cgStyles.root}>
+      <div style={cgStyles.inner}>
+        <div style={cgStyles.heading}>Elegí los tuyos</div>
+        <div style={cgStyles.grid}>
+          {cats.map(cat => (
+            <div key={cat.label} style={{ ...cgStyles.card, background:cat.bg, color:cat.color, border:"1.5px solid #231F20", boxShadow:"4px 4px 0 #231F20" }}
+              onClick={() => onNav && onNav("shop")}>
+              <div style={{ height:100, display:"flex", alignItems:"center", justifyContent:"center", borderBottom:"1.5px solid #231F20", background: cat.bg === "#231F20" ? "#1a1617" : "rgba(0,0,0,0.04)" }}>
+                <span style={{ fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:900, fontSize:32, textTransform:"uppercase", letterSpacing:"-0.01em", color: cat.bg === "#231F20" ? "#FFD100" : "#231F20" }}>&gt;&gt;</span>
+              </div>
+              <div style={cgStyles.cardBody}>
+                <div style={{ fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:700, fontSize:15, textTransform:"uppercase", letterSpacing:"0.02em" }}>{cat.label}</div>
+                <div style={{ fontFamily:"'FuturaStd',sans-serif", fontWeight:400, fontSize:11, opacity:0.65, marginTop:2 }}>{cat.sub}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+const cgStyles = {
+  root: { background:"#fff", paddingTop:40, paddingBottom:40, borderBottom:"1.5px solid #e0e0e0" },
+  inner: { maxWidth:1200, margin:"0 auto", padding:"0 40px" },
+  heading: { fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:900, fontSize:36, textTransform:"uppercase", letterSpacing:"-0.01em", color:"#231F20", marginBottom:20, display:"inline-block", transform:"skewX(-12deg)", transformOrigin:"left bottom" },
+  grid: { display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16 },
+  card: { cursor:"pointer", display:"flex", flexDirection:"column" },
+  cardBody: { padding:"10px 12px 14px" },
+};
+
+// ─── SHOP SECTION ───────────────────────────────────────────────────────────
+const ShopSection = ({ cart, setCart }) => {
+  const [activeCat, setActiveCat] = React.useState("Todos");
+  const [selectedProduct, setSelectedProduct] = React.useState(null);
+
+  const filtered = activeCat === "Todos" ? PRODUCTS : PRODUCTS.filter(p => p.category === activeCat);
+
+  const handleAdd = (product) => {
+    setCart(prev => {
+      const existing = prev.find(i => i.id === product.id);
+      if (existing) return prev.map(i => i.id === product.id ? {...i, qty: i.qty+1} : i);
+      return [...prev, { ...product, qty: 1 }];
+    });
+  };
+
+  if (selectedProduct) {
+    return <ProductDetail product={selectedProduct} onBack={() => setSelectedProduct(null)} onAdd={handleAdd} />;
+  }
+
+  return (
+    <section style={shopStyles.root}>
+      <div style={shopStyles.inner}>
+        <div style={shopStyles.topBar}>
+          <div style={shopStyles.heading}>Todos los productos</div>
+          <div style={shopStyles.count}>{filtered.length} productos</div>
+        </div>
+        <div style={shopStyles.catBar}>
+          {CATEGORIES.map(cat => (
+            <button key={cat} style={{ ...shopStyles.catBtn, ...(activeCat === cat ? shopStyles.catBtnActive : {}) }}
+              onClick={() => setActiveCat(cat)}>{cat}</button>
+          ))}
+        </div>
+        <div style={shopStyles.grid}>
+          {filtered.map(product => (
+            <ProductCard key={product.id} {...product}
+              onAdd={() => handleAdd(product)}
+              onDetail={() => setSelectedProduct(product)} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+const shopStyles = {
+  root: { padding:"32px 0 60px" },
+  inner: { maxWidth:1200, margin:"0 auto", padding:"0 40px" },
+  topBar: { display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:16 },
+  heading: { fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:900, fontSize:32, textTransform:"uppercase", letterSpacing:"-0.01em", color:"#231F20", display:"inline-block", transform:"skewX(-12deg)", transformOrigin:"left bottom" },
+  count: { fontFamily:"'FuturaStd',sans-serif", fontSize:13, color:"#888", letterSpacing:"0.05em" },
+  catBar: { display:"flex", gap:8, marginBottom:24, flexWrap:"wrap" },
+  catBtn: { background:"transparent", border:"1.5px solid #231F20", color:"#231F20", fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:700, fontSize:12, letterSpacing:"0.12em", textTransform:"uppercase", padding:"5px 14px", cursor:"pointer" },
+  catBtnActive: { background:"#231F20", color:"#FFD100" },
+  grid: { display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:20 },
+};
+
+// ─── PRODUCT DETAIL ─────────────────────────────────────────────────────────
+const ProductDetail = ({ product, onBack, onAdd }) => {
+  const [qty, setQty] = React.useState(1);
+  const [added, setAdded] = React.useState(false);
+  const sizes = ["37","38","39","40","41","42","43"];
+  const [selectedSize, setSelectedSize] = React.useState(null);
+
+  const handleAdd = () => {
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
+    onAdd && onAdd(product);
+  };
+
+  return (
+    <div style={detailStyles.root}>
+      <div style={detailStyles.inner}>
+        <button style={detailStyles.back} onClick={onBack}>&lt; Volver a la tienda</button>
+        <div style={detailStyles.layout}>
+          {/* Image */}
+          <div style={detailStyles.imgWrap}>
+            {product.img
+              ? <img src={product.img} alt={product.name} style={detailStyles.img} />
+              : <div style={detailStyles.imgPh}>
+                  <span style={{ fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:900, fontSize:48, color:"#FFD100", textTransform:"uppercase", textAlign:"center", lineHeight:1 }}>{product.name}</span>
+                </div>
+            }
+            {product.badge && <div style={detailStyles.badge}>{product.badge}</div>}
+          </div>
+          {/* Info */}
+          <div style={detailStyles.info}>
+            <div style={detailStyles.category}>{product.category}</div>
+            <h2 style={detailStyles.name}>{product.name}</h2>
+            <div style={detailStyles.price}>{product.price}</div>
+            <div style={detailStyles.divider}></div>
+            {product.category.includes("Roller") && (
+              <div style={{ marginBottom:20 }}>
+                <div style={detailStyles.sizeLabel}>Talle</div>
+                <div style={detailStyles.sizes}>
+                  {sizes.map(s => (
+                    <button key={s} style={{ ...detailStyles.sizeBtn, ...(selectedSize === s ? detailStyles.sizeBtnActive : {}) }}
+                      onClick={() => setSelectedSize(s)}>{s}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div style={detailStyles.qtyRow}>
+              <button style={detailStyles.qtyBtn} onClick={() => setQty(q => Math.max(1,q-1))}>−</button>
+              <span style={detailStyles.qty}>{qty}</span>
+              <button style={detailStyles.qtyBtn} onClick={() => setQty(q => q+1)}>+</button>
+            </div>
+            <button style={{ ...detailStyles.addBtn, ...(added ? detailStyles.addBtnDone : {}) }} onClick={handleAdd}>
+              {added ? "✓ Agregado al carrito" : "Agregar al carrito"}
+            </button>
+            <div style={detailStyles.trust}>
+              <span>✓ Envíos a todo el país</span>
+              <span>✓ Cuotas sin interés</span>
+              <span>✓ Pago seguro</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+const detailStyles = {
+  root: { padding:"24px 0 60px", background:"#fff" },
+  inner: { maxWidth:1200, margin:"0 auto", padding:"0 40px" },
+  back: { background:"none", border:"none", fontFamily:"'FuturaStd',sans-serif", fontWeight:700, fontSize:12, letterSpacing:"0.08em", textTransform:"uppercase", color:"#FFD100", cursor:"pointer", padding:"0 0 20px", display:"block" },
+  layout: { display:"grid", gridTemplateColumns:"1fr 1fr", gap:48 },
+  imgWrap: { position:"relative", background:"#f5f5f5", border:"1.5px solid #231F20", minHeight:400, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden" },
+  img: { width:"100%", height:"100%", objectFit:"contain", maxHeight:400 },
+  imgPh: { background:"#231F20", width:"100%", minHeight:400, display:"flex", alignItems:"center", justifyContent:"center", padding:40 },
+  badge: { position:"absolute", top:12, left:0, background:"#FFD100", color:"#231F20", fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:700, fontSize:11, letterSpacing:"0.15em", textTransform:"uppercase", padding:"4px 12px" },
+  info: { display:"flex", flexDirection:"column", paddingTop:8 },
+  category: { fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:400, fontSize:11, letterSpacing:"0.3em", textTransform:"uppercase", color:"#888", marginBottom:8 },
+  name: { fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:900, fontSize:52, textTransform:"uppercase", color:"#231F20", letterSpacing:"-0.01em", lineHeight:0.9, marginBottom:16, display:"inline-block", transform:"skewX(-12deg)", transformOrigin:"left bottom" },
+  price: { fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:900, fontSize:36, color:"#231F20", letterSpacing:"-0.01em", marginBottom:16 },
+  divider: { height:"1.5px", background:"#231F20", marginBottom:20 },
+  sizeLabel: { fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:700, fontSize:11, letterSpacing:"0.2em", textTransform:"uppercase", color:"#231F20", marginBottom:10 },
+  sizes: { display:"flex", gap:8, flexWrap:"wrap", marginBottom:20 },
+  sizeBtn: { background:"#fff", border:"1.5px solid #231F20", fontFamily:"'FuturaStd',sans-serif", fontWeight:700, fontSize:13, color:"#231F20", padding:"6px 12px", cursor:"pointer", minWidth:44 },
+  sizeBtnActive: { background:"#231F20", color:"#FFD100" },
+  qtyRow: { display:"flex", alignItems:"center", gap:12, marginBottom:16 },
+  qtyBtn: { width:36, height:36, border:"1.5px solid #231F20", background:"#fff", fontFamily:"'FuturaStd',sans-serif", fontWeight:700, fontSize:18, cursor:"pointer" },
+  qty: { fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:900, fontSize:22, color:"#231F20", minWidth:32, textAlign:"center" },
+  addBtn: { background:"#FFD100", color:"#231F20", border:"none", fontFamily:"'FuturaStd',sans-serif", fontWeight:700, fontSize:13, letterSpacing:"0.1em", textTransform:"uppercase", padding:"14px 24px", cursor:"pointer", boxShadow:"4px 4px 0 #231F20", marginBottom:16, transition:"background 0.15s" },
+  addBtnDone: { background:"#231F20", color:"#FFD100", boxShadow:"4px 4px 0 #FFD100" },
+  trust: { display:"flex", flexDirection:"column", gap:4, fontFamily:"'FuturaStd',sans-serif", fontSize:12, color:"#666", letterSpacing:"0.03em" },
+};
+
+// ─── CART DRAWER ─────────────────────────────────────────────────────────────
+const CartDrawer = ({ cart, setCart, onClose }) => {
+  const total = cart.reduce((sum, item) => {
+    const num = parseInt(item.price.replace(/\D/g,""));
+    return sum + num * item.qty;
+  }, 0);
+
+  const removeItem = (id) => setCart(prev => prev.filter(i => i.id !== id));
+  const updateQty = (id, delta) => setCart(prev =>
+    prev.map(i => i.id === id ? {...i, qty: Math.max(1, i.qty + delta)} : i)
+  );
+
+  return (
+    <div style={cartStyles.overlay} onClick={onClose}>
+      <div style={cartStyles.drawer} onClick={e => e.stopPropagation()}>
+        <div style={cartStyles.header}>
+          <div style={cartStyles.title}>Carrito</div>
+          <button style={cartStyles.closeBtn} onClick={onClose}>✕</button>
+        </div>
+        {cart.length === 0
+          ? <div style={cartStyles.empty}><div style={{ fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:900, fontSize:20, textTransform:"uppercase" }}>Tu carrito está vacío</div><div style={{ fontSize:13, color:"#888", marginTop:8 }}>Empezá a patinar → sumá productos.</div></div>
+          : <>
+              <div style={cartStyles.items}>
+                {cart.map(item => (
+                  <div key={item.id} style={cartStyles.item}>
+                    <div style={cartStyles.itemInfo}>
+                      <div style={cartStyles.itemName}>{item.name}</div>
+                      <div style={cartStyles.itemPrice}>{item.price}</div>
+                    </div>
+                    <div style={cartStyles.itemControls}>
+                      <button style={cartStyles.qBtn} onClick={() => updateQty(item.id, -1)}>−</button>
+                      <span style={cartStyles.qNum}>{item.qty}</span>
+                      <button style={cartStyles.qBtn} onClick={() => updateQty(item.id, 1)}>+</button>
+                      <button style={cartStyles.removeBtn} onClick={() => removeItem(item.id)}>✕</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={cartStyles.footer}>
+                <div style={cartStyles.totalRow}>
+                  <span style={cartStyles.totalLabel}>Total</span>
+                  <span style={cartStyles.totalVal}>$ {total.toLocaleString()}</span>
+                </div>
+                <button style={cartStyles.checkoutBtn}>Finalizar compra</button>
+                <div style={{ fontFamily:"'FuturaStd',sans-serif", fontSize:11, color:"#888", textAlign:"center", marginTop:8, letterSpacing:"0.05em" }}>Cuotas sin interés disponibles</div>
+              </div>
+            </>
+        }
+      </div>
+    </div>
+  );
+};
+const cartStyles = {
+  overlay: { position:"fixed", inset:0, background:"rgba(35,31,32,0.5)", zIndex:200, display:"flex", justifyContent:"flex-end" },
+  drawer: { background:"#fff", width:380, height:"100%", display:"flex", flexDirection:"column", borderLeft:"3px solid #FFD100" },
+  header: { padding:"20px 20px 16px", borderBottom:"1.5px solid #231F20", display:"flex", justifyContent:"space-between", alignItems:"center", background:"#231F20" },
+  title: { fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:900, fontSize:24, textTransform:"uppercase", color:"#FFD100", letterSpacing:"-0.01em" },
+  closeBtn: { background:"none", border:"none", color:"#fff", fontSize:16, cursor:"pointer", padding:4 },
+  empty: { flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:40, color:"#231F20" },
+  items: { flex:1, overflowY:"auto", padding:"16px 20px", display:"flex", flexDirection:"column", gap:12 },
+  item: { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0", borderBottom:"1px solid #e0e0e0" },
+  itemInfo: { flex:1 },
+  itemName: { fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:700, fontSize:15, textTransform:"uppercase", color:"#231F20" },
+  itemPrice: { fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:900, fontSize:16, color:"#231F20" },
+  itemControls: { display:"flex", alignItems:"center", gap:6 },
+  qBtn: { width:24, height:24, border:"1.5px solid #231F20", background:"#fff", fontWeight:700, cursor:"pointer", fontSize:14 },
+  qNum: { fontFamily:"'FuturaStd',sans-serif", fontWeight:700, fontSize:14, minWidth:20, textAlign:"center" },
+  removeBtn: { background:"none", border:"none", color:"#888", cursor:"pointer", fontSize:12, marginLeft:4 },
+  footer: { padding:"16px 20px 24px", borderTop:"1.5px solid #231F20" },
+  totalRow: { display:"flex", justifyContent:"space-between", marginBottom:14 },
+  totalLabel: { fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:700, fontSize:16, textTransform:"uppercase", color:"#231F20", letterSpacing:"0.1em" },
+  totalVal: { fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:900, fontSize:24, color:"#231F20" },
+  checkoutBtn: { width:"100%", background:"#FFD100", border:"none", color:"#231F20", fontFamily:"'FuturaStd',sans-serif", fontWeight:700, fontSize:13, letterSpacing:"0.1em", textTransform:"uppercase", padding:"13px", cursor:"pointer", boxShadow:"4px 4px 0 #231F20" },
+};
+
+// ─── APP ─────────────────────────────────────────────────────────────────────
+const App = () => {
+  const [page, setPage] = React.useState("home");
+  const [cart, setCart] = React.useState([]);
+  const [cartOpen, setCartOpen] = React.useState(false);
+
+  const handleNav = (dest) => {
+    if (dest === "cart") { setCartOpen(true); return; }
+    if (dest === "tienda" || dest === "shop" || dest === "productos") { setPage("shop"); return; }
+    setPage("home");
+  };
+
+  return (
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
+      <Header cartCount={cart.reduce((s,i) => s+i.qty, 0)} onNav={handleNav} />
+
+      {page === "home" && (
+        <>
+          <Hero onShop={() => setPage("shop")} />
+          <TrustBar />
+          <CategoryGrid onNav={handleNav} />
+          {/* Featured products */}
+          <section style={{ padding:"40px 0 60px", background:"#f5f5f5" }}>
+            <div style={{ maxWidth:1200, margin:"0 auto", padding:"0 40px" }}>
+              <div style={{ fontFamily:"'FuturaStdCondensed',sans-serif", fontWeight:900, fontSize:32, textTransform:"uppercase", letterSpacing:"-0.01em", color:"#231F20", marginBottom:20, display:"inline-block", transform:"skewX(-12deg)", transformOrigin:"left bottom" }}>Destacados</div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:20 }}>
+                {PRODUCTS.slice(0,4).map(product => (
+                  <ProductCard key={product.id} {...product}
+                    onAdd={() => {
+                      setCart(prev => {
+                        const ex = prev.find(i => i.id === product.id);
+                        if (ex) return prev.map(i => i.id === product.id ? {...i, qty:i.qty+1} : i);
+                        return [...prev, {...product, qty:1}];
+                      });
+                    }}
+                    onDetail={() => setPage("shop")} />
+                ))}
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {page === "shop" && (
+        <ShopSection cart={cart} setCart={setCart} />
+      )}
+
+      <Footer onNav={handleNav} />
+
+      {cartOpen && <CartDrawer cart={cart} setCart={setCart} onClose={() => setCartOpen(false)} />}
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

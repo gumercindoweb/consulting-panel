@@ -1,0 +1,52 @@
+<!-- @dsCard group="Components" name="Ecommerce UI Kit" subtitle="Header · Hero · ProductCard · Footer — FlyFree Urban ecommerce components" viewport="1280x700" -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../../fonts/FuturaStd-CondensedExtraBd.otf") format("opentype"); font-weight: 900; }
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../../fonts/FuturaStd-CondensedBold.otf") format("opentype"); font-weight: 700; }
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../../fonts/FuturaStd-Condensed.otf") format("opentype"); font-weight: 400; }
+  @font-face { font-family: "FuturaStd"; src: url("../../fonts/FuturaStd-Bold.otf") format("opentype"); font-weight: 700; }
+  @font-face { font-family: "FuturaStd"; src: url("../../fonts/FuturaStd-Book.otf") format("opentype"); font-weight: 400; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #f5f5f5; font-family: "FuturaStd", sans-serif; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const NS = window.FlyFreeUrbanDesignSystem_019dd7 || {};
+const { Header, Hero, ProductCard, Footer } = NS;
+
+const products = [
+  { id:1, name:"Stark Billionz", category:"Rollers Adultos", price:"$ 349.000", badge:"Nuevo", img:"../../assets/product-rollers.png" },
+  { id:2, name:"Pack Ruedas 80mm", category:"Accesorios", price:"$ 89.000", badge:null, img:null },
+  { id:3, name:"Kit Principiantes", category:"Combos", price:"$ 520.000", badge:"Oferta", img:null },
+  { id:4, name:"Protecciones Pro", category:"Protecciones", price:"$ 74.000", badge:null, img:null },
+];
+
+function Preview() {
+  if (!Header || !Hero || !ProductCard || !Footer) {
+    return <div style={{padding:40, fontFamily:"sans-serif", color:"#888"}}>Cargando componentes…</div>;
+  }
+  return (
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column" }}>
+      <Header cartCount={2} onNav={() => {}} />
+      <Hero onShop={() => {}} />
+      <div style={{ background:"#f5f5f5", padding:"40px", display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:20, maxWidth:1200, margin:"0 auto", width:"100%" }}>
+        {products.map(p => <ProductCard key={p.id} {...p} />)}
+      </div>
+      <Footer onNav={() => {}} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Preview />);
+</script>
+</body>
+</html>

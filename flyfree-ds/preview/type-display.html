@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Type" name="Display Typography" subtitle="FuturaStd Condensed — display recto + italic en movimiento (Nike-style)" viewport="700x440" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-CondensedExtraBd.otf") format("opentype"); font-weight: 900; }
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-CondensedBold.otf") format("opentype"); font-weight: 700; }
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-Condensed.otf") format("opentype"); font-weight: 400; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #231F20; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+  .block { display: flex; flex-direction: column; gap: 8px; }
+  .label { font-family: "FuturaStdCondensed", sans-serif; font-weight: 700; font-size: 11px; line-height: 1; letter-spacing: 0.35em; text-transform: uppercase; color: #FFD100; }
+  .divider { height: 1px; background: rgba(255,255,255,0.12); }
+
+  /* Recto */
+  .hero { font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 72px; line-height: 0.88; letter-spacing: -0.02em; text-transform: uppercase; color: #FFD100; }
+  .h1 { font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 48px; line-height: 0.9; letter-spacing: -0.02em; text-transform: uppercase; color: #FFFFFF; }
+  .h2 { font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 34px; line-height: 1.0; letter-spacing: -0.01em; text-transform: uppercase; color: #FFD100; }
+
+  /* Movimiento — italic oblique skew −12° (estilo deportivo) */
+  .italic { display: inline-block; transform: skewX(-12deg); transform-origin: left bottom; font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; line-height: 0.9; }
+  .speed-wrap { position: relative; display: inline-block; margin-left: 30px; }
+  .speed-wrap::before { content: ""; position: absolute; left: -32px; top: 14%; width: 24px; height: 68%; background: repeating-linear-gradient(to bottom, #FFD100 0, #FFD100 5px, transparent 5px, transparent 12px); transform: skewX(-12deg); }
+  .motion-row { display: flex; align-items: baseline; gap: 28px; flex-wrap: wrap; }
+  .vs-label { font-family: "FuturaStdCondensed", sans-serif; font-weight:400; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #888; }
+  .note { font-family: "FuturaStdCondensed", sans-serif; font-weight: 400; font-size: 10px; letter-spacing: 0.05em; color: rgba(255,255,255,0.45); }
+</style>
+</head>
+<body>
+  <!-- RECTO -->
+  <div class="block">
+    <div class="label">Display Recto · FuturaStd Condensed ExtraBold · Uppercase</div>
+    <div class="hero">Always Rolling</div>
+    <div class="h1">La calle es tuya</div>
+    <div class="h2">Rollers Urbanos</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- MOVIMIENTO -->
+  <div class="block">
+    <div class="label" style="color:#fff;">Display en Movimiento · Italic oblique −12° · líneas de velocidad</div>
+    <div class="speed-wrap"><span class="italic" style="font-size:72px; color:#FFD100;">Rolleando</span></div>
+    <div class="motion-row">
+      <span class="vs-label">Recto →</span>
+      <span class="h2" style="font-size:40px; color:#fff;">Free</span>
+      <span class="vs-label">Movimiento →</span>
+      <span class="speed-wrap"><span class="italic" style="font-size:40px; color:#FFD100;">Free</span></span>
+    </div>
+    <div class="note">Uso: hero, CTAs, campañas y posts de energía. El recto se mantiene para títulos de catálogo y lectura.</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlyFree Urban — Dark Edition</title>
+<style>
+  @font-face { font-family:"FuturaC"; src:url("fonts/FuturaStd-CondensedExtraBd.otf") format("opentype"); font-weight:900; }
+  @font-face { font-family:"FuturaC"; src:url("fonts/FuturaStd-CondensedBold.otf") format("opentype"); font-weight:700; }
+  @font-face { font-family:"FuturaC"; src:url("fonts/FuturaStd-Condensed.otf") format("opentype"); font-weight:400; }
+  @font-face { font-family:"Futura"; src:url("fonts/FuturaStd-Book.otf") format("opentype"); font-weight:400; }
+  @font-face { font-family:"Futura"; src:url("fonts/FuturaStd-Bold.otf") format("opentype"); font-weight:700; }
+
+  :root {
+    --bg:      #0d0d0d;
+    --bg2:     #141414;
+    --bg3:     #1c1c1c;
+    --yellow:  #FFD100;
+    --yellow2: rgba(255,209,0,0.12);
+    --white:   #FFFFFF;
+    --muted:   rgba(255,255,255,0.55);
+    --border:  rgba(255,255,255,0.08);
+    --glass:   rgba(255,255,255,0.04);
+    --glow:    0 0 60px rgba(255,209,0,0.18);
+    --glow-sm: 0 0 24px rgba(255,209,0,0.22);
+  }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { background:var(--bg); color:var(--white); font-family:"Futura",sans-serif; font-size:16px; line-height:1.6; overflow-x:hidden; }
+  a { color:inherit; text-decoration:none; }
+  button { font-family:inherit; cursor:pointer; }
+  img { display:block; max-width:100%; }
+
+  /* ── UTILS ── */
+  .cond { font-family:"FuturaC",sans-serif; font-weight:900; text-transform:uppercase; letter-spacing:-0.015em; line-height:0.9; }
+  .cond7 { font-family:"FuturaC",sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:0; line-height:1; }
+  .ital { display:inline-block; transform:skewX(-11deg); transform-origin:left bottom; }
+  .kicker-pill { display:inline-block; background:var(--yellow2); border:1px solid rgba(255,209,0,0.3); color:var(--yellow); font-family:"FuturaC",sans-serif; font-weight:700; font-size:11px; letter-spacing:0.25em; text-transform:uppercase; padding:5px 14px; border-radius:999px; margin-bottom:18px; }
+
+  /* ── HEADER ── */
+  header { position:fixed; top:0; left:0; right:0; z-index:100; padding:0 40px; height:60px; display:flex; align-items:center; gap:24px; background:rgba(13,13,13,0.82); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-bottom:1px solid var(--border); }
+  .logo { height:26px; }
+  nav { display:flex; gap:4px; margin-left:16px; }
+  nav a { font-family:"Futura",sans-serif; font-weight:400; font-size:13px; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); padding:4px 12px; transition:color 0.15s; }
+  nav a:hover { color:var(--white); }
+  .nav-cta { margin-left:auto; background:var(--yellow); color:#0d0d0d; border:none; font-family:"Futura",sans-serif; font-weight:700; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; padding:9px 20px; box-shadow:var(--glow-sm); }
+
+  /* ── HERO ── */
+  .hero { position:relative; min-height:100vh; display:flex; align-items:center; overflow:hidden; padding-top:60px; }
+  .hero-bg { position:absolute; inset:0; background-image:url('assets/community-photo.jpg'); background-size:cover; background-position:center 30%; filter:brightness(0.45) saturate(0.7); }
+  .hero-grad { position:absolute; inset:0; background:linear-gradient(110deg, rgba(13,13,13,0.95) 38%, rgba(13,13,13,0.3) 70%, rgba(13,13,13,0.6) 100%); }
+  .hero-grad2 { position:absolute; bottom:0; left:0; right:0; height:240px; background:linear-gradient(to top, var(--bg), transparent); }
+  .hero-content { position:relative; z-index:2; max-width:1200px; margin:0 auto; padding:80px 40px; width:100%; }
+  .hero-tag { display:inline-flex; align-items:center; gap:8px; background:rgba(255,209,0,0.1); border:1px solid rgba(255,209,0,0.25); padding:6px 14px; border-radius:999px; font-family:"FuturaC",sans-serif; font-weight:700; font-size:11px; letter-spacing:0.25em; text-transform:uppercase; color:var(--yellow); margin-bottom:28px; }
+  .hero-tag::before { content:""; width:6px; height:6px; background:var(--yellow); border-radius:50%; box-shadow:0 0 8px var(--yellow); }
+  .hero-title { font-family:"FuturaC",sans-serif; font-weight:900; font-size:clamp(64px,8vw,110px); line-height:0.88; letter-spacing:-0.02em; text-transform:uppercase; max-width:700px; }
+  .hero-title .acc { color:var(--yellow); display:inline-block; transform:skewX(-11deg); transform-origin:left bottom; }
+  .hero-sub { font-family:"Futura",sans-serif; font-weight:400; font-size:18px; color:var(--muted); max-width:480px; margin-top:24px; line-height:1.6; }
+  .hero-btns { display:flex; gap:12px; margin-top:36px; flex-wrap:wrap; }
+  .btn-primary { background:var(--yellow); color:#0d0d0d; border:none; font-family:"Futura",sans-serif; font-weight:700; font-size:13px; letter-spacing:0.1em; text-transform:uppercase; padding:13px 28px; box-shadow:var(--glow-sm); }
+  .btn-ghost { background:transparent; color:var(--white); border:1px solid rgba(255,255,255,0.25); font-family:"Futura",sans-serif; font-weight:700; font-size:13px; letter-spacing:0.1em; text-transform:uppercase; padding:13px 28px; transition:border-color 0.15s; }
+  .btn-ghost:hover { border-color:rgba(255,255,255,0.6); }
+  /* floating stat cards */
+  .hero-stats { position:absolute; bottom:60px; right:40px; z-index:3; display:flex; gap:12px; }
+  .stat-card { background:var(--glass); border:1px solid var(--border); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); padding:16px 22px; text-align:center; min-width:110px; }
+  .stat-num { font-family:"FuturaC",sans-serif; font-weight:900; font-size:36px; color:var(--yellow); line-height:1; }
+  .stat-lbl { font-family:"Futura",sans-serif; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+
+  /* ── MARQUEE ── */
+  .marquee-wrap { border-top:1px solid var(--border); border-bottom:1px solid var(--border); background:var(--bg2); padding:14px 0; overflow:hidden; }
+  .marquee { display:flex; gap:48px; animation:marquee 28s linear infinite; white-space:nowrap; width:max-content; }
+  .marquee-item { font-family:"FuturaC",sans-serif; font-weight:700; font-size:13px; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.3); display:flex; align-items:center; gap:16px; }
+  .marquee-item::before { content:">>"; color:var(--yellow); font-size:10px; opacity:0.7; }
+  @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+  /* ── SECTION COMMON ── */
+  .section { padding:96px 40px; max-width:1200px; margin:0 auto; }
+  .section-header { text-align:center; margin-bottom:56px; }
+  .section-title { font-family:"FuturaC",sans-serif; font-weight:900; font-size:clamp(40px,5vw,60px); text-transform:uppercase; letter-spacing:-0.02em; line-height:0.92; }
+  .section-sub { font-family:"Futura",sans-serif; font-size:16px; color:var(--muted); margin-top:14px; max-width:560px; margin-left:auto; margin-right:auto; }
+
+  /* ── FEATURES GRID ── */
+  .features-bg { background:var(--bg2); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+  .features-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); }
+  .feat-card { background:var(--bg2); padding:36px 32px; transition:background 0.2s; }
+  .feat-card:hover { background:var(--bg3); }
+  .feat-icon { width:44px; height:44px; background:var(--yellow2); border:1px solid rgba(255,209,0,0.2); display:flex; align-items:center; justify-content:center; margin-bottom:20px; }
+  .feat-title { font-family:"FuturaC",sans-serif; font-weight:700; font-size:17px; text-transform:uppercase; letter-spacing:0.02em; color:var(--white); margin-bottom:10px; }
+  .feat-body { font-family:"Futura",sans-serif; font-size:14px; color:var(--muted); line-height:1.65; }
+
+  /* ── PRODUCTS ── */
+  .products-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  .prod-card { background:var(--glass); border:1px solid var(--border); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); display:flex; flex-direction:column; transition:border-color 0.2s, box-shadow 0.2s; }
+  .prod-card:hover { border-color:rgba(255,209,0,0.3); box-shadow:var(--glow); }
+  .prod-img { height:200px; background:var(--bg3); display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; border-bottom:1px solid var(--border); }
+  .prod-img img { width:100%; height:100%; object-fit:contain; }
+  .prod-img-placeholder { font-family:"FuturaC",sans-serif; font-weight:900; font-size:22px; color:rgba(255,209,0,0.25); text-transform:uppercase; text-align:center; line-height:1; padding:20px; }
+  .prod-badge { position:absolute; top:12px; left:0; background:var(--yellow); color:#0d0d0d; font-family:"FuturaC",sans-serif; font-weight:700; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; padding:3px 10px; }
+  .prod-body { padding:16px; flex:1; display:flex; flex-direction:column; gap:4px; }
+  .prod-cat { font-family:"FuturaC",sans-serif; font-weight:400; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); }
+  .prod-name { font-family:"FuturaC",sans-serif; font-weight:700; font-size:16px; text-transform:uppercase; color:var(--white); }
+  .prod-price { font-family:"FuturaC",sans-serif; font-weight:900; font-size:22px; color:var(--yellow); margin-top:6px; }
+  .prod-footer { border-top:1px solid var(--border); }
+  .prod-btn { width:100%; background:transparent; border:none; color:var(--yellow); font-family:"Futura",sans-serif; font-weight:700; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; padding:12px; transition:background 0.15s; }
+  .prod-btn:hover { background:var(--yellow); color:#0d0d0d; }
+
+  /* ── PHOTO GRID (masonry) ── */
+  .photo-section { background:var(--bg); padding:96px 40px; }
+  .photo-grid { max-width:1200px; margin:0 auto; }
+  .photo-masonry { display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:200px; gap:12px; margin-top:56px; }
+  .photo-tile { position:relative; overflow:hidden; background:var(--bg3); }
+  .photo-tile img { width:100%; height:100%; object-fit:cover; transition:transform 0.4s; filter:grayscale(30%) brightness(0.8); }
+  .photo-tile:hover img { transform:scale(1.05); filter:grayscale(0) brightness(1); }
+  .photo-tile.tall { grid-row:span 2; }
+  .photo-tile.wide { grid-column:span 2; }
+  .photo-tile-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(13,13,13,0.7) 0%, transparent 50%); pointer-events:none; }
+  .photo-tile-label { position:absolute; bottom:14px; left:14px; font-family:"FuturaC",sans-serif; font-weight:700; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:rgba(255,255,255,0.8); }
+
+  /* ── CTA BANNER ── */
+  .cta-section { position:relative; overflow:hidden; background:var(--yellow); padding:80px 40px; text-align:center; }
+  .cta-section::before { content:">>"; position:absolute; left:-60px; top:50%; transform:translateY(-50%); font-family:"FuturaC",sans-serif; font-weight:900; font-size:400px; color:rgba(0,0,0,0.08); line-height:1; pointer-events:none; }
+  .cta-section::after { content:">>"; position:absolute; right:-60px; top:50%; transform:translateY(-50%); font-family:"FuturaC",sans-serif; font-weight:900; font-size:400px; color:rgba(0,0,0,0.08); line-height:1; pointer-events:none; }
+  .cta-title { font-family:"FuturaC",sans-serif; font-weight:900; font-size:clamp(48px,6vw,80px); text-transform:uppercase; letter-spacing:-0.02em; line-height:0.9; color:#0d0d0d; display:inline-block; transform:skewX(-11deg); transform-origin:center; }
+  .cta-sub { font-family:"Futura",sans-serif; font-size:18px; color:rgba(0,0,0,0.65); margin-top:20px; }
+  .cta-btn { display:inline-block; background:#0d0d0d; color:var(--yellow); border:none; font-family:"Futura",sans-serif; font-weight:700; font-size:13px; letter-spacing:0.1em; text-transform:uppercase; padding:14px 32px; margin-top:32px; }
+
+  /* ── FOOTER ── */
+  footer { background:var(--bg2); border-top:1px solid var(--border); padding:48px 40px 28px; }
+  .footer-inner { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:2fr 1fr 1fr; gap:40px; }
+  .footer-logo { height:24px; margin-bottom:16px; }
+  .footer-about { font-size:13px; color:var(--muted); line-height:1.7; max-width:340px; }
+  .footer-col-title { font-family:"FuturaC",sans-serif; font-weight:700; font-size:12px; letter-spacing:0.2em; text-transform:uppercase; color:var(--white); margin-bottom:14px; }
+  .footer-link { display:block; font-size:13px; color:var(--muted); margin-bottom:8px; transition:color 0.15s; }
+  .footer-link:hover { color:var(--yellow); }
+  .footer-bottom { max-width:1200px; margin:28px auto 0; padding-top:20px; border-top:1px solid var(--border); display:flex; justify-content:space-between; font-size:11px; color:rgba(255,255,255,0.25); letter-spacing:0.05em; }
+
+  /* Separator full-bleed */
+  .sep { height:1px; background:var(--border); width:100%; }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <img src="assets/logo-white.png" class="logo" alt="FlyFree Urban">
+  <nav>
+    <a href="#">Inicio</a>
+    <a href="#">Tienda</a>
+    <a href="#">Alquiler</a>
+    <a href="#">Nosotros</a>
+  </nav>
+  <button class="nav-cta">Comprar &gt;&gt;</button>
+</header>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grad"></div>
+  <div class="hero-grad2"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Always Rolling · Nueva temporada</div>
+    <h1 class="hero-title">
+      Patines<br>
+      para quien<br>
+      <span class="acc">ya vuela.</span>
+    </h1>
+    <p class="hero-sub">Equipamiento seleccionado por patinadores, para patinadores. Desde principiantes hasta riders que ya superaron su primer equipo.</p>
+    <div class="hero-btns">
+      <button class="btn-primary">Ver tienda &gt;&gt;</button>
+      <button class="btn-ghost">Alquilar rollers</button>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-card">
+      <div class="stat-num">500+</div>
+      <div class="stat-lbl">Clientes activos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">8</div>
+      <div class="stat-lbl">Años rodando</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">30+</div>
+      <div class="stat-lbl">Marcas top</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MARQUEE ── -->
+<div class="marquee-wrap">
+  <div class="marquee">
+    <span class="marquee-item">Stark Skates</span>
+    <span class="marquee-item">Flying Eagle</span>
+    <span class="marquee-item">Rollerblade</span>
+    <span class="marquee-item">Seba</span>
+    <span class="marquee-item">Powerslide</span>
+    <span class="marquee-item">FR Skates</span>
+    <span class="marquee-item">Micro</span>
+    <span class="marquee-item">Doop</span>
+    <span class="marquee-item">Stark Skates</span>
+    <span class="marquee-item">Flying Eagle</span>
+    <span class="marquee-item">Rollerblade</span>
+    <span class="marquee-item">Seba</span>
+    <span class="marquee-item">Powerslide</span>
+    <span class="marquee-item">FR Skates</span>
+    <span class="marquee-item">Micro</span>
+    <span class="marquee-item">Doop</span>
+  </div>
+</div>
+
+<!-- ── FEATURES ── -->
+<div class="features-bg">
+  <div class="section">
+    <div class="section-header">
+      <div class="kicker-pill">Por qué FlyFree</div>
+      <div class="section-title ital">Más que<br>una tienda</div>
+      <p class="section-sub">Una comunidad de patinadores que también vende, asesora y entrena.</p>
+    </div>
+  </div>
+  <div class="features-grid">
+    <div class="feat-card">
+      <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M8 4 L14 4 L14 16 L24 20 L24 24 L6 24 L6 18 L8 4Z" stroke="#FFD100" stroke-width="2.5" stroke-linejoin="miter"/><circle cx="10" cy="27" r="2.5" stroke="#FFD100" stroke-width="2"/><circle cx="19" cy="27" r="2.5" stroke="#FFD100" stroke-width="2"/></svg></div>
+      <div class="feat-title">Probás antes de comprar</div>
+      <div class="feat-body">En nuestro showroom de Palermo podés probar todos los modelos y elegir con certeza. Nada de sorpresas al abrirlo.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="11" r="6" stroke="#FFD100" stroke-width="2.5"/><path d="M4 29 C4 21 9 17 16 17 C23 17 28 21 28 29" stroke="#FFD100" stroke-width="2.5"/></svg></div>
+      <div class="feat-title">Te atiende un patinador</div>
+      <div class="feat-body">La persona que te vende usa lo que te vende. El consejo es real, no de manual.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect x="3" y="7" width="26" height="18" stroke="#FFD100" stroke-width="2.5"/><line x1="3" y1="13" x2="29" y2="13" stroke="#FFD100" stroke-width="2.5"/><rect x="7" y="18" width="6" height="3" fill="#FFD100"/></svg></div>
+      <div class="feat-title">3 y 6 cuotas sin interés</div>
+      <div class="feat-body">Pagá como te convenga. También 10% de descuento en efectivo en el showroom.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M16 3 L28 8 L28 18 C28 25 16 30 16 30 C16 30 4 25 4 18 L4 8 Z" stroke="#FFD100" stroke-width="2.5"/><path d="M11 16 L14.5 20 L21 12" stroke="#FFD100" stroke-width="2.5" stroke-linecap="square"/></svg></div>
+      <div class="feat-title">Garantía oficial</div>
+      <div class="feat-body">Todos los productos tienen garantía de fábrica. En caso de problema, lo resolvemos sin vueltas.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect x="2" y="8" width="18" height="14" stroke="#FFD100" stroke-width="2.5" fill="none"/><path d="M20 12 L30 12 L30 22 L20 22" stroke="#FFD100" stroke-width="2.5" fill="none"/><path d="M20 12 L26 12 L30 16 L30 22" stroke="#FFD100" stroke-width="2.5"/><circle cx="7" cy="24" r="2.5" fill="#FFD100"/><circle cx="24" cy="24" r="2.5" fill="#FFD100"/></svg></div>
+      <div class="feat-title">Envíos a todo el país</div>
+      <div class="feat-body">Despachos rápidos sin monto mínimo. Seguí tu pedido en tiempo real.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M16 3 C10 3 6 7 6 13 C6 21 16 29 16 29 C16 29 26 21 26 13 C26 7 22 3 16 3Z" stroke="#FFD100" stroke-width="2.5"/><circle cx="16" cy="13" r="4" stroke="#FFD100" stroke-width="2.5"/></svg></div>
+      <div class="feat-title">Showroom Palermo</div>
+      <div class="feat-body">Sinclair 3139 5°C. A 2 cuadras del Rosedal. Visitanos sin turno de martes a sábado.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PRODUCTS ── -->
+<div style="background:var(--bg); padding:96px 0;">
+  <div class="section" style="padding-top:0; padding-bottom:0;">
+    <div class="section-header">
+      <div class="kicker-pill">Tienda</div>
+      <div class="section-title">Destacados</div>
+      <p class="section-sub">Seleccionados por nuestro equipo. Probados en la calle.</p>
+    </div>
+    <div class="products-grid">
+      <div class="prod-card">
+        <div class="prod-img">
+          <img src="assets/product-rollers.png" alt="Stark Billionz">
+          <div class="prod-badge">Nuevo</div>
+        </div>
+        <div class="prod-body">
+          <div class="prod-cat">Rollers Adultos</div>
+          <div class="prod-name">Stark Billionz</div>
+          <div class="prod-price">$ 349.000</div>
+        </div>
+        <div class="prod-footer"><button class="prod-btn">Agregar al carrito</button></div>
+      </div>
+      <div class="prod-card">
+        <div class="prod-img"><div class="prod-img-placeholder">Pack<br>Ruedas<br>80mm</div></div>
+        <div class="prod-body">
+          <div class="prod-cat">Accesorios</div>
+          <div class="prod-name">Pack Ruedas 80mm</div>
+          <div class="prod-price">$ 89.000</div>
+        </div>
+        <div class="prod-footer"><button class="prod-btn">Agregar al carrito</button></div>
+      </div>
+      <div class="prod-card">
+        <div class="prod-img">
+          <div class="prod-img-placeholder">Kit<br>Starter</div>
+          <div class="prod-badge" style="background:rgba(255,209,0,0.15); color:var(--yellow); font-size:9px;">Oferta</div>
+        </div>
+        <div class="prod-body">
+          <div class="prod-cat">Combos</div>
+          <div class="prod-name">Kit Principiantes</div>
+          <div class="prod-price">$ 520.000</div>
+        </div>
+        <div class="prod-footer"><button class="prod-btn">Agregar al carrito</button></div>
+      </div>
+      <div class="prod-card">
+        <div class="prod-img"><div class="prod-img-placeholder">Protec.<br>Urbanas</div></div>
+        <div class="prod-body">
+          <div class="prod-cat">Protecciones</div>
+          <div class="prod-name">Protecciones Pro</div>
+          <div class="prod-price">$ 74.000</div>
+        </div>
+        <div class="prod-footer"><button class="prod-btn">Agregar al carrito</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PHOTO GRID ── -->
+<div class="photo-section">
+  <div class="photo-grid">
+    <div class="section-header">
+      <div class="kicker-pill">Comunidad</div>
+      <div class="section-title ital">500+ patinadores<br>llaman hogar a FlyFree</div>
+      <p class="section-sub">Una comunidad real, en la calle, todos los días.</p>
+    </div>
+    <div class="photo-masonry">
+      <div class="photo-tile tall">
+        <img src="assets/skater-martina.jpg" alt="Skater">
+        <div class="photo-tile-overlay"></div>
+        <div class="photo-tile-label">Palermo · Rosedal</div>
+      </div>
+      <div class="photo-tile">
+        <img src="assets/brand-photo.jpg" alt="Brand">
+        <div class="photo-tile-overlay"></div>
+        <div class="photo-tile-label">Freestyle urbano</div>
+      </div>
+      <div class="photo-tile">
+        <img src="assets/community-photo.jpg" alt="Community">
+        <div class="photo-tile-overlay"></div>
+        <div class="photo-tile-label">Salidas grupales</div>
+      </div>
+      <div class="photo-tile wide">
+        <img src="assets/community-photo.jpg" alt="Community wide" style="object-position:center 60%;">
+        <div class="photo-tile-overlay"></div>
+        <div class="photo-tile-label">Always Rolling · Buenos Aires</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CTA ── -->
+<div class="cta-section">
+  <div class="kicker-pill" style="background:rgba(0,0,0,0.12); border-color:rgba(0,0,0,0.2); color:#0d0d0d;">¿Listo para el upgrade?</div>
+  <div class="cta-title">Rodá con el<br>equipo que merecés</div>
+  <p class="cta-sub">Showroom en Palermo · WhatsApp: 11-5109-7151</p>
+  <button class="cta-btn">Contactarnos &gt;&gt;</button>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <img src="assets/logo-white.png" class="footer-logo" alt="FlyFree Urban">
+      <p class="footer-about">FLYFREE URBAN nace de nuestro amor por los deportes urbanos. Somos patinadores apasionados por el movimiento, la libertad y la cultura de la calle.</p>
+    </div>
+    <div>
+      <div class="footer-col-title">Contacto</div>
+      <a href="mailto:flyfreeurban@gmail.com" class="footer-link">flyfreeurban@gmail.com</a>
+      <a href="tel:+5491161097151" class="footer-link">+549 116109715</a>
+      <a href="#" class="footer-link">@flyfreeurban</a>
+    </div>
+    <div>
+      <div class="footer-col-title">Links</div>
+      <a href="#" class="footer-link">Inicio</a>
+      <a href="#" class="footer-link">Tienda</a>
+      <a href="#" class="footer-link">Alquiler</a>
+      <a href="#" class="footer-link">Cursos</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 FlyFree Urban — Todos los derechos reservados</span>
+    <span style="color:var(--yellow);">Always Rolling.</span>
+  </div>
+</footer>
+
+</body>
+</html>

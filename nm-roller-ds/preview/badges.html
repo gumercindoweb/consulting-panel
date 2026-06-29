@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Bold.otf') format('opentype'); font-weight:700; }
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Book.otf') format('opentype'); font-weight:400; }
+  @font-face { font-family:'Futura Std Condensed'; src:url('../fonts/FuturaStd-CondensedBold.otf') format('opentype'); font-weight:700; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; display:flex; gap:12px; padding:24px; font-family:'Futura Std',sans-serif; flex-wrap:wrap; align-items:flex-start; }
+  /* Badge variants */
+  .badge { display:inline-flex; align-items:center; font-weight:700; font-size:9px; letter-spacing:.2em; text-transform:uppercase; padding:4px 10px; }
+  .badge-red { background:oklch(50% 0.26 26); color:#fff; }
+  .badge-dark-red { background:oklch(30% 0.17 22); color:#fff; }
+  .badge-teal { background:oklch(74% 0.13 185); color:#fff; }
+  .badge-outline { background:transparent; border:1px solid oklch(50% 0.26 26); color:oklch(50% 0.26 26); }
+  .badge-outline-white { background:transparent; border:1px solid #fff; color:#fff; }
+  .badge-neutral { background:#2C2C2C; color:#C0C0C0; }
+  .badge-pill { border-radius:9999px; }
+  /* Tags (smaller) */
+  .tag { display:inline-flex; align-items:center; gap:4px; font-weight:700; font-size:8px; letter-spacing:.15em; text-transform:uppercase; padding:3px 8px; border-radius:0; }
+  .divider { width:100%; height:1px; background:#1a1a1a; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .section-label { font-weight:700; font-size:8px; letter-spacing:.2em; text-transform:uppercase; color:#444; width:100%; margin-top:4px; }
+</style>
+</head>
+<body>
+  <div class="section-label">Badges de plan</div>
+  <div class="row">
+    <span class="badge badge-red">MEJOR OPCIÓN</span>
+    <span class="badge badge-dark-red">PANTONE 181</span>
+    <span class="badge badge-teal">NUEVO</span>
+    <span class="badge badge-outline">OFERTA</span>
+    <span class="badge badge-outline-white">PROMO</span>
+    <span class="badge badge-neutral">PRÓXIMAMENTE</span>
+  </div>
+  <div class="divider"></div>
+  <div class="section-label">Pill variants</div>
+  <div class="row">
+    <span class="badge badge-red badge-pill">BÁSIC fUN</span>
+    <span class="badge badge-teal badge-pill">BLACK FREE</span>
+    <span class="badge badge-neutral badge-pill">CLASE ÚNICA</span>
+  </div>
+  <div class="divider"></div>
+  <div class="section-label">Tags de nivel</div>
+  <div class="row">
+    <span class="tag" style="background:#1a2a1a; color:#62C3BF; border:1px solid #62C3BF;">Primeros Pasos</span>
+    <span class="tag" style="background:#1a1a2a; color:#8888ff; border:1px solid #4444cc;">Principiante</span>
+    <span class="tag" style="background:#2a1a10; color:#e07040; border:1px solid #e07040;">Intermedio</span>
+    <span class="tag" style="background:#2a1010; color:oklch(50% 0.26 26); border:1px solid oklch(50% 0.26 26);">Avanzado</span>
+  </div>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Bold.otf') format('opentype'); font-weight:700; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; display:flex; align-items:center; gap:32px; padding:28px 32px; font-family:'Futura Std',sans-serif; flex-wrap:wrap; }
+  .item { display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .box { width:56px; height:56px; background:#1A1A1A; border:1px solid #333; }
+  .label { font-weight:700; font-size:8px; letter-spacing:.15em; text-transform:uppercase; color:#555; text-align:center; }
+  .val { font-size:8px; color:#3a3a3a; text-align:center; }
+  /* Shadow items */
+  .shadow-sm { box-shadow:0 1px 4px rgba(0,0,0,0.4); }
+  .shadow-md { box-shadow:0 4px 16px rgba(0,0,0,0.5); }
+  .shadow-lg { box-shadow:0 8px 32px rgba(0,0,0,0.6); }
+  .shadow-red { box-shadow:0 4px 24px rgba(208,28,31,0.45); background:oklch(50% 0.26 26); }
+  /* Radius items */
+  .r0 { border-radius:0; }
+  .r2 { border-radius:2px; }
+  .r4 { border-radius:4px; }
+  .r8 { border-radius:8px; }
+  .r16 { border-radius:16px; }
+  .rpill { border-radius:9999px; width:80px; height:36px; }
+  .divider { width:1px; height:80px; background:#222; }
+</style>
+</head>
+<body>
+  <div class="item"><div class="box r0 shadow-sm"></div><div class="label">Shadow SM</div><div class="val">0 1px 4px</div></div>
+  <div class="item"><div class="box r0 shadow-md"></div><div class="label">Shadow MD</div><div class="val">0 4px 16px</div></div>
+  <div class="item"><div class="box r0 shadow-lg"></div><div class="label">Shadow LG</div><div class="val">0 8px 32px</div></div>
+  <div class="item"><div class="box r0 shadow-red"></div><div class="label">Red Glow</div><div class="val">CTA / Buttons</div></div>
+  <div class="divider"></div>
+  <div class="item"><div class="box r0"></div><div class="label">Radius 0</div><div class="val">0px — default</div></div>
+  <div class="item"><div class="box r2"></div><div class="label">Radius SM</div><div class="val">2px</div></div>
+  <div class="item"><div class="box r4"></div><div class="label">Radius MD</div><div class="val">4px</div></div>
+  <div class="item"><div class="box r8"></div><div class="label">Radius LG</div><div class="val">8px</div></div>
+  <div class="item"><div class="box rpill"></div><div class="label">Pill</div><div class="val">9999px</div></div>
+</body>
+</html>

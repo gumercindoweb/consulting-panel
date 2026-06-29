@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Bold.otf') format('opentype'); font-weight:700; }
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Book.otf') format('opentype'); font-weight:400; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; display:flex; gap:0; font-family:'Futura Std',sans-serif; min-height:180px; flex-wrap:wrap; }
+  /* Location card */
+  .location { flex:1; min-width:160px; padding:20px 18px; border-right:1px solid #1E1E1E; display:flex; flex-direction:column; gap:4px; }
+  .location:last-child { border-right:none; }
+  .loc-name { font-weight:700; font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:#fff; }
+  .loc-addr { font-weight:400; font-size:10px; line-height:1.5; color:#555; margin-top:2px; }
+  .loc-link { margin-top:auto; padding-top:12px; font-weight:700; font-size:9px; letter-spacing:.15em; text-transform:uppercase; color:oklch(50% 0.26 26); text-decoration:none; display:flex; align-items:center; gap:4px; }
+  .loc-pin { font-size:11px; }
+  /* Content card */
+  .content-card { background:#1A1A1A; border:1px solid #252525; padding:20px; display:flex; flex-direction:column; gap:10px; }
+  .card-overline { font-weight:700; font-size:8px; letter-spacing:.2em; text-transform:uppercase; color:oklch(50% 0.26 26); }
+  .card-title { font-weight:700; font-size:16px; text-transform:uppercase; color:#fff; line-height:1.2; }
+  .card-body { font-weight:400; font-size:10px; color:#666; line-height:1.6; }
+</style>
+</head>
+<body>
+  <div class="location">
+    <div class="loc-pin">📍</div>
+    <div class="loc-name">Rosedal</div>
+    <div class="loc-addr">Infanta Isabel 555, Frente a Museo Sívori, Palermo, CABA</div>
+    <a class="loc-link" href="#">Cómo llegar →</a>
+  </div>
+  <div class="location">
+    <div class="loc-pin">📍</div>
+    <div class="loc-name">Pto. Madero</div>
+    <div class="loc-addr">Pierina Dealessi 100–150, Puerto Madero, frente al dique, CABA</div>
+    <a class="loc-link" href="#">Cómo llegar →</a>
+  </div>
+  <div class="location">
+    <div class="loc-pin">📍</div>
+    <div class="loc-name">Belgrano</div>
+    <div class="loc-addr">Av. Pres. Figueroa Alcorta 6734, Pista para Patinar, CABA</div>
+    <a class="loc-link" href="#">Cómo llegar →</a>
+  </div>
+  <div class="location" style="flex:2; background:#1A1A1A;">
+    <div class="card-overline">Testimonial</div>
+    <div class="card-title">"Pensé que no podría... y ahora salgo sola a rollear por la ciudad."</div>
+    <div class="card-body">— Estefani · Plan Black · Sede Rosedal</div>
+  </div>
+</body>
+</html>

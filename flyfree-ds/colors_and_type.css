@@ -1,0 +1,354 @@
+/* ============================================================
+   FLYFREE URBAN — Design Tokens
+   Brand palette: #FFD100 / #231F20 / #FFFFFF
+   Typography: Futura Std (loaded from fonts/)
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   FONT FACES
+   ---------------------------------------------------------- */
+@font-face {
+  font-family: "FuturaStd";
+  src: url("fonts/FuturaStd-Book.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "FuturaStd";
+  src: url("fonts/FuturaStd-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: "FuturaStd";
+  src: url("fonts/FuturaStd-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: "FuturaStd";
+  src: url("fonts/FuturaStd-Heavy.otf") format("opentype");
+  font-weight: 800;
+  font-style: normal;
+}
+@font-face {
+  font-family: "FuturaStd";
+  src: url("fonts/FuturaStd-ExtraBold.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+}
+@font-face {
+  font-family: "FuturaStdCondensed";
+  src: url("fonts/FuturaStd-CondensedLight.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+}
+@font-face {
+  font-family: "FuturaStdCondensed";
+  src: url("fonts/FuturaStd-Condensed.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "FuturaStdCondensed";
+  src: url("fonts/FuturaStd-CondensedBold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: "FuturaStdCondensed";
+  src: url("fonts/FuturaStd-CondensedExtraBd.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+}
+
+/* ----------------------------------------------------------
+   COLOR TOKENS — Base
+   ---------------------------------------------------------- */
+:root {
+  --color-yellow:  #FFD100;
+  --color-black:   #231F20;
+  --color-white:   #FFFFFF;
+
+  /* Semantic aliases */
+  --color-brand-primary:    var(--color-yellow);
+  --color-brand-dark:       var(--color-black);
+  --color-brand-light:      var(--color-white);
+
+  /* Text */
+  --color-text-primary:     var(--color-black);
+  --color-text-inverse:     var(--color-white);
+  --color-text-accent:      var(--color-yellow);
+
+  /* Backgrounds */
+  --color-bg-light:         var(--color-white);
+  --color-bg-dark:          var(--color-black);
+  --color-bg-accent:        var(--color-yellow);
+
+  /* Interactive */
+  --color-btn-primary-bg:        var(--color-yellow);
+  --color-btn-primary-text:      var(--color-black);
+  --color-btn-primary-hover-bg:  #e6bb00;
+  --color-btn-dark-bg:           var(--color-black);
+  --color-btn-dark-text:         var(--color-white);
+  --color-btn-dark-hover-bg:     #3a3536;
+
+  /* Utility */
+  --color-border:            var(--color-black);
+  --color-overlay:           rgba(35, 31, 32, 0.65);
+
+  /* ----------------------------------------------------------
+     SECONDARY ACCENT FAMILIES (extended palette)
+     Use ONE family at a time, in small doses. Yellow+black+white
+     remain the permanent anchor. See README "Secondary Accent System".
+     ---------------------------------------------------------- */
+  /* Electric Street — Rollerblade / goskate */
+  --accent-lime:        #C4FF1F;
+  --accent-violet:      #7C3AED;
+  /* Sunset Energy — Red Bull */
+  --accent-coral:       #FF5A1F;
+  --accent-magenta:     #FF1F6B;
+  /* Outdoor Trail — Patagonia / Columbia */
+  --accent-forest:      #1F6F54;
+  --accent-sky:         #2E7CC2;
+  --accent-clay:        #C2570C;
+  --accent-sand:        #E9E2D0;
+}
+
+/* ----------------------------------------------------------
+   TYPE TOKENS — Base
+   ---------------------------------------------------------- */
+:root {
+  /* Font families */
+  --font-display:    "FuturaStdCondensed", "Barlow Condensed", sans-serif;
+  --font-body:       "FuturaStd", "Futura", sans-serif;
+
+  /* Scale (desktop, px) */
+  --text-xs:    12px;
+  --text-sm:    14px;
+  --text-base:  16px;
+  --text-md:    18px;
+  --text-lg:    22px;
+  --text-xl:    28px;
+  --text-2xl:   36px;
+  --text-3xl:   48px;
+  --text-4xl:   64px;
+  --text-5xl:   88px;
+  --text-6xl:   120px;
+
+  /* Line heights */
+  --leading-tight:  0.9;
+  --leading-snug:   1.0;
+  --leading-normal: 1.2;
+  --leading-relaxed:1.5;
+  --leading-loose:  1.7;
+
+  /* Letter spacings */
+  --tracking-tight:   -0.02em;
+  --tracking-normal:   0em;
+  --tracking-wide:     0.12em;
+  --tracking-wider:    0.2em;
+  --tracking-widest:   0.35em;
+}
+
+/* ----------------------------------------------------------
+   SEMANTIC TYPE STYLES
+   ---------------------------------------------------------- */
+
+/* Hero / Impact — giant condensed display, always uppercase */
+.type-hero {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--text-6xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+}
+
+/* ----------------------------------------------------------
+   MOTION TYPE — Italic oblique (Nike-style energy)
+   Synthetic oblique: skewX(-12deg). Futura Std has no native
+   italic; this lean IS the brand's motion treatment.
+   Use for hero, CTAs, campaigns, high-energy social.
+   Keep upright for catalog titles & reading.
+   ---------------------------------------------------------- */
+.type-italic {
+  display: inline-block;
+  transform: skewX(-12deg);
+  transform-origin: left bottom;
+}
+.type-italic-soft {           /* lighter lean for smaller labels / product names */
+  display: inline-block;
+  transform: skewX(-9deg);
+  transform-origin: left bottom;
+}
+/* Speed-line accent — place on a wrapper around an italic word */
+.type-speed-lines {
+  position: relative;
+}
+.type-speed-lines::before {
+  content: "";
+  position: absolute;
+  left: -32px;
+  top: 14%;
+  width: 24px;
+  height: 68%;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--color-yellow) 0,
+    var(--color-yellow) 5px,
+    transparent 5px,
+    transparent 12px
+  );
+  transform: skewX(-12deg);
+}
+
+/* H1 — major section headline */
+.type-h1 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--text-5xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+}
+
+/* H2 — section title */
+.type-h2 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--text-4xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+}
+
+/* H3 — subsection / card title */
+.type-h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-3xl);
+  line-height: var(--leading-normal);
+  letter-spacing: var(--tracking-tight);
+  text-transform: uppercase;
+}
+
+/* Label — URBAN-style: condensed, wide tracking */
+.type-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+}
+
+/* Tagline — condensed, spaced, secondary */
+.type-tagline {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--text-lg);
+  line-height: var(--leading-normal);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+}
+
+/* Body — default reading text */
+.type-body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--text-base);
+  line-height: var(--leading-loose);
+  letter-spacing: var(--tracking-normal);
+}
+
+/* Body Strong */
+.type-body-strong {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+}
+
+/* Price */
+.type-price {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--text-2xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* Caption */
+.type-caption {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--text-xs);
+  line-height: var(--leading-relaxed);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* ----------------------------------------------------------
+   SPACING TOKENS
+   ---------------------------------------------------------- */
+:root {
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+  --space-20:  80px;
+  --space-24:  96px;
+  --space-32:  128px;
+}
+
+/* ----------------------------------------------------------
+   BORDER RADIUS
+   ---------------------------------------------------------- */
+:root {
+  --radius-none:   0px;
+  --radius-sm:     2px;
+  --radius-md:     4px;
+  --radius-lg:     8px;
+  --radius-pill:   999px;
+}
+
+/* ----------------------------------------------------------
+   SHADOWS
+   ---------------------------------------------------------- */
+:root {
+  --shadow-sm:   2px 2px 0px var(--color-black);
+  --shadow-md:   4px 4px 0px var(--color-black);
+  --shadow-lg:   6px 6px 0px var(--color-black);
+  --shadow-xl:   8px 8px 0px var(--color-black);
+}
+
+/* ----------------------------------------------------------
+   GRAPHIC ELEMENT — Chevron Pattern
+   ---------------------------------------------------------- */
+.chevron-decor {
+  /* Diagonal hazard-tape stripe pattern */
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-yellow) 0px,
+    var(--color-yellow) 12px,
+    var(--color-black) 12px,
+    var(--color-black) 24px
+  );
+}
+
+.chevron-decor-white {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-white) 0px,
+    var(--color-white) 12px,
+    var(--color-black) 12px,
+    var(--color-black) 24px
+  );
+}

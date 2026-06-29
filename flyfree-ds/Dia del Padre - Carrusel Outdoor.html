@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlyFree Urban — Carrusel Día del Padre · Outdoor Trail</title>
+<style>
+  @font-face { font-family: "FuturaC"; src: url("fonts/FuturaStd-CondensedExtraBd.otf") format("opentype"); font-weight: 900; }
+  @font-face { font-family: "FuturaC"; src: url("fonts/FuturaStd-CondensedBold.otf") format("opentype"); font-weight: 700; }
+  @font-face { font-family: "FuturaC"; src: url("fonts/FuturaStd-Condensed.otf") format("opentype"); font-weight: 400; }
+  @font-face { font-family: "Futura"; src: url("fonts/FuturaStd-Book.otf") format("opentype"); font-weight: 400; }
+  @font-face { font-family: "Futura"; src: url("fonts/FuturaStd-Medium.otf") format("opentype"); font-weight: 500; }
+  @font-face { font-family: "Futura"; src: url("fonts/FuturaStd-Bold.otf") format("opentype"); font-weight: 700; }
+
+  :root {
+    --forest:#1F6F54; --sky:#2E7CC2; --clay:#C2570C; --sand:#E9E2D0;
+    --ink:#1B2A22; --yellow:#FFD100; --paper:#F4EFE3;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { background:#2a2a2a; height:100%; font-family:"Futura", sans-serif; }
+  #stage { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  #scaler { width:1080px; transform-origin:center center; }
+  .viewport { width:1080px; height:1080px; overflow:hidden; border-radius:6px; }
+  .rail { display:flex; transition:transform 0.45s cubic-bezier(0.4,0,0.2,1); will-change:transform; }
+  .slide { position:relative; flex:0 0 1080px; width:1080px; height:1080px; overflow:hidden; display:flex; }
+
+  .cond { font-family:"FuturaC",sans-serif; font-weight:900; text-transform:uppercase; letter-spacing:-0.01em; line-height:0.92; }
+  .cond7 { font-family:"FuturaC",sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:0.01em; line-height:1; }
+  .serifless { font-family:"Futura",sans-serif; }
+  .label { font-family:"FuturaC",sans-serif; font-weight:700; letter-spacing:0.32em; text-transform:uppercase; }
+  .ital { display:inline-block; transform:skewX(-9deg); transform-origin:left bottom; font-family:"FuturaC",sans-serif; font-weight:900; text-transform:uppercase; letter-spacing:-0.01em; line-height:0.9; }
+
+  /* Field-guide inner frame */
+  .frame { position:absolute; inset:40px; border:2px solid currentColor; pointer-events:none; }
+  .inner { position:relative; width:100%; height:100%; padding:78px; display:flex; flex-direction:column; }
+
+  /* top tab */
+  .tab { display:flex; align-items:center; justify-content:space-between; }
+  .tab .brand { display:flex; align-items:center; gap:12px; }
+  .rule { height:2px; background:currentColor; width:100%; }
+
+  #nav { position:fixed; left:0; right:0; bottom:22px; display:flex; align-items:center; justify-content:center; gap:18px; z-index:50; }
+  .arrow { width:48px; height:48px; border:none; background:var(--clay); color:var(--sand); font-family:"FuturaC",sans-serif; font-weight:900; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:3px 3px 0 var(--ink); }
+  .arrow:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
+  .dots { display:flex; gap:8px; }
+  .dot { width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,0.4); cursor:pointer; }
+  .dot.on { background:var(--clay); }
+  .counter { position:fixed; top:18px; right:22px; z-index:50; font-family:"FuturaC",sans-serif; font-weight:700; font-size:13px; letter-spacing:0.2em; color:rgba(255,255,255,0.6); text-transform:uppercase; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="scaler">
+    <div class="viewport">
+    <div class="rail" id="rail">
+
+      <!-- ════ 01 · PORTADA (forest) ════ -->
+      <section class="slide" data-screen-label="01" style="background:var(--forest); color:var(--sand);">
+        <div class="frame"></div>
+        <div class="inner">
+          <div class="tab">
+            <div class="brand">
+              <div style="display:flex; flex-direction:column; align-items:flex-start; line-height:1;"><div style="display:flex; align-items:center; gap:7px;"><span style="color:#FFD100; font-family:FuturaC,sans-serif; font-weight:900; font-size:30px; letter-spacing:-5px;">&laquo;</span><span style="color:#E9E2D0; font-family:FuturaC,sans-serif; font-weight:900; font-size:30px; letter-spacing:-1px;">FLYFREE</span><span style="color:#FFD100; font-family:FuturaC,sans-serif; font-weight:900; font-size:30px; letter-spacing:-5px;">&raquo;</span></div><div style="color:#E9E2D0; font-family:FuturaC,sans-serif; font-weight:400; font-size:10px; letter-spacing:8px; margin-top:2px; padding-left:2px;">URBAN</div></div>
+              <span class="label" style="font-size:12px; color:var(--yellow);">Outdoor</span>
+            </div>
+            <span class="label" style="font-size:13px; color:var(--sand);">Día del Padre</span>
+          </div>
+          <div class="rule" style="margin-top:20px; color:var(--sand);"></div>
+
+          <div style="margin-top:auto;">
+            <div class="label" style="font-size:14px; color:var(--yellow); margin-bottom:24px;">Edición especial · 2026</div>
+            <div class="cond" style="font-size:96px; color:var(--sand);">¿Tu papá<br/>se animaría</div>
+            <div class="ital" style="font-size:96px; color:var(--yellow); margin-top:10px;">a hacer esto?</div>
+          </div>
+
+          <div class="rule" style="margin-top:auto; color:var(--sand);"></div>
+          <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-top:22px;">
+            <div class="cond7" style="font-size:30px; color:var(--sand);">2×1 en alquiler<br/>de rollers</div>
+            <div class="serifless" style="font-weight:700; font-size:20px; color:var(--yellow); letter-spacing:0.04em; text-align:right;">21 · 22 · 23<br/>de junio</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════ 02 · EMOCIONAL (sand) ════ -->
+      <section class="slide" data-screen-label="02" style="background:var(--sand); color:var(--forest);">
+        <div class="frame"></div>
+        <div class="inner">
+          <div class="tab">
+            <span class="label" style="font-size:13px; color:var(--clay);">02 — La historia</span>
+            <span class="cond" style="font-size:20px; color:var(--forest);">&raquo;</span>
+          </div>
+          <div class="rule" style="margin-top:20px; color:var(--forest);"></div>
+
+          <div style="margin-top:auto; max-width:820px;">
+            <div class="cond" style="font-size:60px; color:var(--ink);">Antes él te llevaba<br/>al parque.</div>
+            <div class="ital" style="font-size:74px; color:var(--clay); margin-top:30px;">Este domingo,<br/>vos lo llevás<br/>al Rosedal.</div>
+          </div>
+
+          <div style="margin-top:auto;">
+            <div class="rule" style="color:var(--forest);"></div>
+            <div class="serifless" style="font-size:24px; line-height:1.5; color:var(--forest); margin-top:22px; max-width:760px;">Sobre patines. A 2 cuadras de nuestro showroom en Palermo.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════ 03 · OFERTA 2x1 (clay) ════ -->
+      <section class="slide" data-screen-label="03" style="background:var(--clay); color:var(--sand);">
+        <div class="frame"></div>
+        <div class="inner" style="align-items:center; justify-content:center; text-align:center;">
+          <div class="label" style="font-size:15px; color:var(--yellow); margin-bottom:10px;">La propuesta</div>
+          <div class="cond" style="font-size:300px; color:var(--sand); line-height:0.8;">2×1</div>
+          <div class="rule" style="width:280px; margin:30px 0; color:var(--sand);"></div>
+          <div class="cond7" style="font-size:46px; color:var(--yellow);">en alquiler de rollers</div>
+          <div class="serifless" style="font-weight:700; font-size:28px; color:var(--sand); margin-top:18px; letter-spacing:0.02em;">Vienen dos, pagan uno…</div>
+        </div>
+      </section>
+
+      <!-- ════ 04 · QUÉ INCLUYE (paper) ════ -->
+      <section class="slide" data-screen-label="04" style="background:var(--paper); color:var(--forest);">
+        <div class="frame"></div>
+        <div class="inner" style="padding-top:70px;">
+          <div class="tab">
+            <span class="label" style="font-size:13px; color:var(--clay);">04 — El equipo</span>
+            <span class="cond" style="font-size:20px; color:var(--forest);">&raquo;</span>
+          </div>
+          <div class="rule" style="margin-top:18px; color:var(--forest);"></div>
+          <div class="cond" style="font-size:62px; color:var(--ink); margin-top:26px;">¿Qué incluye?</div>
+
+          <div style="margin-top:36px; display:flex; flex-direction:column;">
+            <!-- rows with thin dividers -->
+            <div style="display:flex; align-items:center; gap:24px; padding:20px 0; border-top:1.5px solid rgba(31,111,84,0.35);">
+              <span class="cond" style="font-size:26px; color:var(--clay); width:42px;">01</span>
+              <svg width="40" height="40" viewBox="0 0 32 32" fill="none"><path d="M8 4 L14 4 L14 16 L24 20 L24 24 L6 24 L6 18 L8 4Z" stroke="#1F6F54" stroke-width="2.5" stroke-linejoin="miter"/><circle cx="10" cy="27" r="2.5" stroke="#1F6F54" stroke-width="2"/><circle cx="19" cy="27" r="2.5" stroke="#1F6F54" stroke-width="2"/></svg>
+              <span class="cond7" style="font-size:30px; color:var(--ink);">Rollers ajustados a tu talle</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:24px; padding:20px 0; border-top:1.5px solid rgba(31,111,84,0.35);">
+              <span class="cond" style="font-size:26px; color:var(--clay); width:42px;">02</span>
+              <svg width="40" height="40" viewBox="0 0 32 32" fill="none"><path d="M16 3 L28 8 L28 18 C28 25 16 30 16 30 C16 30 4 25 4 18 L4 8 Z" stroke="#1F6F54" stroke-width="2.5"/><path d="M11 16 L14.5 20 L21 12" stroke="#1F6F54" stroke-width="2.5" stroke-linecap="square"/></svg>
+              <span class="cond7" style="font-size:30px; color:var(--ink);">Protecciones completas</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:24px; padding:20px 0; border-top:1.5px solid rgba(31,111,84,0.35);">
+              <span class="cond" style="font-size:26px; color:var(--clay); width:42px;">03</span>
+              <svg width="40" height="40" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="11" r="6" stroke="#1F6F54" stroke-width="2.5"/><path d="M4 29 C4 21 9 17 16 17 C23 17 28 21 28 29" stroke="#1F6F54" stroke-width="2.5"/></svg>
+              <span class="cond7" style="font-size:30px; color:var(--ink); line-height:0.98;">Asesoramiento de alguien que patina todos los días</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:24px; padding:20px 0; border-top:1.5px solid rgba(31,111,84,0.35); border-bottom:1.5px solid rgba(31,111,84,0.35);">
+              <span class="cond" style="font-size:26px; color:var(--clay); width:42px;">04</span>
+              <svg width="40" height="40" viewBox="0 0 32 32" fill="none"><path d="M16 3 C10 3 6 7 6 13 C6 21 16 29 16 29 C16 29 26 21 26 13 C26 7 22 3 16 3Z" stroke="#1F6F54" stroke-width="2.5"/><circle cx="16" cy="13" r="4" stroke="#1F6F54" stroke-width="2.5"/></svg>
+              <span class="cond7" style="font-size:30px; color:var(--ink);">Showroom en Palermo, Rosedal a 2 cuadras</span>
+            </div>
+          </div>
+
+          <div style="margin-top:auto; display:flex; align-items:center; gap:16px; background:var(--forest); padding:22px 26px;">
+            <span class="cond" style="color:var(--yellow); font-size:26px;">&raquo;</span>
+            <span class="serifless" style="color:var(--sand); font-weight:700; font-size:22px; line-height:1.4;">Y si después querés comprar, el alquiler ya lo descontamos.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════ 05 · ESCASEZ (forest) ════ -->
+      <section class="slide" data-screen-label="05" style="background:var(--forest); color:var(--sand);">
+        <div class="frame"></div>
+        <div class="inner">
+          <div class="tab">
+            <span class="label" style="font-size:13px; color:var(--yellow);">05 — Disponibilidad</span>
+            <span class="cond" style="font-size:20px; color:var(--sand);">&raquo;</span>
+          </div>
+          <div class="rule" style="margin-top:18px; color:var(--sand);"></div>
+
+          <div class="cond" style="font-size:74px; color:var(--sand); margin-top:36px;">Solo 3 días.</div>
+
+          <div style="display:flex; gap:18px; margin-top:40px;">
+            <div style="flex:1; border:2px solid var(--sand); padding:28px 10px; text-align:center;">
+              <div class="cond" style="font-size:78px; color:var(--yellow); line-height:0.82;">21</div>
+              <div class="label" style="color:var(--sand); font-size:13px; margin-top:10px;">Domingo</div>
+            </div>
+            <div style="flex:1; border:2px solid var(--sand); padding:28px 10px; text-align:center; background:var(--sky);">
+              <div class="cond" style="font-size:78px; color:var(--sand); line-height:0.82;">22</div>
+              <div class="label" style="color:var(--sand); font-size:13px; margin-top:10px;">Lunes</div>
+            </div>
+            <div style="flex:1; border:2px solid var(--sand); padding:28px 10px; text-align:center; background:var(--clay);">
+              <div class="cond" style="font-size:78px; color:var(--sand); line-height:0.82;">23</div>
+              <div class="label" style="color:var(--sand); font-size:13px; margin-top:10px;">Martes</div>
+            </div>
+          </div>
+
+          <div class="cond7" style="font-size:34px; color:var(--sand); margin-top:48px; line-height:1.05;">Se reserva por WhatsApp<br/>con cita previa en el showroom.</div>
+          <div style="margin-top:auto;">
+            <div class="rule" style="color:var(--sand);"></div>
+            <div style="display:flex; align-items:center; gap:14px; margin-top:20px;">
+              <span style="width:12px; height:12px; background:var(--yellow); border-radius:50%; display:inline-block;"></span>
+              <span class="cond7" style="font-size:24px; color:var(--yellow);">Los turnos son limitados</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════ 06 · CTA (sky) ════ -->
+      <section class="slide" data-screen-label="06" style="background:var(--sky); color:var(--sand);">
+        <div class="frame"></div>
+        <div class="inner">
+          <div class="tab">
+            <div class="brand"><div style="display:flex; flex-direction:column; align-items:flex-start; line-height:1;"><div style="display:flex; align-items:center; gap:7px;"><span style="color:#FFD100; font-family:FuturaC,sans-serif; font-weight:900; font-size:30px; letter-spacing:-5px;">&laquo;</span><span style="color:#E9E2D0; font-family:FuturaC,sans-serif; font-weight:900; font-size:30px; letter-spacing:-1px;">FLYFREE</span><span style="color:#FFD100; font-family:FuturaC,sans-serif; font-weight:900; font-size:30px; letter-spacing:-5px;">&raquo;</span></div><div style="color:#E9E2D0; font-family:FuturaC,sans-serif; font-weight:400; font-size:10px; letter-spacing:8px; margin-top:2px; padding-left:2px;">URBAN</div></div><span class="label" style="font-size:12px; color:var(--yellow);">Outdoor</span></div>
+            <span class="label" style="font-size:13px; color:var(--sand);">06 — Sumate</span>
+          </div>
+          <div class="rule" style="margin-top:18px; color:var(--sand);"></div>
+
+          <div style="margin-top:auto;">
+            <div class="cond" style="font-size:108px; color:var(--sand);">¿Papá</div>
+            <div class="ital" style="font-size:108px; color:var(--yellow); margin-top:6px;">se anima?</div>
+          </div>
+
+          <div style="margin-top:48px; background:var(--ink); padding:32px 38px; display:flex; align-items:center; gap:22px;">
+            <svg width="54" height="54" viewBox="0 0 32 32" fill="none"><path d="M16 3 C9 3 3 8.5 3 15.5 C3 18.5 4 21 6 23 L4 29 L10.5 27 C12.2 27.8 14 28 16 28 C23 28 29 22.5 29 15.5 C29 8.5 23 3 16 3Z" stroke="#FFD100" stroke-width="2.5"/><path d="M11 14 C11 14 12 16 14 18 C16 20 18 21 18 21 L20 19 C20 19 21 20.5 22 21 L19 23 C16 23 11 18 10 13 L12 11 C12.5 12 14 13 14 13 Z" fill="#FFD100"/></svg>
+            <div>
+              <div class="label" style="color:rgba(233,226,208,0.7); font-size:14px;">Escribinos por WhatsApp</div>
+              <div class="cond" style="color:var(--yellow); font-size:52px; line-height:0.95; margin-top:4px;">11-5109-7151</div>
+            </div>
+          </div>
+          <div class="serifless" style="color:var(--sand); font-weight:700; font-size:25px; margin-top:28px; line-height:1.4;">…o comentá <span style="background:var(--yellow); color:var(--ink); padding:2px 10px;">ALQUILER</span> abajo y te contactamos.</div>
+
+          <div style="margin-top:auto;">
+            <div class="rule" style="color:var(--sand);"></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:20px;">
+              <span class="cond7" style="font-size:26px; color:var(--sand);">@flyfreeurban</span>
+              <span class="serifless" style="font-size:18px; color:var(--sand);">Sinclair 3139 5°C, Palermo</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+    </div>
+  </div>
+</div>
+
+<div class="counter" id="counter">01 / 06</div>
+<div id="nav">
+  <button class="arrow" id="prev">‹</button>
+  <div class="dots" id="dots"></div>
+  <button class="arrow" id="next">›</button>
+</div>
+
+<script>
+  const rail = document.getElementById('rail');
+  const slides = [...rail.children];
+  const N = slides.length;
+  const scaler = document.getElementById('scaler');
+  const counter = document.getElementById('counter');
+  let idx = 0;
+  function fit() {
+    const s = Math.min((window.innerWidth-80)/1080, (window.innerHeight-120)/1080);
+    scaler.style.transform = `scale(${s})`;
+    scaler.style.height = (1080 * s) + 'px';
+  }
+  window.addEventListener('resize', fit);
+  const dotsWrap = document.getElementById('dots');
+  slides.forEach((_, i) => { const d = document.createElement('div'); d.className='dot'+(i===0?' on':''); d.addEventListener('click',()=>go(i)); dotsWrap.appendChild(d); });
+  const dots = [...dotsWrap.children];
+  function go(i) {
+    idx = Math.max(0, Math.min(N-1, i));
+    rail.style.transform = `translateX(${-idx*1080}px)`;
+    update();
+    try { localStorage.setItem('dp-outdoor-idx', String(idx)); } catch(e) {}
+  }
+  function update() {
+    dots.forEach((d,i)=>d.classList.toggle('on', i===idx));
+    counter.textContent = String(idx+1).padStart(2,'0')+' / '+String(N).padStart(2,'0');
+  }
+  document.getElementById('prev').addEventListener('click',()=>go(idx-1));
+  document.getElementById('next').addEventListener('click',()=>go(idx+1));
+  document.addEventListener('keydown', e=>{ if(e.key==='ArrowRight')go(idx+1); if(e.key==='ArrowLeft')go(idx-1); });
+  fit();
+  try { const saved=parseInt(localStorage.getItem('dp-outdoor-idx')||'0'); if(saved>0) go(saved); } catch(e) {}
+</script>
+</body>
+</html>

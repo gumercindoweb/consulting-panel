@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Bold.otf') format('opentype'); font-weight:700; }
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Book.otf') format('opentype'); font-weight:400; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; display:flex; gap:0; font-family:'Futura Std',sans-serif; min-height:160px; }
+  .group { display:flex; flex-direction:column; flex:1; border-right:1px solid #222; }
+  .group:last-child { border-right:none; }
+  .group-label { font-weight:700; font-size:8px; letter-spacing:.2em; text-transform:uppercase; color:#555; padding:10px 12px 6px; }
+  .token { display:flex; align-items:center; gap:10px; padding:5px 12px; }
+  .dot { width:18px; height:18px; border-radius:50%; flex-shrink:0; }
+  .token-name { font-weight:700; font-size:9px; letter-spacing:.05em; color:#aaa; }
+  .token-value { font-size:8px; color:#555; }
+</style>
+</head>
+<body>
+  <div class="group">
+    <div class="group-label">Texto</div>
+    <div class="token"><div class="dot" style="background:#fff"></div><div><div class="token-name">fg-primary</div><div class="token-value">#FFFFFF</div></div></div>
+    <div class="token"><div class="dot" style="background:#C0C0C0"></div><div><div class="token-name">fg-secondary</div><div class="token-value">#C0C0C0</div></div></div>
+    <div class="token"><div class="dot" style="background:#767676"></div><div><div class="token-name">fg-muted</div><div class="token-value">#767676</div></div></div>
+    <div class="token"><div class="dot" style="background:#fff; border:1px solid #333"></div><div><div class="token-name">fg-on-red</div><div class="token-value">#FFFFFF</div></div></div>
+  </div>
+  <div class="group">
+    <div class="group-label">Fondos</div>
+    <div class="token"><div class="dot" style="background:#111111; border:1px solid #333"></div><div><div class="token-name">bg-base</div><div class="token-value">#111111</div></div></div>
+    <div class="token"><div class="dot" style="background:#1A1A1A; border:1px solid #333"></div><div><div class="token-name">bg-surface</div><div class="token-value">#1A1A1A</div></div></div>
+    <div class="token"><div class="dot" style="background:#2C2C2C"></div><div><div class="token-name">bg-elevated</div><div class="token-value">#2C2C2C</div></div></div>
+    <div class="token"><div class="dot" style="background:#fff"></div><div><div class="token-name">bg-light</div><div class="token-value">#FFFFFF</div></div></div>
+  </div>
+  <div class="group">
+    <div class="group-label">Marca</div>
+    <div class="token"><div class="dot" style="background:oklch(50% 0.26 26)"></div><div><div class="token-name">brand-primary</div><div class="token-value">Red 500</div></div></div>
+    <div class="token"><div class="dot" style="background:oklch(30% 0.17 22)"></div><div><div class="token-name">brand-dark</div><div class="token-value">Red 700</div></div></div>
+    <div class="token"><div class="dot" style="background:oklch(74% 0.13 185)"></div><div><div class="token-name">brand-accent</div><div class="token-value">Teal 500</div></div></div>
+  </div>
+  <div class="group">
+    <div class="group-label">Bordes</div>
+    <div class="token"><div class="dot" style="background:#404040"></div><div><div class="token-name">border</div><div class="token-value">#404040</div></div></div>
+    <div class="token"><div class="dot" style="background:oklch(50% 0.26 26)"></div><div><div class="token-name">border-strong</div><div class="token-value">brand-primary</div></div></div>
+  </div>
+</body>
+</html>

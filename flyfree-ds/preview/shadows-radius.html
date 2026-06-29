@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Spacing" name="Shadows & Radius" subtitle="Flat offset black shadows · minimal radius 0–8px + pill" viewport="700x140" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-CondensedBold.otf") format("opentype"); font-weight: 700; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #f0f0f0; padding: 20px; font-family: 'Helvetica Neue', sans-serif; display: flex; gap: 20px; flex-wrap: wrap; }
+  .group { display: flex; flex-direction: column; gap: 12px; }
+  .label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #888; margin-bottom: 4px; }
+  .shadow-box { background: #fff; border: 1.5px solid #231F20; width: 70px; height: 40px; display: flex; align-items: center; justify-content: center; font-family: "FuturaStdCondensed", sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: #231F20; }
+  .radius-row { display: flex; gap: 10px; align-items: center; }
+  .radius-box { background: #FFD100; border: 1.5px solid #231F20; width: 44px; height: 44px; }
+  .r0 { border-radius: 0px; }
+  .r2 { border-radius: 2px; }
+  .r4 { border-radius: 4px; }
+  .r8 { border-radius: 8px; }
+  .rpill { border-radius: 999px; }
+</style>
+</head>
+<body>
+  <div class="group">
+    <div class="label">Flat Offset Shadows</div>
+    <div style="display:flex;gap:14px;align-items:flex-end;">
+      <div><div class="label" style="margin-bottom:6px;">SM</div><div class="shadow-box" style="box-shadow:2px 2px 0 #231F20;">2px</div></div>
+      <div><div class="label" style="margin-bottom:6px;">MD</div><div class="shadow-box" style="box-shadow:4px 4px 0 #231F20;">4px</div></div>
+      <div><div class="label" style="margin-bottom:6px;">LG</div><div class="shadow-box" style="box-shadow:6px 6px 0 #231F20;">6px</div></div>
+      <div><div class="label" style="margin-bottom:6px;">XL</div><div class="shadow-box" style="box-shadow:8px 8px 0 #231F20;">8px</div></div>
+    </div>
+  </div>
+  <div class="group">
+    <div class="label">Border Radius</div>
+    <div class="radius-row">
+      <div><div class="label">0</div><div class="radius-box r0"></div></div>
+      <div><div class="label">2px</div><div class="radius-box r2"></div></div>
+      <div><div class="label">4px</div><div class="radius-box r4"></div></div>
+      <div><div class="label">8px</div><div class="radius-box r8"></div></div>
+      <div><div class="label">Pill</div><div class="radius-box rpill" style="width:64px;height:28px;"></div></div>
+    </div>
+  </div>
+</body>
+</html>

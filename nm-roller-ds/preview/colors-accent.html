@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Bold.otf') format('opentype'); font-weight:700; }
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Book.otf') format('opentype'); font-weight:400; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; display:flex; align-items:stretch; min-height:160px; font-family:'Futura Std',sans-serif; }
+  .swatch { flex:1; display:flex; flex-direction:column; justify-content:flex-end; padding:10px 12px; min-height:140px; }
+  .swatch-name { font-weight:700; font-size:9px; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:2px; }
+  .swatch-hex  { font-weight:400; font-size:9px; opacity:0.8; }
+  .dark { color:#fff; }
+  .light { color:#111; }
+</style>
+</head>
+<body>
+  <div class="swatch light" style="background:oklch(96% 0.04 185)"><span class="swatch-name">Teal 100</span><span class="swatch-hex">#E8FAF9</span></div>
+  <div class="swatch light" style="background:oklch(88% 0.09 185)"><span class="swatch-name">Teal 200</span><span class="swatch-hex">#B8EBE9</span></div>
+  <div class="swatch light" style="background:oklch(78% 0.14 185)"><span class="swatch-name">Teal 300</span><span class="swatch-hex">#80D8D5</span></div>
+  <div class="swatch dark" style="background:oklch(74% 0.13 185); outline:2px solid #fff; outline-offset:-2px; position:relative;">
+    <span class="swatch-name">Teal 500</span><span class="swatch-hex">#62C3BF</span>
+    <span style="position:absolute;top:8px;right:8px;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;color:#3A9995;padding:2px 6px;">PANTONE 7472 C</span>
+  </div>
+  <div class="swatch dark" style="background:oklch(58% 0.12 185)"><span class="swatch-name">Teal 600</span><span class="swatch-hex">#3A9995</span></div>
+  <div class="swatch dark" style="background:oklch(44% 0.10 185)"><span class="swatch-name">Teal 700</span><span class="swatch-hex">#256F6C</span></div>
+  <div class="swatch dark" style="background:#111; border:1px solid #333; flex:2; display:flex; flex-direction:column; justify-content:center; padding:24px;">
+    <span style="font-weight:700;font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#666;margin-bottom:8px;">Uso del acento</span>
+    <span style="font-size:12px;color:#aaa;line-height:1.6;">El teal se usa como contraste fresco al rojo primario. Aparece en badges secundarios, highlights y elementos de apoyo.</span>
+  </div>
+</body>
+</html>

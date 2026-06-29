@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Logo Variants" subtitle="On White (yellow chevrons) · On Black (yellow chevrons) · On Yellow (black chevrons)" viewport="700x140" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: sans-serif; background: #e8e8e8; display: flex; flex-direction: column; }
+  .logo-row { display: flex; }
+  .logo-box { flex: 1; display: flex; align-items: center; justify-content: center; padding: 28px 20px; min-height: 130px; }
+  .on-white  { background: #FFFFFF; border-right: 1px solid #ddd; }
+  .on-black  { background: #231F20; border-right: 1px solid #111; }
+  .on-yellow { background: #FFD100; }
+  .label-row { display: flex; }
+  .label-item { flex: 1; text-align: center; font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 7px 4px; border-top: 1px solid rgba(0,0,0,0.12); }
+  img.logo { width: 220px; height: auto; display: block; }
+  /* On yellow, force everything to pure black (kills blue chevrons too) */
+  img.logo.allblack { filter: brightness(0) saturate(100%); }
+</style>
+</head>
+<body>
+  <div class="logo-row">
+    <!-- ON WHITE: black version -->
+    <div class="logo-box on-white">
+      <img class="logo" src="../assets/logo-black-real.webp" alt="FlyFree Urban — black on white">
+    </div>
+    <!-- ON BLACK: white version -->
+    <div class="logo-box on-black">
+      <img class="logo" src="../assets/logo-white-real.png" alt="FlyFree Urban — white on black">
+    </div>
+    <!-- ON YELLOW: black logo, all elements black (no blue) -->
+    <div class="logo-box on-yellow">
+      <img class="logo allblack" src="../assets/logo-black-real.webp" alt="FlyFree Urban — all black on yellow">
+    </div>
+  </div>
+  <div class="label-row">
+    <div class="label-item" style="background:#fff;color:#231F20;">On White</div>
+    <div class="label-item" style="background:#231F20;color:#FFD100;">On Black</div>
+    <div class="label-item" style="background:#FFD100;color:#231F20;">On Yellow</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Type" name="Body Typography" subtitle="FuturaStd Book/Medium — tagline, body, price, caption" viewport="700x200" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: "FuturaStd"; src: url("../fonts/FuturaStd-Book.otf") format("opentype"); font-weight: 400; }
+  @font-face { font-family: "FuturaStd"; src: url("../fonts/FuturaStd-Medium.otf") format("opentype"); font-weight: 500; }
+  @font-face { font-family: "FuturaStd"; src: url("../fonts/FuturaStd-Bold.otf") format("opentype"); font-weight: 700; }
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-Condensed.otf") format("opentype"); font-weight: 400; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #FFFFFF; padding: 24px 28px; display: flex; flex-direction: column; gap: 12px; }
+  .tagline { font-family: "FuturaStdCondensed", sans-serif; font-weight: 400; font-size: 13px; letter-spacing: 0.35em; text-transform: uppercase; color: #231F20; }
+  .body-text { font-family: "FuturaStd", sans-serif; font-weight: 400; font-size: 15px; line-height: 1.7; color: #231F20; max-width: 560px; }
+  .body-strong { font-family: "FuturaStd", sans-serif; font-weight: 700; font-size: 15px; color: #231F20; }
+  .caption { font-family: "FuturaStd", sans-serif; font-weight: 400; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #231F20; opacity: 0.5; }
+  .price { font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 32px; letter-spacing: -0.01em; color: #231F20; }
+  .divider { height: 1px; background: #e0e0e0; }
+</style>
+</head>
+<body>
+  <div class="tagline">A L W A Y S &nbsp; R O L L I N G</div>
+  <div class="divider"></div>
+  <div class="body-text">Seleccionamos y ofrecemos productos funcionales, priorizando la calidad, las buenas terminaciones y el diseño. Elegimos cada artículo pensando en quienes viven el deporte con intensidad.</div>
+  <div class="body-strong">La seguridad es lo primero. Aseguráte de usar protecciones.</div>
+  <div class="divider"></div>
+  <div class="price">$ 349.000</div>
+  <div class="caption">Envíos a todo el país · Cuotas sin interés</div>
+</body>
+</html>

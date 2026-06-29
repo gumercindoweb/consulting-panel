@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Brand" name="Graphic Elements" subtitle=">> chevron · hazard stripes · yellow/black label bars · left accent" viewport="700x120" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-CondensedExtraBd.otf") format("opentype"); font-weight: 900; }
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-CondensedBold.otf") format("opentype"); font-weight: 700; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #231F20; padding: 20px; display: flex; gap: 16px; align-items: center; }
+  /* Big chevron */
+  .chevron-big { font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 80px; line-height: 1; color: #FFD100; letter-spacing: -0.05em; }
+  /* Hazard stripe block */
+  .hazard { width: 80px; height: 80px; background-image: repeating-linear-gradient(-45deg, #FFD100 0px, #FFD100 10px, #231F20 10px, #231F20 20px); border: 2px solid #FFD100; }
+  /* Yellow label */
+  .label-yellow { background: #FFD100; padding: 6px 12px; display: inline-block; }
+  .label-yellow span { font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 20px; text-transform: uppercase; color: #231F20; font-style: italic; letter-spacing: 0.01em; }
+  /* Black label */
+  .label-black { background: #231F20; border: 2px solid #FFD100; padding: 6px 12px; display: inline-block; }
+  .label-black span { font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 20px; text-transform: uppercase; color: #FFD100; font-style: italic; letter-spacing: 0.01em; }
+  /* Yellow left bar */
+  .left-bar { display: flex; }
+  .bar { width: 6px; background: #FFD100; }
+  .bar-content { background: #fff; padding: 10px 12px; }
+  .bar-content span { font-family: "FuturaStdCondensed", sans-serif; font-weight: 700; font-size: 14px; color: #231F20; text-transform: uppercase; letter-spacing: 0.05em; }
+  .sep { width: 1px; background: #444; }
+</style>
+</head>
+<body>
+  <div class="chevron-big">&gt;&gt;</div>
+  <div class="sep"></div>
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    <div class="hazard"></div>
+  </div>
+  <div class="sep"></div>
+  <div style="display:flex;flex-direction:column;gap:8px;">
+    <div class="label-yellow"><span>Rodilleras</span></div>
+    <div class="label-black"><span>Always Rolling</span></div>
+  </div>
+  <div class="sep"></div>
+  <div class="left-bar">
+    <div class="bar"></div>
+    <div class="bar-content"><span>Rollers Adultos</span></div>
+  </div>
+</body>
+</html>

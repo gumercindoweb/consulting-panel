@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-ExtraBold.otf') format('opentype'); font-weight:900; }
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Bold.otf') format('opentype'); font-weight:700; }
+  @font-face { font-family:'Futura Std'; src:url('../fonts/FuturaStd-Book.otf') format('opentype'); font-weight:400; }
+  @font-face { font-family:'Futura Std Condensed'; src:url('../fonts/FuturaStd-CondensedExtraBd.otf') format('opentype'); font-weight:900; }
+  @font-face { font-family:'Futura Std Condensed'; src:url('../fonts/FuturaStd-CondensedBold.otf') format('opentype'); font-weight:700; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0d0d0d; display:flex; gap:0; align-items:stretch; min-height:380px; font-family:'Futura Std',sans-serif; }
+  .plan { flex:1; display:flex; flex-direction:column; padding:24px 20px; border-right:1px solid #222; position:relative; }
+  .plan:last-child { border-right:none; }
+  .best { position:absolute; top:0; left:0; right:0; background:oklch(50% 0.26 26); color:#fff; font-weight:700; font-size:8px; letter-spacing:.2em; text-transform:uppercase; text-align:center; padding:4px 0; }
+  .plan-name { font-family:'Futura Std Condensed',sans-serif; font-weight:900; font-size:22px; letter-spacing:.05em; text-transform:uppercase; color:#fff; margin-top:24px; }
+  .plan-sub { font-weight:700; font-size:8px; letter-spacing:.15em; text-transform:uppercase; color:#555; margin-bottom:12px; }
+  .price-val { font-family:'Futura Std Condensed',sans-serif; font-weight:900; font-size:44px; line-height:1; color:#fff; }
+  .price-period { font-weight:700; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#555; margin-top:2px; margin-bottom:16px; }
+  .divider { height:1px; background:#222; margin:12px 0; }
+  .feature { display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; }
+  .feature-dot { width:5px; height:5px; background:oklch(50% 0.26 26); border-radius:50%; margin-top:5px; flex-shrink:0; }
+  .feature-text { font-weight:400; font-size:10px; line-height:1.5; color:#888; }
+  .feature-text strong { color:#ccc; font-weight:700; }
+  .cta { margin-top:auto; padding-top:16px; display:block; background:oklch(50% 0.26 26); color:#fff; font-weight:700; font-size:10px; letter-spacing:.15em; text-transform:uppercase; border:none; padding:11px 0; text-align:center; cursor:pointer; }
+  .cta-outline { background:transparent; border:1px solid #333; color:#666; }
+</style>
+</head>
+<body>
+  <div class="plan">
+    <div class="plan-sub">Para descubrir</div>
+    <div class="plan-name">Clase Única</div>
+    <div class="price-val">30 mil</div>
+    <div class="price-period">Vigencia 15 días</div>
+    <div class="divider"></div>
+    <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>1 Clase</strong> grupal, cualquier sede</div></div>
+    <div class="feature"><div class="feature-dot"></div><div class="feature-text">Incluye <strong>protecciones y casco</strong></div></div>
+    <div class="feature"><div class="feature-dot"></div><div class="feature-text">Reprogramar hasta 2 veces</div></div>
+    <button class="cta cta-outline">AGENDAR TURNO</button>
+  </div>
+  <div class="plan">
+    <div class="plan-sub">Para progresar</div>
+    <div class="plan-name">BASIC fUN</div>
+    <div class="price-val">55 mil</div>
+    <div class="price-period">Mensual · $13.750/clase</div>
+    <div class="divider"></div>
+    <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>4 clases</strong> mensuales</div></div>
+    <div class="feature"><div class="feature-dot"></div><div class="feature-text">Recupera clases por lluvia</div></div>
+    <div class="feature"><div class="feature-dot"></div><div class="feature-text">Acceso a <strong>Salidas Urbanas</strong></div></div>
+    <button class="cta cta-outline">AGENDAR TURNO</button>
+  </div>
+  <div class="plan" style="background:#1a0a0a;">
+    <div class="best">MEJOR OPCIÓN</div>
+    <div class="plan-sub" style="margin-top:24px;">Para enamorarse</div>
+    <div class="plan-name" style="color:oklch(50% 0.26 26)">BLACK FREE</div>
+    <div class="price-val">65 mil</div>
+    <div class="price-period">Mensual · INCALCULABLE</div>
+    <div class="divider" style="background:#331010;"></div>
+    <div class="feature"><div class="feature-dot"></div><div class="feature-text"><strong>Clases ilimitadas</strong> (2/día)</div></div>
+    <div class="feature"><div class="feature-dot"></div><div class="feature-text">Seguro de pausa por lesión</div></div>
+    <div class="feature"><div class="feature-dot"></div><div class="feature-text">Acceso <strong>prioritario</strong> a Masterclass</div></div>
+    <button class="cta">COMPRAR PLAN</button>
+  </div>
+</body>
+</html>

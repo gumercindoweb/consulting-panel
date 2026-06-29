@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>FlyFree Urban — Design System (Print)</title>
+<style>
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-CondensedExtraBd.otf") format("opentype"); font-weight: 900; }
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-CondensedBold.otf") format("opentype"); font-weight: 700; }
+  @font-face { font-family: "FuturaStdCondensed"; src: url("../fonts/FuturaStd-Condensed.otf") format("opentype"); font-weight: 400; }
+  @font-face { font-family: "FuturaStd"; src: url("../fonts/FuturaStd-Bold.otf") format("opentype"); font-weight: 700; }
+  @font-face { font-family: "FuturaStd"; src: url("../fonts/FuturaStd-Book.otf") format("opentype"); font-weight: 400; }
+  @page { size: A4 portrait; margin: 1.5cm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: "FuturaStd", sans-serif; color: #231F20; background: #fff; }
+  .page { break-after: page; padding: 0 0 24px; }
+  .page:last-child { break-after: auto; }
+  h1.cover-title { font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 64px; line-height: 0.9; letter-spacing: -0.02em; text-transform: uppercase; color: #231F20; }
+  .cover { min-height: 22cm; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: #FFD100; break-after: page; }
+  .cover .tagline { font-family: "FuturaStdCondensed", sans-serif; font-weight: 400; font-size: 14px; letter-spacing: 0.35em; text-transform: uppercase; color: #231F20; margin-bottom: 16px; }
+  .cover .sub { font-family: "FuturaStd", sans-serif; font-size: 14px; margin-top: 32px; max-width: 480px; line-height: 1.7; }
+  .section-header { display: flex; align-items: baseline; gap: 16px; padding: 16px 0 12px; border-bottom: 2px solid #231F20; margin-bottom: 16px; }
+  .section-num { font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 36px; color: #FFD100; line-height: 1; }
+  .section-title { font-family: "FuturaStdCondensed", sans-serif; font-weight: 900; font-size: 26px; text-transform: uppercase; letter-spacing: -0.01em; }
+  .section-meta { font-family: "FuturaStd", sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #888; margin-left: auto; }
+  .card-frame { border: 1.5px solid #231F20; box-shadow: 4px 4px 0 #231F20; margin-bottom: 22px; break-inside: avoid; overflow: hidden; }
+  .card-caption { font-family: "FuturaStd", sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #555; padding: 8px 0 0; }
+  iframe { width: 100%; border: 0; display: block; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="tagline">Always Rolling</div>
+  <h1 class="cover-title">FlyFree Urban<br/>Design System</h1>
+  <div class="sub">Brand identity, color system, typography, components and patterns for flyfreeurban.com and connected surfaces.<br/><br/>Mayo 2026 · v1.0</div>
+</div>
+
+<!-- 01 LOGO -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div class="section-title">Logo &amp; Brand Mark</div>
+    <div class="section-meta">Brand</div>
+  </div>
+  <div class="card-frame"><iframe src="logo-variants.html" style="height:200px"></iframe></div>
+  <div class="card-caption">Logo en sus tres aplicaciones autorizadas. La variante on-yellow va 100% en negro.</div>
+</div>
+
+<!-- 02 COLORS -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div class="section-title">Color System</div>
+    <div class="section-meta">Colors</div>
+  </div>
+  <div class="card-frame"><iframe src="colors-primary.html" style="height:200px"></iframe></div>
+  <div class="card-caption">Paleta primaria · Tres colores · Sin grises ni gradientes.</div>
+  <div class="card-frame"><iframe src="colors-combos.html" style="height:230px"></iframe></div>
+  <div class="card-caption">Combinaciones autorizadas.</div>
+</div>
+
+<!-- 03 TYPE -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div class="section-title">Typography</div>
+    <div class="section-meta">Type</div>
+  </div>
+  <div class="card-frame"><iframe src="type-display.html" style="height:300px"></iframe></div>
+  <div class="card-caption">Display type — FuturaStd Condensed ExtraBold, siempre uppercase.</div>
+  <div class="card-frame"><iframe src="type-body.html" style="height:240px"></iframe></div>
+  <div class="card-caption">Body type — FuturaStd Book/Bold para lectura, precio y captions.</div>
+  <div class="card-frame"><iframe src="type-scale.html" style="height:240px"></iframe></div>
+  <div class="card-caption">Escala display — 28px → 120px.</div>
+</div>
+
+<!-- 04 SPACING -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div class="section-title">Spacing, Shadows &amp; Radius</div>
+    <div class="section-meta">Spacing</div>
+  </div>
+  <div class="card-frame"><iframe src="spacing-tokens.html" style="height:160px"></iframe></div>
+  <div class="card-caption">Escala basada en unidad de 4px.</div>
+  <div class="card-frame"><iframe src="shadows-radius.html" style="height:170px"></iframe></div>
+  <div class="card-caption">Sombras planas con offset · Radios mínimos.</div>
+</div>
+
+<!-- 05 GRAPHIC ELEMENTS -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div class="section-title">Graphic Elements</div>
+    <div class="section-meta">Brand</div>
+  </div>
+  <div class="card-frame"><iframe src="graphic-elements.html" style="height:140px"></iframe></div>
+  <div class="card-caption">Chevrón &gt;&gt; · Hazard stripes · Label bars amarillas y negras · Borde lateral.</div>
+  <div class="card-frame"><iframe src="social-post-anatomy.html" style="height:230px"></iframe></div>
+  <div class="card-caption">Anatomía de posts sociales.</div>
+</div>
+
+<!-- 06 COMPONENTS -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div class="section-title">Components</div>
+    <div class="section-meta">Components</div>
+  </div>
+  <div class="card-frame"><iframe src="buttons.html" style="height:230px"></iframe></div>
+  <div class="card-caption">Botones primario, dark, outline · Tags y badges.</div>
+  <div class="card-frame"><iframe src="product-card.html" style="height:240px"></iframe></div>
+  <div class="card-caption">Product card para ecommerce.</div>
+</div>
+
+<!-- 07 ICONS -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div class="section-title">Iconography</div>
+    <div class="section-meta">Brand</div>
+  </div>
+  <div class="card-frame"><iframe src="icons-persuasive.html" style="height:380px"></iframe></div>
+  <div class="card-caption">12 íconos persuasivos en estilo geométrico urbano.</div>
+</div>
+
+<script>
+  // Wait for fonts + every iframe + extra delay before printing
+  function ready() {
+    const iframes = Array.from(document.querySelectorAll('iframe'));
+    return Promise.all(iframes.map(f =>
+      f.contentDocument && f.contentDocument.readyState === 'complete'
+        ? Promise.resolve()
+        : new Promise(r => f.addEventListener('load', r, { once: true }))
+    ));
+  }
+  window.addEventListener('load', () => {
+    Promise.all([
+      document.fonts ? document.fonts.ready : Promise.resolve(),
+      ready()
+    ]).then(() => setTimeout(() => window.print(), 1500));
+  });
+</script>
+</body>
+</html>

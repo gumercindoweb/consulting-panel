@@ -1465,7 +1465,7 @@ export default function AdminClientDetail() {
     <div className="min-h-screen flex" style={{ background: "var(--gj-petrol-ink)" }}>
       {/* ── SIDEBAR ────────────────────────────────────────── */}
       <aside
-        className="w-72 flex-shrink-0 flex flex-col"
+        className="flex-shrink-0 flex flex-col"
         style={{
           background: "rgb(12,8,10)",
           borderRight: "1px solid rgba(255,255,255,0.06)",
@@ -1474,6 +1474,8 @@ export default function AdminClientDetail() {
           top: 0,
           height: "100vh",
           overflowY: "auto",
+          width: "clamp(240px, 100%, 288px)",
+          maxWidth: "calc(100vw - 60px)",
         }}
       >
         {/* Back + GJ brand */}

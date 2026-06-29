@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Spacing" name="Spacing Tokens" subtitle="4px base unit scale: space-1 through space-16" viewport="700x130" -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fff; padding: 20px; font-family: 'Helvetica Neue', sans-serif; }
+  .grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; align-items: end; }
+  .token { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .bar { background: #FFD100; border: 1.5px solid #231F20; width: 100%; }
+  .val { font-size: 9px; font-weight: 700; color: #231F20; letter-spacing: 0.05em; text-align: center; }
+  .name { font-size: 8px; color: #888; text-align: center; letter-spacing: 0.05em; }
+  .section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #231F20; margin-bottom: 12px; }
+  .gap-demo { display: flex; gap: 0; margin-top: 16px; border: 1.5px solid #231F20; overflow: hidden; }
+  .gap-cell { flex: 1; height: 24px; background: #231F20; }
+  .gap-space { background: #FFD100; }
+</style>
+</head>
+<body>
+  <div class="section-label">Spacing Scale</div>
+  <div class="grid">
+    <div class="token"><div class="bar" style="height:4px;"></div><div class="val">4</div><div class="name">--space-1</div></div>
+    <div class="token"><div class="bar" style="height:8px;"></div><div class="val">8</div><div class="name">--space-2</div></div>
+    <div class="token"><div class="bar" style="height:12px;"></div><div class="val">12</div><div class="name">--space-3</div></div>
+    <div class="token"><div class="bar" style="height:16px;"></div><div class="val">16</div><div class="name">--space-4</div></div>
+    <div class="token"><div class="bar" style="height:24px;"></div><div class="val">24</div><div class="name">--space-6</div></div>
+    <div class="token"><div class="bar" style="height:32px;"></div><div class="val">32</div><div class="name">--space-8</div></div>
+    <div class="token"><div class="bar" style="height:48px;"></div><div class="val">48</div><div class="name">--space-12</div></div>
+    <div class="token"><div class="bar" style="height:64px;"></div><div class="val">64</div><div class="name">--space-16</div></div>
+  </div>
+</body>
+</html>
