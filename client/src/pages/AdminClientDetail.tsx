@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff, Upload, Paperclip } from "lucide-react";
 import { useIsMobile } from "@/hooks/useMobile";
+import { uploadClientFile } from "@/lib/storage";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -44,24 +45,13 @@ function FileUploadButton({ clientId, onUploaded, label = "SUBIR ARCHIVO" }: {
   label?: string;
 }) {
   const [uploading, setUploading] = useState(false);
-  const getUploadUrl = trpc.storage.getUploadUrl.useMutation();
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     try {
-      const { signedUrl, publicUrl } = await getUploadUrl.mutateAsync({
-        clientId,
-        filename: file.name,
-        contentType: file.type || "application/octet-stream",
-      });
-      const res = await fetch(signedUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type || "application/octet-stream" },
-        body: file,
-      });
-      if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+      const { publicUrl } = await uploadClientFile(clientId, file);
       onUploaded(publicUrl, file.name);
       toast.success("Archivo subido correctamente.");
     } catch (err: any) {
