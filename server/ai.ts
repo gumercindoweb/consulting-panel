@@ -17,6 +17,7 @@ import {
   createMetric,
   createLearning,
   createResource,
+  createBacklogItem,
 } from "./db";
 
 // ─── ESQUEMA DE ACCIONES ─────────────────────────────────────────────────────
@@ -133,6 +134,13 @@ const createResourceData = z.object({
   content: z.string().optional(),
 });
 
+const createBacklogData = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  status: z.enum(["idea", "en_revision", "aprobada", "en_progreso", "descartada"]).optional(),
+  priority: z.enum(["alta", "media", "baja"]).optional(),
+});
+
 export const actionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("create_phase"), label: z.string(), data: createPhaseData }),
   z.object({ type: z.literal("update_phase"), label: z.string(), data: updatePhaseData }),
@@ -144,6 +152,7 @@ export const actionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("create_metric"), label: z.string(), data: createMetricData }),
   z.object({ type: z.literal("create_learning"), label: z.string(), data: createLearningData }),
   z.object({ type: z.literal("create_resource"), label: z.string(), data: createResourceData }),
+  z.object({ type: z.literal("create_backlog"), label: z.string(), data: createBacklogData }),
 ]);
 
 export type AIAction = z.infer<typeof actionSchema>;
@@ -243,6 +252,8 @@ ${JSON.stringify(snapshot, null, 2)}
 - create_okr, update_okr  → Objetivos
 - create_metric  → Métricas
 - create_learning  → Aprendizajes
+- create_resource  → Recursos (Biblioteca: videos, documentos, guías, templates). category: document | template | script | training | guide | other. Para un video o link externo usá externalUrl.
+- create_backlog  → Backlog de ideas (ideas, mejoras, oportunidades). status: idea | en_revision | aprobada | en_progreso | descartada. priority: alta | media | baja.
 NUNCA inventes otros valores de "type" ni los traduzcas. Si ninguna acción aplica, devolvé "actions": [].
 
 ## Formato de salida (OBLIGATORIO)
@@ -294,6 +305,10 @@ const TYPE_ALIASES: Record<string, string> = {
   create_recurso: "create_resource",
   crear_recurso: "create_resource",
   crear_video: "create_resource",
+  create_idea: "create_backlog",
+  crear_idea: "create_backlog",
+  create_backlog_item: "create_backlog",
+  create_backlogitem: "create_backlog",
 };
 
 function normalizeActionTypes(obj: any): void {
@@ -503,6 +518,16 @@ export async function executeActions(opts: {
             fileUrl: action.data.fileUrl,
             externalUrl: action.data.externalUrl,
             content: action.data.content,
+          } as any);
+          break;
+        }
+        case "create_backlog": {
+          await createBacklogItem({
+            clientId,
+            title: action.data.title,
+            description: action.data.description,
+            status: action.data.status ?? "idea",
+            priority: action.data.priority ?? "media",
           } as any);
           break;
         }
