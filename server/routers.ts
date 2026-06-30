@@ -490,6 +490,7 @@ export const appRouter = router({
             .enum(["document", "template", "script", "training", "guide", "other"])
             .default("other"),
           area: z.string().optional(),
+          areas: z.array(z.string()).optional(),
           fileUrl: z.string().optional(),
           externalUrl: z.string().optional(),
           content: z.string().optional(),
@@ -498,6 +499,32 @@ export const appRouter = router({
         })
       )
       .mutation(({ input }) => createResource(input)),
+
+    // Crea el mismo recurso en la biblioteca de varios clientes a la vez.
+    createForClients: adminProcedure
+      .input(
+        z.object({
+          clientIds: z.array(z.number()).min(1),
+          title: z.string(),
+          description: z.string().optional(),
+          category: z
+            .enum(["document", "template", "script", "training", "guide", "other"])
+            .default("other"),
+          areas: z.array(z.string()).optional(),
+          fileUrl: z.string().optional(),
+          externalUrl: z.string().optional(),
+          content: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { clientIds, ...data } = input;
+        let created = 0;
+        for (const clientId of clientIds) {
+          await createResource({ ...data, clientId } as any);
+          created++;
+        }
+        return { created };
+      }),
 
     update: adminProcedure
       .input(
@@ -510,6 +537,7 @@ export const appRouter = router({
             .enum(["document", "template", "script", "training", "guide", "other"])
             .optional(),
           area: z.string().optional(),
+          areas: z.array(z.string()).optional(),
           fileUrl: z.string().optional(),
           externalUrl: z.string().optional(),
           content: z.string().optional(),

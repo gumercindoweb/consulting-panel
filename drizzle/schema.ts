@@ -183,6 +183,7 @@ export const resources = pgTable("resources", {
   description: text("description"),
   category: resourceCategoryEnum("category").default("other").notNull(),
   area: varchar("area", { length: 64 }),
+  areas: text("areas").array(),
   fileUrl: text("fileUrl"),
   externalUrl: text("externalUrl"),
   content: text("content"),

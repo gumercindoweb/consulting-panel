@@ -929,12 +929,45 @@ function ScopeTab({ clientId }: { clientId: number }) {
 
 // ─── RESOURCES TAB ────────────────────────────────────────────────────────────
 const RESOURCE_AREAS = ["Ventas", "Operaciones", "Atención al Cliente / Soporte", "Social Media"];
+const rAreas = (r: any): string[] => (Array.isArray(r?.areas) && r.areas.length ? r.areas : (r?.area ? [r.area] : []));
+
+// Selector de áreas con checkboxes (multi-selección) + agregar área nueva.
+function AreaPicker({ value, onChange, available, onAddCustom, inputStyle }: { value: string[]; onChange: (v: string[]) => void; available: string[]; onAddCustom: (a: string) => void; inputStyle: any }) {
+  const [custom, setCustom] = useState("");
+  const toggle = (a: string) => onChange(value.includes(a) ? value.filter((x) => x !== a) : [...value, a]);
+  const add = () => { const v = custom.trim(); if (!v) return; onAddCustom(v); if (!value.includes(v)) onChange([...value, v]); setCustom(""); };
+  return (
+    <div className="col-span-2">
+      <p className="text-xs mb-2" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>ÁREAS / DEPARTAMENTOS (podés elegir varias)</p>
+      <div className="flex flex-wrap gap-2 mb-2">
+        {available.map((a) => {
+          const on = value.includes(a);
+          return (
+            <button key={a} type="button" onClick={() => toggle(a)} className="text-xs px-3 py-1.5 rounded flex items-center gap-1.5"
+              style={{ background: on ? "rgba(77,182,232,0.18)" : "rgba(255,255,255,0.05)", color: on ? "#4db6e8" : "var(--gj-muted)", border: on ? "1px solid rgba(77,182,232,0.45)" : "1px solid rgba(255,255,255,0.1)", cursor: "pointer" }}>
+              {on && <Check size={12} />} {a}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex gap-2">
+        <input value={custom} onChange={(e) => setCustom(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }} placeholder="Agregar área nueva..." className="px-3 py-1.5 text-xs flex-1" style={inputStyle} />
+        <button type="button" onClick={add} className="text-xs px-3 py-1.5 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "var(--gj-cream)", border: "none", cursor: "pointer" }}>+ Agregar</button>
+      </div>
+    </div>
+  );
+}
 
 function ResourcesTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
   const { data: resources = [] } = trpc.resources.list.useQuery({ clientId });
+  const { data: allClients = [] } = trpc.clients.list.useQuery();
   const createResource = trpc.resources.create.useMutation({
     onSuccess: () => { utils.resources.list.invalidate({ clientId }); toast.success("Recurso creado."); },
+    onError: (e) => toast.error(e.message),
+  });
+  const createForClients = trpc.resources.createForClients.useMutation({
+    onSuccess: (res) => { utils.resources.list.invalidate({ clientId }); toast.success(`Recurso creado en ${res.created} cliente(s).`); },
     onError: (e) => toast.error(e.message),
   });
   const updateResource = trpc.resources.update.useMutation({
@@ -946,10 +979,17 @@ function ResourcesTab({ clientId }: { clientId: number }) {
     onError: (e) => toast.error(e.message),
   });
 
-  const EMPTY_R = { title: "", description: "", category: "script" as const, area: "", externalUrl: "", fileUrl: "", content: "" };
+  const EMPTY_R = { title: "", description: "", category: "script" as const, areas: [] as string[], externalUrl: "", fileUrl: "", content: "" };
   const [form, setForm] = useState(EMPTY_R);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState(EMPTY_R);
+  const [extraAreas, setExtraAreas] = useState<string[]>([]);
+  const [targetClientIds, setTargetClientIds] = useState<number[]>([]);
+
+  const usedAreas = Array.from(new Set(resources.flatMap((r) => rAreas(r))));
+  const availableAreas = Array.from(new Set([...RESOURCE_AREAS, ...usedAreas, ...extraAreas])).filter(Boolean);
+  const otherClients = allClients.filter((c) => c.id !== clientId);
+  const addCustom = (a: string) => setExtraAreas((p) => (p.includes(a) ? p : [...p, a]));
 
   const inputStyle = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" };
 
@@ -971,7 +1011,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
                   }
                 </div>
                 <textarea value={editForm.content} onChange={(e) => setEditForm((f) => ({ ...f, content: e.target.value }))} placeholder="Contenido de texto (opcional)..." rows={3} className="col-span-2 px-3 py-2 text-sm resize-none" style={inputStyle} />
-                <select value={editForm.category} onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value as any }))} className="px-3 py-2 text-sm" style={inputStyle}>
+                <select value={editForm.category} onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={inputStyle}>
                   <option value="script">Videotutorial</option>
                   <option value="training">Curso</option>
                   <option value="document">Presentación</option>
@@ -979,10 +1019,10 @@ function ResourcesTab({ clientId }: { clientId: number }) {
                   <option value="template">Material de Apoyo</option>
                   <option value="other">Otro</option>
                 </select>
-                <input list="resource-areas" value={editForm.area} onChange={(e) => setEditForm((f) => ({ ...f, area: e.target.value }))} placeholder="Área / departamento (ej. Ventas)" className="px-3 py-2 text-sm" style={inputStyle} />
+                <AreaPicker value={editForm.areas} onChange={(v) => setEditForm((f) => ({ ...f, areas: v }))} available={availableAreas} onAddCustom={addCustom} inputStyle={inputStyle} />
               </div>
               <div className="flex gap-2">
-                <button onClick={() => { if (editForm.title) updateResource.mutate({ id: r.id, clientId, title: editForm.title, description: editForm.description, category: editForm.category, area: editForm.area || undefined, externalUrl: editForm.externalUrl || undefined, fileUrl: editForm.fileUrl || undefined, content: editForm.content || undefined }); }} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
+                <button onClick={() => { if (editForm.title) updateResource.mutate({ id: r.id, clientId, title: editForm.title, description: editForm.description, category: editForm.category, areas: editForm.areas, externalUrl: editForm.externalUrl || undefined, fileUrl: editForm.fileUrl || undefined, content: editForm.content || undefined }); }} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
                   <Save size={13} /> GUARDAR
                 </button>
                 <button onClick={() => setEditingId(null)} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "var(--gj-muted)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
@@ -994,13 +1034,13 @@ function ResourcesTab({ clientId }: { clientId: number }) {
             <div className="gj-card p-4 flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <span className="text-xs" style={{ color: "var(--gj-mint)", letterSpacing: "2px" }}>{r.category.toUpperCase()}</span>
-                {(r as any).area && <span className="text-xs ml-2 px-2 py-0.5 rounded" style={{ background: "rgba(77,182,232,0.15)", color: "#4db6e8", letterSpacing: "1px" }}>{(r as any).area}</span>}
+                {rAreas(r).map((a) => <span key={a} className="text-xs ml-2 px-2 py-0.5 rounded" style={{ background: "rgba(77,182,232,0.15)", color: "#4db6e8", letterSpacing: "1px" }}>{a}</span>)}
                 <p className="text-sm font-medium mt-1" style={{ color: "var(--gj-cream)" }}>{r.title}</p>
                 {r.description && <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{r.description}</p>}
                 {r.externalUrl && <a href={r.externalUrl} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 block" style={{ color: "var(--gj-green)" }}>{r.externalUrl}</a>}
               </div>
               <div className="flex gap-1 flex-shrink-0">
-                <button onClick={() => { setEditingId(r.id); setEditForm({ title: r.title, description: r.description || "", category: r.category as any, area: (r as any).area || "", externalUrl: r.externalUrl || "", fileUrl: (r as any).fileUrl || "", content: (r as any).content || "" }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-mint)", padding: "4px" }}>
+                <button onClick={() => { setEditingId(r.id); setEditForm({ title: r.title, description: r.description || "", category: r.category as any, areas: rAreas(r), externalUrl: r.externalUrl || "", fileUrl: (r as any).fileUrl || "", content: (r as any).content || "" }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-mint)", padding: "4px" }}>
                   <Edit3 size={14} />
                 </button>
                 <button onClick={() => deleteResource.mutate({ id: r.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}>
@@ -1025,7 +1065,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
             }
           </div>
           <textarea value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} placeholder="Contenido de texto (opcional)..." rows={3} className="col-span-2 px-3 py-2 text-sm resize-none" style={inputStyle} />
-          <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))} className="px-3 py-2 text-sm" style={inputStyle}>
+          <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={inputStyle}>
             <option value="script">Videotutorial</option>
             <option value="training">Curso</option>
             <option value="document">Presentación</option>
@@ -1033,17 +1073,40 @@ function ResourcesTab({ clientId }: { clientId: number }) {
             <option value="template">Material de Apoyo</option>
             <option value="other">Otro</option>
           </select>
-          <input list="resource-areas" value={form.area} onChange={(e) => setForm((f) => ({ ...f, area: e.target.value }))} placeholder="Área / departamento (ej. Ventas)" className="px-3 py-2 text-sm" style={inputStyle} />
-          <datalist id="resource-areas">
-            {RESOURCE_AREAS.map((a) => <option key={a} value={a} />)}
-          </datalist>
+          <AreaPicker value={form.areas} onChange={(v) => setForm((f) => ({ ...f, areas: v }))} available={availableAreas} onAddCustom={addCustom} inputStyle={inputStyle} />
+
+          {otherClients.length > 0 && (
+            <div className="col-span-2" style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 12 }}>
+              <p className="text-xs mb-2" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>AGREGAR TAMBIÉN A OTROS CLIENTES (opcional)</p>
+              <div className="flex flex-wrap gap-2">
+                {otherClients.map((c) => {
+                  const on = targetClientIds.includes(c.id);
+                  return (
+                    <button key={c.id} type="button" onClick={() => setTargetClientIds((p) => (on ? p.filter((x) => x !== c.id) : [...p, c.id]))} className="text-xs px-3 py-1.5 rounded flex items-center gap-1.5"
+                      style={{ background: on ? "rgba(154,230,180,0.18)" : "rgba(255,255,255,0.05)", color: on ? "var(--gj-mint)" : "var(--gj-muted)", border: on ? "1px solid rgba(154,230,180,0.45)" : "1px solid rgba(255,255,255,0.1)", cursor: "pointer" }}>
+                      {on && <Check size={12} />} {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
         <button
-          onClick={() => { if (form.title) { createResource.mutate({ clientId, title: form.title, description: form.description || undefined, category: form.category, area: form.area || undefined, externalUrl: form.externalUrl || undefined, fileUrl: form.fileUrl || undefined, content: form.content || undefined, order: resources.length }); setForm(EMPTY_R); } }}
+          onClick={() => {
+            if (!form.title) return;
+            const base = { title: form.title, description: form.description || undefined, category: form.category, areas: form.areas.length ? form.areas : undefined, externalUrl: form.externalUrl || undefined, fileUrl: form.fileUrl || undefined, content: form.content || undefined };
+            if (targetClientIds.length > 0) {
+              createForClients.mutate({ clientIds: [clientId, ...targetClientIds], ...base });
+            } else {
+              createResource.mutate({ clientId, ...base, order: resources.length });
+            }
+            setForm(EMPTY_R); setTargetClientIds([]);
+          }}
           className="flex items-center gap-1 text-xs px-4 py-2 rounded"
           style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
         >
-          <Plus size={14} /> AGREGAR RECURSO
+          <Plus size={14} /> {targetClientIds.length > 0 ? `AGREGAR A ${targetClientIds.length + 1} CLIENTES` : "AGREGAR RECURSO"}
         </button>
       </div>
     </div>

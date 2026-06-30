@@ -129,7 +129,7 @@ const createResourceData = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   category: z.enum(["document", "template", "script", "training", "guide", "other"]).optional(),
-  area: z.string().optional(),
+  areas: z.array(z.string()).optional(),
   fileUrl: z.string().optional(),
   externalUrl: z.string().optional(),
   content: z.string().optional(),
@@ -253,7 +253,7 @@ ${JSON.stringify(snapshot, null, 2)}
 - create_okr, update_okr  → Objetivos
 - create_metric  → Métricas
 - create_learning  → Aprendizajes
-- create_resource  → Recursos (Biblioteca: videos, documentos, guías, templates). category: document | template | script | training | guide | other. Para un video o link externo usá externalUrl. El campo "area" es el departamento al que sirve el recurso (ej. Ventas, Operaciones, Atención al Cliente / Soporte, Social Media); usá una de esas o la que mencione el consultor.
+- create_resource  → Recursos (Biblioteca: videos, documentos, guías, templates). category: document | template | script | training | guide | other. Para un video o link externo usá externalUrl. El campo "areas" es un ARRAY de departamentos a los que sirve el recurso (ej. ["Ventas"] o ["Ventas","Atención al Cliente / Soporte"] si sirve a varios); usá las que mencione el consultor o las estándar (Ventas, Operaciones, Atención al Cliente / Soporte, Social Media).
 - create_backlog  → Backlog de ideas (ideas, mejoras, oportunidades). status: idea | en_revision | aprobada | en_progreso | descartada. priority: alta | media | baja.
 NUNCA inventes otros valores de "type" ni los traduzcas. Si ninguna acción aplica, devolvé "actions": [].
 
@@ -516,7 +516,7 @@ export async function executeActions(opts: {
             title: action.data.title,
             description: action.data.description,
             category: action.data.category ?? "other",
-            area: action.data.area,
+            areas: action.data.areas,
             fileUrl: action.data.fileUrl,
             externalUrl: action.data.externalUrl,
             content: action.data.content,

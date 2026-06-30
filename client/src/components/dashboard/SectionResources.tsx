@@ -19,9 +19,13 @@ export default function SectionResources({ clientId }: Props) {
   const { data: resources = [], isLoading } = trpc.resources.list.useQuery({ clientId });
 
   const grouped = resources.reduce<Record<string, typeof resources>>((acc, r) => {
-    const key = (r as any).area?.trim() || "General";
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(r);
+    const ra = (r as any).areas;
+    const areas: string[] = (Array.isArray(ra) && ra.length) ? ra : ((r as any).area ? [(r as any).area] : ["General"]);
+    for (const a of areas) {
+      const key = (a || "").trim() || "General";
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(r);
+    }
     return acc;
   }, {});
 
