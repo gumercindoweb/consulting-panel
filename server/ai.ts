@@ -16,6 +16,7 @@ import {
   updateOkr,
   createMetric,
   createLearning,
+  createResource,
 } from "./db";
 
 // ─── ESQUEMA DE ACCIONES ─────────────────────────────────────────────────────
@@ -123,6 +124,15 @@ const createLearningData = z.object({
   isResolved: z.boolean().optional(),
 });
 
+const createResourceData = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  category: z.enum(["document", "template", "script", "training", "guide", "other"]).optional(),
+  fileUrl: z.string().optional(),
+  externalUrl: z.string().optional(),
+  content: z.string().optional(),
+});
+
 export const actionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("create_phase"), label: z.string(), data: createPhaseData }),
   z.object({ type: z.literal("update_phase"), label: z.string(), data: updatePhaseData }),
@@ -133,6 +143,7 @@ export const actionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("update_okr"), label: z.string(), data: updateOkrData }),
   z.object({ type: z.literal("create_metric"), label: z.string(), data: createMetricData }),
   z.object({ type: z.literal("create_learning"), label: z.string(), data: createLearningData }),
+  z.object({ type: z.literal("create_resource"), label: z.string(), data: createResourceData }),
 ]);
 
 export type AIAction = z.infer<typeof actionSchema>;
@@ -280,6 +291,9 @@ const TYPE_ALIASES: Record<string, string> = {
   "create_métrica": "create_metric",
   create_hito: "create_milestone",
   create_etapa: "create_phase",
+  create_recurso: "create_resource",
+  crear_recurso: "create_resource",
+  crear_video: "create_resource",
 };
 
 function normalizeActionTypes(obj: any): void {
@@ -477,6 +491,18 @@ export async function executeActions(opts: {
             resolution: action.data.resolution,
             date: new Date(action.data.date),
             isResolved: action.data.isResolved ?? false,
+          } as any);
+          break;
+        }
+        case "create_resource": {
+          await createResource({
+            clientId,
+            title: action.data.title,
+            description: action.data.description,
+            category: action.data.category ?? "other",
+            fileUrl: action.data.fileUrl,
+            externalUrl: action.data.externalUrl,
+            content: action.data.content,
           } as any);
           break;
         }
