@@ -305,7 +305,7 @@ export default function TimelineTab({ clientId }: Props) {
                                   <input
                                     type="date"
                                     style={INP}
-                                    value={editMilestoneData.date ?? (m.date as string).split("T")[0]}
+                                    value={editMilestoneData.date ?? new Date(m.date).toISOString().split("T")[0]}
                                     onChange={(e) => setEditMilestoneData((d: any) => ({ ...d, date: e.target.value }))}
                                   />
                                   <select

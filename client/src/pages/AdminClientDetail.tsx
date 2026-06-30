@@ -368,7 +368,13 @@ function MilestonesTab({ clientId }: { clientId: number }) {
     reorder.mutate({ clientId, ids: newItems.map(m => m.id) });
   }
 
-  const EMPTY_M = { title: "", description: "", date: new Date().toISOString().split("T")[0], status: "completed" as const, category: "strategy" as const, impact: "medium" as const, resultType: null as any, phaseId: null as number | null };
+  const EMPTY_M = {
+    title: "", description: "", date: new Date().toISOString().split("T")[0],
+    status: "completed" as "completed" | "in_progress" | "pending",
+    category: "strategy" as "strategy" | "implementation" | "training" | "automation" | "content" | "analytics" | "other",
+    impact: "medium" as "high" | "medium" | "low",
+    resultType: null as any, phaseId: null as number | null,
+  };
   const RESULT_TYPES: Record<string, { label: string; color: string }> = {
     result: { label: "RESULTADO", color: "var(--ambar)" },
     delivery: { label: "ENTREGABLE", color: "#E0913F" },
@@ -477,7 +483,7 @@ function MilestonesTab({ clientId }: { clientId: number }) {
                                     {!m.isPaused && <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${status.color}12`, border: `1px solid ${status.color}30`, color: status.color, fontFamily: "var(--gj-font)" }}>{status.label}</span>}
                                     <button
                                       title="Editar"
-                                      onClick={() => { setEditingId(m.id); setEditForm({ title: m.title, description: m.description || "", date: m.date.split("T")[0], status: m.status, category: m.category, impact: m.impact, resultType: m.resultType, phaseId: (m as any).phaseId ?? null }); }}
+                                      onClick={() => { setEditingId(m.id); setEditForm({ title: m.title, description: m.description || "", date: new Date(m.date).toISOString().split("T")[0], status: m.status, category: m.category, impact: m.impact, resultType: m.resultType, phaseId: (m as any).phaseId ?? null }); }}
                                       style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}
                                     >
                                       <Edit3 size={14} />
