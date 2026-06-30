@@ -11,9 +11,14 @@ export const ENV = {
   devAutoLogin: process.env.DEV_AUTOLOGIN === "1",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
-  // Modelo de Anthropic a usar por el asistente IA. Se puede cambiar desde
-  // Vercel sin tocar código. Default: Claude Sonnet 4 (buen balance precio/calidad).
-  forgeModel: process.env.BUILT_IN_FORGE_MODEL ?? "claude-sonnet-4-20250514",
+  // Asistente IA — proveedor compatible con OpenAI (Groq, Google Gemini, OpenRouter…).
+  // Gratuito: se crea una API key en el proveedor y se setean estas 3 variables en
+  // Vercel. AI_API_URL es la base hasta antes de /chat/completions.
+  //   Groq:   AI_API_URL=https://api.groq.com/openai/v1   AI_MODEL=llama-3.3-70b-versatile
+  //   Gemini: AI_API_URL=https://generativelanguage.googleapis.com/v1beta/openai   AI_MODEL=gemini-2.0-flash
+  aiApiUrl: process.env.AI_API_URL ?? "",
+  aiApiKey: process.env.AI_API_KEY ?? "",
+  aiModel: process.env.AI_MODEL ?? "llama-3.3-70b-versatile",
   supabaseUrl: process.env.SUPABASE_URL ?? "",
   supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY ?? "",
 };

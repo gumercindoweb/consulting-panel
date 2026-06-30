@@ -1,49 +1,52 @@
 import { ENV } from "./env";
 
-// Cliente mínimo para la API nativa de Anthropic (Messages API).
-// A diferencia de llm.ts (formato OpenAI), Anthropic usa:
-//   - endpoint /v1/messages
-//   - header x-api-key (no Authorization: Bearer)
-//   - header anthropic-version
-//   - "system" como campo top-level, separado de los mensajes
-//   - respuesta en content[] (bloques de tipo "text")
+// Cliente para APIs de chat compatibles con OpenAI (Groq, Google Gemini en su
+// modo OpenAI, OpenRouter, etc.). Configurable por env para poder usar
+// proveedores con nivel gratuito sin tocar código.
+//   - endpoint {AI_API_URL}/chat/completions
+//   - header Authorization: Bearer {AI_API_KEY}
+//   - "system" como primer mensaje del array
+//   - respuesta en choices[0].message.content
 
-const ANTHROPIC_VERSION = "2023-06-01";
-
-export type ClaudeMessage = { role: "user" | "assistant"; content: string };
+export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 const resolveBaseUrl = () =>
-  (ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? ENV.forgeApiUrl.trim()
-    : "https://api.anthropic.com"
-  ).replace(/\/$/, "");
+  (ENV.aiApiUrl ?? "").trim().replace(/\/$/, "");
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-export async function invokeClaude(params: {
+export async function invokeChat(params: {
   system: string;
-  messages: ClaudeMessage[];
+  messages: ChatMessage[];
   maxTokens?: number;
   model?: string;
 }): Promise<string> {
-  if (!ENV.forgeApiKey) {
+  const base = resolveBaseUrl();
+  if (!base) {
     throw new Error(
-      "El asistente IA no está configurado. Falta la variable BUILT_IN_FORGE_API_KEY en Vercel."
+      "El asistente IA no está configurado. Falta la variable AI_API_URL en Vercel."
+    );
+  }
+  if (!ENV.aiApiKey) {
+    throw new Error(
+      "El asistente IA no está configurado. Falta la variable AI_API_KEY en Vercel."
     );
   }
 
   const body = JSON.stringify({
-    model: params.model ?? ENV.forgeModel,
+    model: params.model ?? ENV.aiModel,
     max_tokens: params.maxTokens ?? 4096,
-    system: params.system,
-    messages: params.messages,
+    messages: [
+      { role: "system", content: params.system },
+      ...params.messages,
+    ],
+    response_format: { type: "json_object" },
   });
 
-  const url = `${resolveBaseUrl()}/v1/messages`;
+  const url = `${base}/chat/completions`;
   const headers = {
     "content-type": "application/json",
-    "x-api-key": ENV.forgeApiKey,
-    "anthropic-version": ANTHROPIC_VERSION,
+    authorization: `Bearer ${ENV.aiApiKey}`,
   };
 
   // Reintentos con backoff para errores transitorios (429 / 5xx / red).
@@ -53,29 +56,26 @@ export async function invokeClaude(params: {
       const res = await fetch(url, { method: "POST", headers, body });
       if (res.ok) {
         const data = (await res.json()) as {
-          content?: Array<{ type: string; text?: string }>;
+          choices?: Array<{ message?: { content?: string } }>;
         };
-        return (data.content ?? [])
-          .filter((b) => b.type === "text" && typeof b.text === "string")
-          .map((b) => b.text)
-          .join("");
+        return data.choices?.[0]?.message?.content ?? "";
       }
 
       // 4xx (salvo 429) no se reintentan: es un error de la request.
       if (res.status !== 429 && res.status < 500) {
         const errText = await res.text();
-        throw new Error(`Anthropic API ${res.status}: ${errText}`);
+        throw new Error(`IA API ${res.status}: ${errText}`);
       }
 
       if (attempt === 3) {
         const errText = await res.text();
-        throw new Error(`Anthropic API ${res.status} tras reintentos: ${errText}`);
+        throw new Error(`IA API ${res.status} tras reintentos: ${errText}`);
       }
       await sleep(500 * 2 ** attempt + Math.random() * 250);
     } catch (error) {
       lastError = error;
       // Si fue un Error que tiramos nosotros por 4xx, no reintentar.
-      if (error instanceof Error && error.message.startsWith("Anthropic API 4")) {
+      if (error instanceof Error && error.message.startsWith("IA API 4")) {
         throw error;
       }
       if (attempt === 3) break;
@@ -85,5 +85,5 @@ export async function invokeClaude(params: {
 
   throw lastError instanceof Error
     ? lastError
-    : new Error("La llamada a Anthropic falló tras varios reintentos.");
+    : new Error("La llamada a la IA falló tras varios reintentos.");
 }

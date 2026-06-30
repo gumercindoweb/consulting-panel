@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { invokeClaude, type ClaudeMessage } from "./_core/anthropic";
+import { invokeChat, type ChatMessage } from "./_core/anthropic";
 import {
   getPhasesByClient,
   getMilestonesByClient,
@@ -263,17 +263,17 @@ export async function interpretMessage(opts: {
   clientId: number;
   clientName: string;
   message: string;
-  history: ClaudeMessage[];
+  history: ChatMessage[];
 }): Promise<InterpretResult> {
   const ctx = await loadClientContext(opts.clientId);
   const system = buildSystemPrompt(opts.clientName, ctx.snapshot);
 
-  const messages: ClaudeMessage[] = [
+  const messages: ChatMessage[] = [
     ...opts.history,
     { role: "user", content: opts.message },
   ];
 
-  const raw = await invokeClaude({ system, messages, maxTokens: 4096 });
+  const raw = await invokeChat({ system, messages, maxTokens: 4096 });
   const parsed = interpretResultSchema.safeParse(extractJson(raw));
   if (!parsed.success) {
     // Si el modelo se desvió del formato, devolvemos su texto como charla.
