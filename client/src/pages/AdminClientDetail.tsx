@@ -2,7 +2,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
-import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff, Upload, Paperclip, Sparkles, Send, Check, Copy } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff, Upload, Paperclip, Sparkles, Send, Check, Copy, Lock, Shield } from "lucide-react";
+import { MEMBER_GATED_SECTIONS } from "@shared/const";
 import TimelineTab from "@/components/admin/TimelineTab";
 import SectionFeed from "@/components/dashboard/SectionFeed";
 import SectionMilestones from "@/components/dashboard/SectionMilestones";
@@ -1486,8 +1487,17 @@ function BacklogTab({ clientId }: { clientId: number }) {
 }
 
 // ─── USERS TAB ────────────────────────────────────────────────────────────────
+const MEMBER_SECTION_LABELS: Record<string, string> = {
+  resources: "Biblioteca de formación",
+  digital_assets: "Activos digitales",
+  backlog: "Backlog de ideas",
+  okrs: "Objetivos",
+  updates: "Actualizaciones",
+};
+
 function UsersTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
+  const { data: client } = trpc.clients.get.useQuery({ id: clientId });
   const { data: userList = [], isLoading } = trpc.users.listByClient.useQuery({ clientId });
   const createUser = trpc.users.createWithAccess.useMutation({
     onSuccess: (res) => {
@@ -1502,8 +1512,16 @@ function UsersTab({ clientId }: { clientId: number }) {
     onSuccess: () => { utils.users.listByClient.invalidate({ clientId }); toast.success("Acceso revocado."); },
     onError: (e) => toast.error(e.message),
   });
+  const setLevel = trpc.users.setAccessLevel.useMutation({
+    onSuccess: () => { utils.users.listByClient.invalidate({ clientId }); toast.success("Nivel de acceso actualizado."); },
+    onError: (e) => toast.error(e.message),
+  });
+  const updateMemberSections = trpc.clients.update.useMutation({
+    onSuccess: () => { utils.clients.get.invalidate({ id: clientId }); toast.success("Secciones para miembros actualizadas."); },
+    onError: (e) => toast.error(e.message),
+  });
 
-  const EMPTY_FORM = { name: "", email: "", password: "" };
+  const EMPTY_FORM = { name: "", email: "", password: "", accessLevel: "owner" as "owner" | "member" };
   const [form, setForm] = useState(EMPTY_FORM);
   const [showForm, setShowForm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -1511,8 +1529,52 @@ function UsersTab({ clientId }: { clientId: number }) {
 
   const inp = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", fontSize: "13px", padding: "8px 12px", width: "100%", outline: "none" };
 
+  const memberSections = ((client as any)?.memberVisibleSections as string[] | null) ?? [];
+  function toggleMemberSection(sectionId: string) {
+    const next = memberSections.includes(sectionId)
+      ? memberSections.filter((s) => s !== sectionId)
+      : [...memberSections, sectionId];
+    updateMemberSections.mutate({ id: clientId, memberVisibleSections: next });
+  }
+
   return (
     <div className="space-y-6">
+      {/* Secciones confidenciales para usuarios "Miembro del equipo" */}
+      <div className="gj-card p-5 space-y-3" style={{ borderLeft: "3px solid #E0913F" }}>
+        <div className="flex items-center gap-2">
+          <Shield size={14} style={{ color: "#E0913F" }} />
+          <p className="text-xs tracking-widest" style={{ color: "var(--gj-cream)", letterSpacing: "2px", fontWeight: 600 }}>
+            SECCIONES PARA MIEMBROS DEL EQUIPO
+          </p>
+        </div>
+        <p className="text-xs" style={{ color: "var(--gj-muted)", lineHeight: 1.5 }}>
+          Los usuarios "Miembro del equipo" (empleados del cliente) ven el resto del portal igual que el dueño,
+          pero estas secciones son confidenciales por defecto. Habilitá acá las que puedan ver — aplica a todos
+          los miembros de este cliente.
+        </p>
+        <div className="flex flex-wrap gap-2 pt-1">
+          {MEMBER_GATED_SECTIONS.map((id) => {
+            const active = memberSections.includes(id);
+            return (
+              <button
+                key={id}
+                onClick={() => toggleMemberSection(id)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "6px",
+                  background: active ? "rgba(10,135,105,0.15)" : "rgba(255,255,255,0.04)",
+                  border: `1px solid ${active ? "rgba(10,135,105,0.4)" : "rgba(255,255,255,0.1)"}`,
+                  borderRadius: "4px", padding: "6px 12px", cursor: "pointer",
+                  color: active ? "var(--gj-mint)" : "var(--gj-muted)", fontSize: "11px", letterSpacing: "1px",
+                }}
+              >
+                {active ? <Eye size={12} /> : <Lock size={12} />}
+                {MEMBER_SECTION_LABELS[id] ?? id}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
@@ -1552,6 +1614,40 @@ function UsersTab({ clientId }: { clientId: number }) {
                 </button>
               </div>
             </div>
+            <div>
+              <label className="text-xs block mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>NIVEL DE ACCESO</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, accessLevel: "owner" }))}
+                  style={{
+                    flex: 1, padding: "8px", borderRadius: "4px", fontSize: "12px", letterSpacing: "1px", cursor: "pointer",
+                    background: form.accessLevel === "owner" ? "rgba(10,135,105,0.15)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${form.accessLevel === "owner" ? "rgba(10,135,105,0.4)" : "rgba(255,255,255,0.1)"}`,
+                    color: form.accessLevel === "owner" ? "var(--gj-mint)" : "var(--gj-muted)",
+                  }}
+                >
+                  DUEÑO
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, accessLevel: "member" }))}
+                  style={{
+                    flex: 1, padding: "8px", borderRadius: "4px", fontSize: "12px", letterSpacing: "1px", cursor: "pointer",
+                    background: form.accessLevel === "member" ? "rgba(224,145,63,0.15)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${form.accessLevel === "member" ? "rgba(224,145,63,0.4)" : "rgba(255,255,255,0.1)"}`,
+                    color: form.accessLevel === "member" ? "#E0913F" : "var(--gj-muted)",
+                  }}
+                >
+                  MIEMBRO DEL EQUIPO
+                </button>
+              </div>
+              {form.accessLevel === "member" && (
+                <p className="text-xs mt-2" style={{ color: "var(--gj-muted)", lineHeight: 1.4, fontStyle: "italic" }}>
+                  Solo va a ver las secciones confidenciales que hayas habilitado arriba.
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex gap-3 pt-2">
             <button onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }} style={{ flex: 1, padding: "8px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: "var(--gj-muted)", cursor: "pointer", fontSize: "12px", letterSpacing: "2px" }}>
@@ -1578,38 +1674,64 @@ function UsersTab({ clientId }: { clientId: number }) {
             </p>
           </div>
         )}
-        {userList.map((u) => (
-          <div key={u.id} className="gj-card p-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(10,135,105,0.15)", border: "1px solid rgba(10,135,105,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <Users size={16} style={{ color: "var(--gj-green)" }} />
+        {userList.map((u) => {
+          const level = ((u as any).accessLevel as "owner" | "member" | undefined) ?? "owner";
+          const isMember = level === "member";
+          return (
+            <div key={u.id} className="gj-card p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(10,135,105,0.15)", border: "1px solid rgba(10,135,105,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Users size={16} style={{ color: "var(--gj-green)" }} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm truncate" style={{ color: "var(--gj-cream)", fontWeight: 600 }}>{u.name || "—"}</p>
+                    <span style={{
+                      fontSize: "9px", letterSpacing: "1px", padding: "2px 6px", borderRadius: "3px", flexShrink: 0,
+                      background: isMember ? "rgba(224,145,63,0.15)" : "rgba(10,135,105,0.15)",
+                      color: isMember ? "#E0913F" : "var(--gj-mint)",
+                      border: `1px solid ${isMember ? "rgba(224,145,63,0.35)" : "rgba(10,135,105,0.35)"}`,
+                    }}>
+                      {isMember ? "MIEMBRO" : "DUEÑO"}
+                    </span>
+                  </div>
+                  <p className="text-xs truncate" style={{ color: "var(--gj-muted)" }}>{u.email}</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-sm truncate" style={{ color: "var(--gj-cream)", fontWeight: 600 }}>{u.name || "—"}</p>
-                <p className="text-xs truncate" style={{ color: "var(--gj-muted)" }}>{u.email}</p>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  title={isMember ? "Cambiar a Dueño" : "Cambiar a Miembro del equipo"}
+                  onClick={() => setLevel.mutate({ userId: u.id, clientId, accessLevel: isMember ? "owner" : "member" })}
+                  style={{
+                    background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px",
+                    cursor: "pointer", padding: "6px 10px", color: "var(--gj-muted)", fontSize: "11px", letterSpacing: "1px",
+                  }}
+                >
+                  {isMember ? "HACER DUEÑO" : "HACER MIEMBRO"}
+                </button>
+                <button
+                  onClick={() => {
+                    if (revokingId === u.id) {
+                      revokeAccess.mutate({ userId: u.id, clientId });
+                      setRevokingId(null);
+                    } else {
+                      setRevokingId(u.id);
+                      setTimeout(() => setRevokingId(null), 3000);
+                    }
+                  }}
+                  style={{
+                    background: revokingId === u.id ? "rgba(220,38,38,0.15)" : "transparent",
+                    border: `1px solid ${revokingId === u.id ? "rgba(220,38,38,0.4)" : "rgba(255,255,255,0.1)"}`,
+                    borderRadius: "4px", cursor: "pointer", padding: "6px 12px", flexShrink: 0,
+                    color: revokingId === u.id ? "#ef4444" : "var(--gj-muted)", fontSize: "11px", letterSpacing: "1px",
+                  }}
+                >
+                  {revokingId === u.id ? "¿CONFIRMAR?" : "REVOCAR"}
+                </button>
               </div>
             </div>
-            <button
-              onClick={() => {
-                if (revokingId === u.id) {
-                  revokeAccess.mutate({ userId: u.id, clientId });
-                  setRevokingId(null);
-                } else {
-                  setRevokingId(u.id);
-                  setTimeout(() => setRevokingId(null), 3000);
-                }
-              }}
-              style={{
-                background: revokingId === u.id ? "rgba(220,38,38,0.15)" : "transparent",
-                border: `1px solid ${revokingId === u.id ? "rgba(220,38,38,0.4)" : "rgba(255,255,255,0.1)"}`,
-                borderRadius: "4px", cursor: "pointer", padding: "6px 12px", flexShrink: 0,
-                color: revokingId === u.id ? "#ef4444" : "var(--gj-muted)", fontSize: "11px", letterSpacing: "1px",
-              }}
-            >
-              {revokingId === u.id ? "¿CONFIRMAR?" : "REVOCAR"}
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

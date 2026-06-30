@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS, MEMBER_GATED_SECTIONS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
 import { hashPassword, verifyPassword } from "./_core/password";
@@ -53,6 +53,7 @@ import {
   reorderLearnings,
   reorderMilestones,
   reorderOkrs,
+  setAccessLevel,
   updateBacklogItem,
   updateClient,
   updateLearning,
@@ -81,6 +82,23 @@ async function assertClientAccess(userId: number, clientId: number) {
   const allowed = accesses.some((a) => a.clientId === clientId);
   if (!allowed) {
     throw new TRPCError({ code: "FORBIDDEN", message: "No tenés acceso a este cliente." });
+  }
+}
+
+// ─── MEMBER SECTION GUARD ──────────────────────────────────────────────────────
+// Para las secciones "confidenciales" (MEMBER_GATED_SECTIONS): un usuario nivel
+// "member" (empleado del cliente) solo puede leerlas si están en
+// clients.memberVisibleSections. El "owner" (cliente principal) no se ve
+// afectado por este chequeo — solo aplica a members.
+async function assertSectionAccess(userId: number, clientId: number, section: string) {
+  if (!(MEMBER_GATED_SECTIONS as readonly string[]).includes(section)) return;
+  const accesses = await getClientAccessForUser(userId);
+  const access = accesses.find((a) => a.clientId === clientId);
+  if (!access || access.accessLevel !== "member") return;
+  const client = await getClientById(clientId);
+  const allowed = (client?.memberVisibleSections as string[] | null) ?? [];
+  if (!allowed.includes(section)) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "No tenés acceso a esta sección." });
   }
 }
 
@@ -188,6 +206,7 @@ export const appRouter = router({
           consultorName: z.string().optional(),
           isActive: z.boolean().optional(),
           visibleSections: z.array(z.string()).optional(),
+          memberVisibleSections: z.array(z.string()).optional(),
         })
       )
       .mutation(({ input }) => {
@@ -203,9 +222,12 @@ export const appRouter = router({
     myClients: protectedProcedure.query(async ({ ctx }) => {
       if (ctx.user.role === "admin") return getAllClients();
       const accesses = await getClientAccessForUser(ctx.user.id);
+      const levelByClientId = new Map(accesses.map((a) => [a.clientId, a.accessLevel]));
       const clientIds = accesses.map((a) => a.clientId);
       const all = await getAllClients();
-      return all.filter((c) => clientIds.includes(c.id));
+      return all
+        .filter((c) => clientIds.includes(c.id))
+        .map((c) => ({ ...c, accessLevel: levelByClientId.get(c.id) ?? "owner" }));
     }),
   }),
 
@@ -261,7 +283,10 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+        if (ctx.user.role !== "admin") {
+          await assertClientAccess(ctx.user.id, input.clientId);
+          await assertSectionAccess(ctx.user.id, input.clientId, "okrs");
+        }
         return getOkrsByClient(input.clientId, ctx.user.role === "admin");
       }),
 
@@ -476,7 +501,10 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+        if (ctx.user.role !== "admin") {
+          await assertClientAccess(ctx.user.id, input.clientId);
+          await assertSectionAccess(ctx.user.id, input.clientId, "resources");
+        }
         return getResourcesByClient(input.clientId);
       }),
 
@@ -560,7 +588,10 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+        if (ctx.user.role !== "admin") {
+          await assertClientAccess(ctx.user.id, input.clientId);
+          await assertSectionAccess(ctx.user.id, input.clientId, "digital_assets");
+        }
         return getDigitalAssetsByClient(input.clientId);
       }),
 
@@ -664,7 +695,10 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+        if (ctx.user.role !== "admin") {
+          await assertClientAccess(ctx.user.id, input.clientId);
+          await assertSectionAccess(ctx.user.id, input.clientId, "updates");
+        }
         const all = await getUpdatesByClient(input.clientId);
         if (ctx.user.role !== "admin") return all.filter((u) => u.isPublic === true);
         return all;
@@ -717,7 +751,10 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+        if (ctx.user.role !== "admin") {
+          await assertClientAccess(ctx.user.id, input.clientId);
+          await assertSectionAccess(ctx.user.id, input.clientId, "backlog");
+        }
         return getBacklogByClient(input.clientId);
       }),
 
@@ -762,12 +799,13 @@ export const appRouter = router({
         name: z.string().min(2).max(255),
         email: z.string().email("Email inválido"),
         password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+        accessLevel: z.enum(["owner", "member"]).default("owner"),
       }))
       .mutation(async ({ input }) => {
         const existingUser = await (await import("./db")).getUserByEmail(input.email);
         if (existingUser) {
           // User exists — just grant access if not already granted
-          await grantClientAccess(existingUser.id, input.clientId);
+          await grantClientAccess(existingUser.id, input.clientId, input.accessLevel);
           return { userId: existingUser.id, created: false };
         }
         const passwordHash = await hashPassword(input.password);
@@ -776,9 +814,13 @@ export const appRouter = router({
           passwordHash,
           name: input.name,
         });
-        await grantClientAccess(userId, input.clientId);
+        await grantClientAccess(userId, input.clientId, input.accessLevel);
         return { userId, created: true };
       }),
+
+    setAccessLevel: adminProcedure
+      .input(z.object({ userId: z.number(), clientId: z.number(), accessLevel: z.enum(["owner", "member"]) }))
+      .mutation(({ input }) => setAccessLevel(input.userId, input.clientId, input.accessLevel)),
 
     revokeAccess: adminProcedure
       .input(z.object({ userId: z.number(), clientId: z.number() }))

@@ -61,6 +61,11 @@ export const clients = pgTable("clients", {
   startDate: timestamp("startDate"),
   isActive: boolean("isActive").default(true).notNull(),
   visibleSections: json("visibleSections").$type<string[]>(),
+  // Secciones "confidenciales" habilitadas para los usuarios nivel "member"
+  // (empleados del cliente) de este cliente. Compartido por todos los
+  // miembros — no es 1x1 todavía (queda como evolución futura: ver
+  // clientAccess.accessLevel para el campo que ya distingue cada usuario).
+  memberVisibleSections: json("memberVisibleSections").$type<string[]>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
@@ -73,6 +78,9 @@ export const clientAccess = pgTable("client_access", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   userId: integer("userId").notNull(),
   clientId: integer("clientId").notNull(),
+  // "owner": el cliente principal, ve todo lo habilitado para el cliente.
+  // "member": empleado del cliente, además filtrado por memberVisibleSections.
+  accessLevel: varchar("accessLevel", { length: 16 }).default("owner").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

@@ -163,13 +163,19 @@ export async function getClientAccessForUser(userId: number): Promise<ClientAcce
   return db.select().from(clientAccess).where(eq(clientAccess.userId, userId));
 }
 
-export async function grantClientAccess(userId: number, clientId: number): Promise<void> {
+export async function grantClientAccess(userId: number, clientId: number, accessLevel: "owner" | "member" = "owner"): Promise<void> {
   const db = await getDb();
   if (!db) return;
   const existing = await db.select().from(clientAccess).where(and(eq(clientAccess.userId, userId), eq(clientAccess.clientId, clientId))).limit(1);
   if (existing.length === 0) {
-    await db.insert(clientAccess).values({ userId, clientId });
+    await db.insert(clientAccess).values({ userId, clientId, accessLevel });
   }
+}
+
+export async function setAccessLevel(userId: number, clientId: number, accessLevel: "owner" | "member"): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(clientAccess).set({ accessLevel }).where(and(eq(clientAccess.userId, userId), eq(clientAccess.clientId, clientId)));
 }
 
 export async function getUsersWithAccessToClient(clientId: number) {
@@ -185,6 +191,7 @@ export async function getUsersWithAccessToClient(clientId: number) {
     role: users.role,
     createdAt: users.createdAt,
     accessId: clientAccess.id,
+    accessLevel: clientAccess.accessLevel,
   })
     .from(users)
     .innerJoin(clientAccess, and(eq(clientAccess.userId, users.id), eq(clientAccess.clientId, clientId)))

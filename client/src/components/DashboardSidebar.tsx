@@ -1,5 +1,6 @@
 import type { DashboardSection } from "@/pages/ClientDashboard";
 import type { Client, User } from "../../../drizzle/schema";
+import { MEMBER_GATED_SECTIONS } from "@shared/const";
 import {
   BarChart3,
   BookOpen,
@@ -52,9 +53,17 @@ export default function DashboardSidebar({ client, activeSection, onSectionChang
   const isFuturaBrand = isNMRoller || isFlyFree;
 
   const visibleSections = (client as any).visibleSections as string[] | null | undefined;
-  const filteredNav = visibleSections?.length
-    ? NAV_ITEMS.filter(item => visibleSections.includes(item.id))
-    : NAV_ITEMS;
+  const accessLevel = (client as any).accessLevel as "owner" | "member" | undefined;
+  const memberVisibleSections = (client as any).memberVisibleSections as string[] | null | undefined;
+  const isMember = accessLevel === "member";
+
+  const filteredNav = NAV_ITEMS.filter(item => {
+    if (visibleSections?.length && !visibleSections.includes(item.id)) return false;
+    if (isMember && (MEMBER_GATED_SECTIONS as readonly string[]).includes(item.id)) {
+      return (memberVisibleSections ?? []).includes(item.id);
+    }
+    return true;
+  });
 
   const handleSectionChange = (s: DashboardSection) => {
     onSectionChange(s);

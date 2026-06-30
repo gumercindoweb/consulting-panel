@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { MEMBER_GATED_SECTIONS } from "@shared/const";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { getLoginUrl } from "@/const";
@@ -66,6 +67,14 @@ export default function ClientDashboard() {
     const visibleSections = (activeClient as any).visibleSections as string[] | null | undefined;
     if (visibleSections?.length && !visibleSections.includes(activeSection)) {
       setActiveSection("overview");
+      return;
+    }
+    const accessLevel = (activeClient as any).accessLevel as "owner" | "member" | undefined;
+    if (accessLevel === "member" && (MEMBER_GATED_SECTIONS as readonly string[]).includes(activeSection)) {
+      const memberVisibleSections = (activeClient as any).memberVisibleSections as string[] | null | undefined;
+      if (!(memberVisibleSections ?? []).includes(activeSection)) {
+        setActiveSection("overview");
+      }
     }
   }, [activeClient, activeSection]);
 
