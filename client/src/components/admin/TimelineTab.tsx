@@ -72,10 +72,27 @@ const EMPTY_M = {
 // Wrapper con drag handle para reordenar hitos dentro de una etapa.
 function SortableMilestone({ id, children }: { id: number; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const [hover, setHover] = useState(false);
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, position: "relative" }}>
-      <div {...attributes} {...listeners} style={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", cursor: "grab", color: "rgba(154,230,180,0.3)", zIndex: 1, padding: "4px", touchAction: "none" }}>
-        <GripVertical size={12} />
+      <div
+        {...attributes}
+        {...listeners}
+        title="Arrastrá para reordenar este hito"
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        style={{
+          position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          width: 20, height: 28, borderRadius: 4,
+          cursor: isDragging ? "grabbing" : "grab",
+          color: hover || isDragging ? "var(--gj-mint)" : "rgba(154,230,180,0.65)",
+          background: hover || isDragging ? "rgba(154,230,180,0.14)" : "rgba(154,230,180,0.05)",
+          border: "1px solid rgba(154,230,180,0.15)",
+          zIndex: 2, touchAction: "none",
+        }}
+      >
+        <GripVertical size={14} />
       </div>
       {children}
     </div>
