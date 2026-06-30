@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
-import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff, Upload, Paperclip, Sparkles, Send, Check } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff, Upload, Paperclip, Sparkles, Send, Check, Copy } from "lucide-react";
 import TimelineTab from "@/components/admin/TimelineTab";
 import SectionFeed from "@/components/dashboard/SectionFeed";
 import SectionMilestones from "@/components/dashboard/SectionMilestones";
@@ -985,6 +985,8 @@ function ResourcesTab({ clientId }: { clientId: number }) {
   const [editForm, setEditForm] = useState(EMPTY_R);
   const [extraAreas, setExtraAreas] = useState<string[]>([]);
   const [targetClientIds, setTargetClientIds] = useState<number[]>([]);
+  const [copyingId, setCopyingId] = useState<number | null>(null);
+  const [copyTargets, setCopyTargets] = useState<number[]>([]);
 
   const usedAreas = Array.from(new Set(resources.flatMap((r) => rAreas(r))));
   const availableAreas = Array.from(new Set([...RESOURCE_AREAS, ...usedAreas, ...extraAreas])).filter(Boolean);
@@ -1031,22 +1033,57 @@ function ResourcesTab({ clientId }: { clientId: number }) {
               </div>
             </div>
           ) : (
-            <div className="gj-card p-4 flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <span className="text-xs" style={{ color: "var(--gj-mint)", letterSpacing: "2px" }}>{r.category.toUpperCase()}</span>
-                {rAreas(r).map((a) => <span key={a} className="text-xs ml-2 px-2 py-0.5 rounded" style={{ background: "rgba(77,182,232,0.15)", color: "#4db6e8", letterSpacing: "1px" }}>{a}</span>)}
-                <p className="text-sm font-medium mt-1" style={{ color: "var(--gj-cream)" }}>{r.title}</p>
-                {r.description && <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{r.description}</p>}
-                {r.externalUrl && <a href={r.externalUrl} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 block" style={{ color: "var(--gj-green)" }}>{r.externalUrl}</a>}
+            <div className="gj-card p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs" style={{ color: "var(--gj-mint)", letterSpacing: "2px" }}>{r.category.toUpperCase()}</span>
+                  {rAreas(r).map((a) => <span key={a} className="text-xs ml-2 px-2 py-0.5 rounded" style={{ background: "rgba(77,182,232,0.15)", color: "#4db6e8", letterSpacing: "1px" }}>{a}</span>)}
+                  <p className="text-sm font-medium mt-1" style={{ color: "var(--gj-cream)" }}>{r.title}</p>
+                  {r.description && <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{r.description}</p>}
+                  {r.externalUrl && <a href={r.externalUrl} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 block" style={{ color: "var(--gj-green)" }}>{r.externalUrl}</a>}
+                </div>
+                <div className="flex gap-1 flex-shrink-0">
+                  {otherClients.length > 0 && (
+                    <button title="Copiar a otros clientes" onClick={() => { setCopyingId(copyingId === r.id ? null : r.id); setCopyTargets([]); }} style={{ background: "none", border: "none", cursor: "pointer", color: copyingId === r.id ? "var(--gj-green)" : "var(--gj-muted)", padding: "4px" }}>
+                    <Copy size={14} />
+                  </button>
+                  )}
+                  <button onClick={() => { setEditingId(r.id); setEditForm({ title: r.title, description: r.description || "", category: r.category as any, areas: rAreas(r), externalUrl: r.externalUrl || "", fileUrl: (r as any).fileUrl || "", content: (r as any).content || "" }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-mint)", padding: "4px" }}>
+                    <Edit3 size={14} />
+                  </button>
+                  <button onClick={() => deleteResource.mutate({ id: r.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-1 flex-shrink-0">
-                <button onClick={() => { setEditingId(r.id); setEditForm({ title: r.title, description: r.description || "", category: r.category as any, areas: rAreas(r), externalUrl: r.externalUrl || "", fileUrl: (r as any).fileUrl || "", content: (r as any).content || "" }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-mint)", padding: "4px" }}>
-                  <Edit3 size={14} />
-                </button>
-                <button onClick={() => deleteResource.mutate({ id: r.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}>
-                  <Trash2 size={14} />
-                </button>
-              </div>
+
+              {copyingId === r.id && otherClients.length > 0 && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                  <p className="text-xs mb-2" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>COPIAR "{r.title}" A OTROS CLIENTES</p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {otherClients.map((c) => {
+                      const on = copyTargets.includes(c.id);
+                      return (
+                        <button key={c.id} type="button" onClick={() => setCopyTargets((p) => (on ? p.filter((x) => x !== c.id) : [...p, c.id]))} className="text-xs px-3 py-1.5 rounded flex items-center gap-1.5"
+                          style={{ background: on ? "rgba(154,230,180,0.18)" : "rgba(255,255,255,0.05)", color: on ? "var(--gj-mint)" : "var(--gj-muted)", border: on ? "1px solid rgba(154,230,180,0.45)" : "1px solid rgba(255,255,255,0.1)", cursor: "pointer" }}>
+                          {on && <Check size={12} />} {c.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (copyTargets.length === 0) { toast.error("Elegí al menos un cliente."); return; }
+                      createForClients.mutate({ clientIds: copyTargets, title: r.title, description: r.description || undefined, category: r.category, areas: rAreas(r).length ? rAreas(r) : undefined, externalUrl: r.externalUrl || undefined, fileUrl: (r as any).fileUrl || undefined, content: (r as any).content || undefined });
+                      setCopyingId(null); setCopyTargets([]);
+                    }}
+                    className="flex items-center gap-1 text-xs px-4 py-2 rounded"
+                    style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px", opacity: copyTargets.length === 0 ? 0.5 : 1 }}
+                  >
+                    <Copy size={13} /> COPIAR A {copyTargets.length || 0} CLIENTE{copyTargets.length === 1 ? "" : "S"}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1094,7 +1131,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
         </div>
         <button
           onClick={() => {
-            if (!form.title) return;
+            if (!form.title.trim()) { toast.error("Poné un título al recurso."); return; }
             const base = { title: form.title, description: form.description || undefined, category: form.category, areas: form.areas.length ? form.areas : undefined, externalUrl: form.externalUrl || undefined, fileUrl: form.fileUrl || undefined, content: form.content || undefined };
             if (targetClientIds.length > 0) {
               createForClients.mutate({ clientIds: [clientId, ...targetClientIds], ...base });
