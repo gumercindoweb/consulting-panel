@@ -1,6 +1,6 @@
 import { trpc } from "@/lib/trpc";
-import { useState } from "react";
-import { Plus, Edit3, Trash2, Flag, AlertTriangle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Edit3, Trash2, Flag, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props { clientId: number }
@@ -101,6 +101,23 @@ export default function TimelineTab({ clientId }: Props) {
   const [editingMilestoneId, setEditingMilestoneId] = useState<number | null>(null);
   const [editMilestoneData, setEditMilestoneData] = useState<any>({});
 
+  // Collapse state: set of phase IDs that are collapsed
+  const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
+  const initializedRef = useRef(false);
+  useEffect(() => {
+    if (phases.length > 0 && !initializedRef.current) {
+      initializedRef.current = true;
+      // Auto-collapse completed phases on first load
+      setCollapsed(new Set(phases.filter((p) => p.status === "completed").map((p) => p.id)));
+    }
+  }, [phases]);
+
+  const toggleCollapse = (id: number) =>
+    setCollapsed((prev) => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  const allCollapsed = phases.length > 0 && phases.every((p) => collapsed.has(p.id));
+  const toggleAll = () =>
+    setCollapsed(allCollapsed ? new Set() : new Set(phases.map((p) => p.id)));
+
   // Helpers
   const milestonesByPhase = (phaseId: number) =>
     milestones.filter((m) => (m as any).phaseId === phaseId);
@@ -111,14 +128,43 @@ export default function TimelineTab({ clientId }: Props) {
   const orphanedMilestones = milestones.filter((m) => !(m as any).phaseId);
   const totalCompleted = phases.filter((p) => p.status === "completed").length;
 
+  // Descending order: in_progress first, then pending, then completed
+  const sortedPhases = [...phases].sort((a, b) => {
+    const rank = { in_progress: 0, pending: 1, completed: 2 };
+    return (rank[a.status] ?? 3) - (rank[b.status] ?? 3);
+  });
+  // Map original index (for "ETAPA N" label) by id
+  const phaseOriginalIndex = Object.fromEntries(phases.map((p, i) => [p.id, i + 1]));
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
 
-      {phases.map((phase, idx) => {
+      {/* Global collapse toggle */}
+      {phases.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <button
+            onClick={toggleAll}
+            style={{
+              background: "none", border: "1px solid rgba(154,230,180,0.2)",
+              color: "var(--gj-muted)", borderRadius: "3px",
+              padding: "4px 12px", fontSize: "10px", letterSpacing: "2px",
+              cursor: "pointer", fontFamily: "var(--gj-font)",
+              display: "flex", alignItems: "center", gap: "5px",
+            }}
+          >
+            {allCollapsed ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+            {allCollapsed ? "EXPANDIR TODO" : "COLAPSAR TODO"}
+          </button>
+        </div>
+      )}
+
+      {sortedPhases.map((phase) => {
         const cfg = PHASE_STATUS[phase.status] ?? PHASE_STATUS.pending;
         const phaseMilestones = milestonesByPhase(phase.id);
         const phaseOnlyUpdates = updatesWithPhaseOnly(phase.id);
         const isEditingPhase = editingPhaseId === phase.id;
+        const isCollapsed = collapsed.has(phase.id);
+        const phaseNum = phaseOriginalIndex[phase.id];
 
         return (
           <div
@@ -133,10 +179,18 @@ export default function TimelineTab({ clientId }: Props) {
           >
             {/* ── Phase header ── */}
             <div style={{ padding: "14px 16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+              {/* Chevron toggle */}
+              <button
+                onClick={() => toggleCollapse(phase.id)}
+                title={isCollapsed ? "Expandir" : "Colapsar"}
+                style={{ background: "none", border: "none", cursor: "pointer", color: cfg.color, padding: "2px 4px 0 0", flexShrink: 0, marginTop: 2 }}
+              >
+                {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+              </button>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "5px" }}>
                   <span style={{ fontSize: "9px", letterSpacing: "3px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)" }}>
-                    ETAPA {idx + 1}
+                    ETAPA {phaseNum}
                   </span>
                   <span style={{
                     fontSize: "9px", letterSpacing: "1px", padding: "2px 6px", borderRadius: "3px",
@@ -212,6 +266,8 @@ export default function TimelineTab({ clientId }: Props) {
               )}
             </div>
 
+            {!isCollapsed && (
+            <>
             {/* ── Milestones ── */}
             {phaseMilestones.length > 0 && (
               <div style={{ marginLeft: "24px", paddingLeft: "14px", paddingBottom: "4px", borderLeft: `2px solid ${cfg.color}25` }}>
@@ -447,6 +503,8 @@ export default function TimelineTab({ clientId }: Props) {
                 </button>
               )}
             </div>
+            </>
+            )}
           </div>
         );
       })}

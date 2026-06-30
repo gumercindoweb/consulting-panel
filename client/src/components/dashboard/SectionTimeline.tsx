@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
-import { CheckCircle2, Circle, Clock, Flag } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { CheckCircle2, Circle, Clock, Flag, ChevronDown, ChevronRight } from "lucide-react";
 
 interface Props { clientId: number; }
 
@@ -42,6 +43,24 @@ export default function SectionTimeline({ clientId }: Props) {
 
   const isLoading = phasesLoading || milestonesLoading || updatesLoading;
 
+  const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
+  const initializedRef = useRef(false);
+  useEffect(() => {
+    if (phases.length > 0 && !initializedRef.current) {
+      initializedRef.current = true;
+      setCollapsed(new Set(phases.filter((p) => p.status === "completed").map((p) => p.id)));
+    }
+  }, [phases]);
+
+  const toggleCollapse = (id: number) =>
+    setCollapsed((prev) => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+
+  const sortedPhases = [...phases].sort((a, b) => {
+    const rank: Record<string, number> = { in_progress: 0, pending: 1, completed: 2 };
+    return (rank[a.status] ?? 3) - (rank[b.status] ?? 3);
+  });
+  const phaseOriginalIndex = Object.fromEntries(phases.map((p, i) => [p.id, i + 1]));
+
   const milestonesByPhase = (phaseId: number) => milestones.filter((m) => m.phaseId === phaseId);
   const updatesByMilestone = (milestoneId: number) => updates.filter((u) => u.milestoneId === milestoneId);
   const updatesWithPhaseOnly = (phaseId: number) => updates.filter((u) => u.phaseId === phaseId && !u.milestoneId);
@@ -74,23 +93,29 @@ export default function SectionTimeline({ clientId }: Props) {
         </div>
       ) : (
         <div className="space-y-6">
-          {phases.map((phase, idx) => {
+          {sortedPhases.map((phase) => {
             const cfg = PHASE_STATUS[phase.status];
             const Icon = cfg.Icon;
             const phaseMilestones = milestonesByPhase(phase.id);
             const phaseOnlyUpdates = updatesWithPhaseOnly(phase.id);
+            const isCollapsed = collapsed.has(phase.id);
+            const phaseNum = phaseOriginalIndex[phase.id];
 
             return (
               <div key={phase.id}>
                 {/* ── Etapa header ── */}
                 <div
                   className="sdt-card p-5 border-l-4"
-                  style={{ borderColor: cfg.color }}
+                  style={{ borderColor: cfg.color, cursor: "pointer", userSelect: "none" }}
+                  onClick={() => toggleCollapse(phase.id)}
                 >
                   <div className="flex items-center gap-3 mb-1">
-                    <span className="font-label text-xs tracking-widest" style={{ color: "var(--gris)", letterSpacing: "2px" }}>ETAPA {idx + 1}</span>
+                    <span className="font-label text-xs tracking-widest" style={{ color: "var(--gris)", letterSpacing: "2px" }}>ETAPA {phaseNum}</span>
                     <span className="flex items-center gap-1 text-xs" style={{ color: cfg.color }}>
                       <Icon size={12} /> {cfg.label}
+                    </span>
+                    <span className="ml-auto" style={{ color: "var(--gris)", opacity: 0.5 }}>
+                      {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                     </span>
                   </div>
                   <h2 className="font-display text-2xl font-bold mb-1" style={{ color: "var(--creme)" }}>{phase.name}</h2>
@@ -106,6 +131,8 @@ export default function SectionTimeline({ clientId }: Props) {
                   )}
                 </div>
 
+                {!isCollapsed && (
+                <>
                 {/* ── Hitos de la etapa ── */}
                 {phaseMilestones.length > 0 && (
                   <div className="ml-6 mt-3 space-y-3 border-l-2 pl-4" style={{ borderColor: `${cfg.color}30` }}>
@@ -184,6 +211,8 @@ export default function SectionTimeline({ clientId }: Props) {
                       </div>
                     ))}
                   </div>
+                )}
+                </>
                 )}
               </div>
             );
