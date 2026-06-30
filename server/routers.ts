@@ -350,6 +350,7 @@ export const appRouter = router({
         z.object({
           id: z.number(),
           clientId: z.number(),
+          phaseId: z.number().nullable().optional(),
           title: z.string().optional(),
           description: z.string().optional(),
           date: z.date().optional(),

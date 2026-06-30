@@ -3,6 +3,17 @@ import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff, Upload, Paperclip } from "lucide-react";
+import TimelineTab from "@/components/admin/TimelineTab";
+import SectionFeed from "@/components/dashboard/SectionFeed";
+import SectionMilestones from "@/components/dashboard/SectionMilestones";
+import SectionOKRs from "@/components/dashboard/SectionOKRs";
+import SectionMetrics from "@/components/dashboard/SectionMetrics";
+import SectionLearnings from "@/components/dashboard/SectionLearnings";
+import SectionScope from "@/components/dashboard/SectionScope";
+import SectionResources from "@/components/dashboard/SectionResources";
+import SectionDigitalAssets from "@/components/dashboard/SectionDigitalAssets";
+import SectionBacklog from "@/components/dashboard/SectionBacklog";
+import SectionTimeline from "@/components/dashboard/SectionTimeline";
 import { useIsMobile } from "@/hooks/useMobile";
 import { uploadClientFile } from "@/lib/storage";
 import { toast } from "sonner";
@@ -22,14 +33,14 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type Tab = "phases" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates" | "digital_assets" | "backlog" | "users";
+type Tab = "timeline" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates" | "digital_assets" | "backlog" | "users";
 
 // Los labels coinciden 1:1 con las secciones del portal del cliente (ver
 // DashboardSidebar NAV_ITEMS y PORTAL_SECTIONS). El orden también espeja al portal.
 // Única pestaña admin-only: ACCESOS (gestión de usuarios, el cliente no la ve).
 const TABS: { id: Tab; label: string; icon: React.FC<any>; title: string; subtitle: string }[] = [
   { id: "updates", label: "ACTUALIZACIONES", icon: Rss, title: "Actualizaciones del Proyecto", subtitle: "Publicá avances diarios que el cliente puede ver en su portal." },
-  { id: "phases", label: "HOJA DE RUTA", icon: CheckSquare, title: "Hoja de Ruta", subtitle: "Etapas estratégicas del proyecto. Los hitos y las actualizaciones se conectan a cada etapa y arman la Hoja de Ruta que ve el cliente." },
+  { id: "timeline", label: "HOJA DE RUTA", icon: CheckSquare, title: "Hoja de Ruta", subtitle: "Etapas, hitos y actualizaciones en la misma jerarquía que ve el cliente. Usá 'VISTA PREVIA' para confirmar cómo se ve en el portal." },
   { id: "milestones", label: "HITOS E IMPLEMENTACIONES", icon: BarChart3, title: "Hitos e Implementaciones", subtitle: "Logros y entregas clave que cuelgan de cada etapa." },
   { id: "okrs", label: "OBJETIVOS", icon: Target, title: "Objetivos", subtitle: "Objetivos medibles y su progreso actual." },
   { id: "metrics", label: "MÉTRICAS DEL NEGOCIO", icon: LayoutDashboard, title: "Métricas del Negocio", subtitle: "Indicadores clave de performance del cliente." },
@@ -233,160 +244,6 @@ function UpdatesTab({ clientId }: { clientId: number }) {
   );
 }
 
-// ─── PHASES TAB ───────────────────────────────────────────────────────────────
-function PhasesTab({ clientId }: { clientId: number }) {
-  const utils = trpc.useUtils();
-  const { data: phases = [] } = trpc.phases.list.useQuery({ clientId });
-  const createPhase = trpc.phases.create.useMutation({
-    onSuccess: () => { utils.phases.list.invalidate({ clientId }); toast.success("Etapa creada."); },
-    onError: (e) => toast.error(e.message),
-  });
-  const updatePhase = trpc.phases.update.useMutation({
-    onSuccess: () => { utils.phases.list.invalidate({ clientId }); toast.success("Etapa actualizada."); },
-    onError: (e) => toast.error(e.message),
-  });
-  const deletePhase = trpc.phases.delete.useMutation({
-    onSuccess: () => { utils.phases.list.invalidate({ clientId }); toast.success("Etapa eliminada."); },
-    onError: (e) => toast.error(e.message),
-  });
-
-  const [newPhase, setNewPhase] = useState({ name: "", description: "", status: "pending" as const, order: phases.length });
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editData, setEditData] = useState<any>({});
-
-  const SDT_PHASES = [
-    "Diagnóstico",
-    "Q1 Optimización",
-    "Plan 2026 Fase 1",
-    "Plan 2026 Fase 2",
-    "Plan 2026 Fase 3",
-  ];
-
-  return (
-    <div className="space-y-6">
-      {/* Quick-add SDT phases */}
-      {phases.length === 0 && (
-        <div style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "20px" }}>
-          <p className="text-xs tracking-widest mb-3" style={{ color: "var(--gj-mint)", letterSpacing: "3px" }}>
-            CARGA RÁPIDA — FASES SDT
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {SDT_PHASES.map((name, i) => (
-              <button
-                key={name}
-                onClick={() => createPhase.mutate({ clientId, name, order: i, status: i === 0 ? "completed" : i === 1 ? "completed" : i === 2 ? "in_progress" : "pending" })}
-                className="text-xs px-3 py-2 rounded"
-                style={{
-                  background: "rgba(224,145,63,0.1)",
-                  border: "1px solid rgba(224,145,63,0.25)",
-                  color: "var(--gj-mint)",
-                  cursor: "pointer",
-                  letterSpacing: "2px",
-                }}
-              >
-                + {name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Existing phases */}
-      <div className="space-y-2">
-        {phases.map((phase) => (
-          <div key={phase.id} style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "16px" }}>
-            {editingId === phase.id ? (
-              <div className="space-y-3">
-                <input
-                  value={editData.name ?? phase.name}
-                  onChange={(e) => setEditData((d: any) => ({ ...d, name: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}
-                />
-                <textarea
-                  value={editData.description ?? phase.description ?? ""}
-                  onChange={(e) => setEditData((d: any) => ({ ...d, description: e.target.value }))}
-                  placeholder="Descripción..."
-                  rows={2}
-                  className="w-full px-3 py-2 text-sm resize-none"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}
-                />
-                <select
-                  value={editData.status ?? phase.status}
-                  onChange={(e) => setEditData((d: any) => ({ ...d, status: e.target.value }))}
-                  className="px-3 py-2 text-sm"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}
-                >
-                  <option value="pending">Pendiente</option>
-                  <option value="in_progress">En curso</option>
-                  <option value="completed">Completada</option>
-                </select>
-                <div className="flex gap-2">
-                  <button onClick={() => { updatePhase.mutate({ id: phase.id, ...editData }); setEditingId(null); }} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
-                    <Save size={12} /> GUARDAR
-                  </button>
-                  <button onClick={() => setEditingId(null)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "var(--gj-muted)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
-                    <X size={12} /> CANCELAR
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium" style={{ color: "var(--gj-cream)" }}>{phase.name}</p>
-                  {phase.description && <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{phase.description}</p>}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs px-2 py-1 rounded" style={{ color: phase.status === "completed" ? "#4eba8a" : phase.status === "in_progress" ? "var(--gj-mint)" : "var(--gj-muted)", background: "rgba(255,255,255,0.05)", letterSpacing: "2px" }}>
-                    {phase.status === "completed" ? "COMPLETADA" : phase.status === "in_progress" ? "EN CURSO" : "PENDIENTE"}
-                  </span>
-                  <button onClick={() => { setEditingId(phase.id); setEditData({}); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "4px" }}>
-                    <Edit3 size={14} />
-                  </button>
-                  <button onClick={() => deletePhase.mutate({ id: phase.id })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}>
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Add new */}
-      <div style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "20px" }}>
-        <p className="text-xs tracking-widest mb-3" style={{ color: "var(--gj-muted)", letterSpacing: "3px" }}>AGREGAR ETAPA</p>
-        <div className="flex gap-3">
-          <input
-            value={newPhase.name}
-            onChange={(e) => setNewPhase((f) => ({ ...f, name: e.target.value }))}
-            placeholder="Nombre de la etapa..."
-            className="flex-1 px-3 py-2 text-sm"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}
-          />
-          <select
-            value={newPhase.status}
-            onChange={(e) => setNewPhase((f) => ({ ...f, status: e.target.value as any }))}
-            className="px-3 py-2 text-sm"
-            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "3px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)" }}
-          >
-            <option value="pending">Pendiente</option>
-            <option value="in_progress">En curso</option>
-            <option value="completed">Completada</option>
-          </select>
-          <button
-            onClick={() => { if (newPhase.name) { createPhase.mutate({ clientId, ...newPhase, order: phases.length }); setNewPhase({ name: "", description: "", status: "pending", order: phases.length + 1 }); } }}
-            className="flex items-center gap-1 text-xs px-4 py-2 rounded"
-            style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
-          >
-            <Plus size={14} /> AGREGAR
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── MILESTONES TAB ───────────────────────────────────────────────────────────
 const M_CAT: Record<string, { label: string; color: string }> = {
   strategy:       { label: "ESTRATEGIA",      color: "var(--gj-green)" },
@@ -425,6 +282,7 @@ function SortableItem({ id, children }: { id: number; children: React.ReactNode 
 
 function MilestonesTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
+  const { data: phases = [] } = trpc.phases.list.useQuery({ clientId });
   const { data: serverMilestones = [] } = trpc.milestones.list.useQuery({ clientId });
   const [items, setItems] = useState(serverMilestones);
 
@@ -461,7 +319,7 @@ function MilestonesTab({ clientId }: { clientId: number }) {
     reorder.mutate({ clientId, ids: newItems.map(m => m.id) });
   }
 
-  const EMPTY_M = { title: "", description: "", date: new Date().toISOString().split("T")[0], status: "completed" as const, category: "strategy" as const, impact: "medium" as const, resultType: null as any };
+  const EMPTY_M = { title: "", description: "", date: new Date().toISOString().split("T")[0], status: "completed" as const, category: "strategy" as const, impact: "medium" as const, resultType: null as any, phaseId: null as number | null };
   const RESULT_TYPES: Record<string, { label: string; color: string }> = {
     result: { label: "RESULTADO", color: "var(--ambar)" },
     delivery: { label: "ENTREGABLE", color: "#E0913F" },
@@ -498,6 +356,10 @@ function MilestonesTab({ clientId }: { clientId: number }) {
             <select style={INP} value={form.impact} onChange={(e) => setForm(f => ({ ...f, impact: e.target.value as any }))}>
               <option value="high">Alto impacto</option><option value="medium">Impacto medio</option><option value="low">Bajo impacto</option>
             </select>
+            <select style={{ ...INP, gridColumn: "1/-1" }} value={form.phaseId ?? ""} onChange={(e) => setForm(f => ({ ...f, phaseId: e.target.value ? Number(e.target.value) : null }))}>
+              <option value="">Sin etapa asignada (no aparece en Hoja de Ruta)</option>
+              {phases.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
             {form.status === "completed" && (
               <select style={INP} value={form.resultType || ""} onChange={(e) => setForm(f => ({ ...f, resultType: e.target.value || null }))}>
                 <option value="">Sin clasificar</option>
@@ -510,7 +372,7 @@ function MilestonesTab({ clientId }: { clientId: number }) {
             )}
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
-            <button onClick={() => { if (form.title) createMilestone.mutate({ clientId, ...form, date: new Date(form.date) }); }} disabled={!form.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", opacity: form.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>GUARDAR</button>
+            <button onClick={() => { if (form.title) createMilestone.mutate({ clientId, ...form, phaseId: form.phaseId ?? undefined, date: new Date(form.date) }); }} disabled={!form.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", opacity: form.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>GUARDAR</button>
             <button onClick={() => { setShowForm(false); setForm(EMPTY_M); }} style={{ background: "none", border: "1px solid rgba(154,230,180,0.2)", color: "var(--gj-muted)", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", fontFamily: "var(--gj-font)" }}>CANCELAR</button>
           </div>
         </div>
@@ -566,7 +428,7 @@ function MilestonesTab({ clientId }: { clientId: number }) {
                                     {!m.isPaused && <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${status.color}12`, border: `1px solid ${status.color}30`, color: status.color, fontFamily: "var(--gj-font)" }}>{status.label}</span>}
                                     <button
                                       title="Editar"
-                                      onClick={() => { setEditingId(m.id); setEditForm({ title: m.title, description: m.description || "", date: m.date.split("T")[0], status: m.status, category: m.category, impact: m.impact, resultType: m.resultType }); }}
+                                      onClick={() => { setEditingId(m.id); setEditForm({ title: m.title, description: m.description || "", date: m.date.split("T")[0], status: m.status, category: m.category, impact: m.impact, resultType: m.resultType, phaseId: (m as any).phaseId ?? null }); }}
                                       style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}
                                     >
                                       <Edit3 size={14} />
@@ -599,6 +461,10 @@ function MilestonesTab({ clientId }: { clientId: number }) {
                                       <select style={INP} value={editForm.impact} onChange={(e) => setEditForm(f => ({ ...f, impact: e.target.value as any }))}>
                                         <option value="high">Alto impacto</option><option value="medium">Impacto medio</option><option value="low">Bajo impacto</option>
                                       </select>
+                                      <select style={{ ...INP, gridColumn: "1/-1" }} value={editForm.phaseId ?? ""} onChange={(e) => setEditForm(f => ({ ...f, phaseId: e.target.value ? Number(e.target.value) : null }))}>
+                                        <option value="">Sin etapa asignada (no aparece en Hoja de Ruta)</option>
+                                        {phases.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                      </select>
                                       {editForm.status === "completed" && (
                                         <select style={INP} value={editForm.resultType || ""} onChange={(e) => setEditForm(f => ({ ...f, resultType: e.target.value || null }))}>
                                           <option value="">Sin clasificar</option>
@@ -611,7 +477,7 @@ function MilestonesTab({ clientId }: { clientId: number }) {
                                       )}
                                     </div>
                                     <div style={{ display: "flex", gap: "6px" }}>
-                                      <button onClick={() => { if (editForm.title) updateMilestone.mutate({ id: m.id, clientId, ...editForm, date: new Date(editForm.date) }); }} disabled={!editForm.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "6px 12px", fontSize: "10px", letterSpacing: "1px", cursor: "pointer", opacity: editForm.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>GUARDAR</button>
+                                      <button onClick={() => { if (editForm.title) updateMilestone.mutate({ id: m.id, clientId, ...editForm, phaseId: editForm.phaseId ?? undefined, date: new Date(editForm.date) }); }} disabled={!editForm.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "6px 12px", fontSize: "10px", letterSpacing: "1px", cursor: "pointer", opacity: editForm.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>GUARDAR</button>
                                       <button onClick={() => setEditingId(null)} style={{ background: "none", border: "1px solid rgba(154,230,180,0.2)", color: "var(--gj-muted)", borderRadius: "3px", padding: "6px 12px", fontSize: "10px", letterSpacing: "1px", cursor: "pointer", fontFamily: "var(--gj-font)" }}>CANCELAR</button>
                                     </div>
                                   </div>
@@ -1681,6 +1547,21 @@ export default function AdminClientDetail() {
 
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [previewMode, setPreviewMode] = useState(false);
+
+  // Mapa tab → componente portal para vista previa
+  const PREVIEW_COMPONENT: Partial<Record<Tab, React.FC<{ clientId: number }>>> = {
+    timeline:      SectionTimeline,
+    updates:       SectionFeed,
+    milestones:    SectionMilestones,
+    okrs:          SectionOKRs,
+    metrics:       SectionMetrics,
+    learnings:     SectionLearnings,
+    scope:         SectionScope,
+    resources:     SectionResources,
+    digital_assets: SectionDigitalAssets,
+    backlog:       SectionBacklog,
+  };
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate("/login");
@@ -1802,7 +1683,7 @@ export default function AdminClientDetail() {
               return (
                 <li key={tab.id}>
                   <button
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => { setActiveTab(tab.id); setPreviewMode(false); }}
                     className="w-full flex items-center gap-3 px-3 py-3 text-left transition-all duration-200 rounded"
                     style={{
                       background: isActive ? "rgba(10,135,105,0.12)" : "transparent",
@@ -1858,6 +1739,23 @@ export default function AdminClientDetail() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {PREVIEW_COMPONENT[activeTab] && (
+              <button
+                onClick={() => setPreviewMode(!previewMode)}
+                className="flex items-center gap-2 text-xs py-2 px-3 rounded"
+                style={{
+                  background: previewMode ? "rgba(10,135,105,0.25)" : "rgba(10,135,105,0.07)",
+                  color: "var(--gj-green)",
+                  border: `1px solid ${previewMode ? "rgba(10,135,105,0.5)" : "rgba(10,135,105,0.2)"}`,
+                  cursor: "pointer", letterSpacing: isMobile ? "1px" : "2px",
+                  fontFamily: "var(--font-label)", fontSize: isMobile ? 9 : 11,
+                  transition: "all 0.15s",
+                }}
+              >
+                {previewMode ? <EyeOff size={12} /> : <Eye size={12} />}
+                {isMobile ? (previewMode ? "EDITAR" : "PREVIEW") : (previewMode ? "EDITAR" : "VISTA PREVIA")}
+              </button>
+            )}
             <a
               href={`/dashboard/${clientId}`}
               target="_blank"
@@ -1885,17 +1783,50 @@ export default function AdminClientDetail() {
           </p>
           <div className="sdt-divider" style={{ marginBottom: "28px" }} />
 
-          {activeTab === "updates" && <UpdatesTab clientId={clientId} />}
-          {activeTab === "phases" && <PhasesTab clientId={clientId} />}
-          {activeTab === "milestones" && <MilestonesTab clientId={clientId} />}
-          {activeTab === "okrs" && <OKRsTab clientId={clientId} />}
-          {activeTab === "learnings" && <LearningsTab clientId={clientId} />}
-          {activeTab === "scope" && <ScopeTab clientId={clientId} />}
-          {activeTab === "resources" && <ResourcesTab clientId={clientId} />}
-          {activeTab === "digital_assets" && <DigitalAssetsTab clientId={clientId} />}
-          {activeTab === "metrics" && <MetricsTab clientId={clientId} />}
-          {activeTab === "backlog" && <BacklogTab clientId={clientId} />}
-          {activeTab === "users" && <UsersTab clientId={clientId} />}
+          {(() => {
+            const PreviewComp = PREVIEW_COMPONENT[activeTab];
+            if (previewMode && PreviewComp) {
+              return (
+                <div>
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    marginBottom: "16px", padding: "8px 14px",
+                    background: "rgba(10,135,105,0.08)", border: "1px dashed rgba(10,135,105,0.3)",
+                    borderRadius: "5px",
+                  }}>
+                    <Eye size={12} style={{ color: "var(--gj-green)" }} />
+                    <span style={{ fontSize: "10px", letterSpacing: "3px", color: "var(--gj-green)", fontFamily: "var(--gj-font)" }}>
+                      ASÍ LO VE EL CLIENTE — solo lectura
+                    </span>
+                    <button
+                      onClick={() => setPreviewMode(false)}
+                      style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", fontSize: "10px", letterSpacing: "2px", fontFamily: "var(--gj-font)" }}
+                    >
+                      ✕ VOLVER A EDITAR
+                    </button>
+                  </div>
+                  <div style={{ background: "rgb(12,8,10)", borderRadius: "8px", padding: "28px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <PreviewComp clientId={clientId} />
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <>
+                {activeTab === "updates" && <UpdatesTab clientId={clientId} />}
+                {activeTab === "timeline" && <TimelineTab clientId={clientId} />}
+                {activeTab === "milestones" && <MilestonesTab clientId={clientId} />}
+                {activeTab === "okrs" && <OKRsTab clientId={clientId} />}
+                {activeTab === "learnings" && <LearningsTab clientId={clientId} />}
+                {activeTab === "scope" && <ScopeTab clientId={clientId} />}
+                {activeTab === "resources" && <ResourcesTab clientId={clientId} />}
+                {activeTab === "digital_assets" && <DigitalAssetsTab clientId={clientId} />}
+                {activeTab === "metrics" && <MetricsTab clientId={clientId} />}
+                {activeTab === "backlog" && <BacklogTab clientId={clientId} />}
+                {activeTab === "users" && <UsersTab clientId={clientId} />}
+              </>
+            );
+          })()}
         </div>
       </main>
     </div>

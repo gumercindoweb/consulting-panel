@@ -8,7 +8,6 @@ import DashboardSidebar from "@/components/DashboardSidebar";
 import { useIsMobile } from "@/hooks/useMobile";
 import SectionOverview from "@/components/dashboard/SectionOverview";
 import SectionFeed from "@/components/dashboard/SectionFeed";
-import SectionPhases from "@/components/dashboard/SectionPhases";
 import SectionMilestones from "@/components/dashboard/SectionMilestones";
 import SectionOKRs from "@/components/dashboard/SectionOKRs";
 import SectionLearnings from "@/components/dashboard/SectionLearnings";
@@ -22,7 +21,6 @@ import SectionTimeline from "@/components/dashboard/SectionTimeline";
 export type DashboardSection =
   | "overview"
   | "updates"
-  | "phases"
   | "milestones"
   | "okrs"
   | "learnings"
@@ -222,9 +220,6 @@ export default function ClientDashboard() {
           )}
           {activeSection === "updates" && (
             <SectionFeed clientId={activeClient.id} />
-          )}
-          {activeSection === "phases" && (
-            <SectionPhases clientId={activeClient.id} />
           )}
           {activeSection === "milestones" && (
             <SectionMilestones clientId={activeClient.id} />
