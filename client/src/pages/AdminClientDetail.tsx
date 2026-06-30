@@ -960,7 +960,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
           {editingId === r.id ? (
             <div style={{ background: "rgba(154,230,180,0.05)", border: "1px solid rgba(154,230,180,0.2)", borderRadius: "6px", padding: "20px" }}>
               <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-mint)", letterSpacing: "3px" }}>EDITANDO RECURSO</p>
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <input value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
                 <input value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
                 <input value={editForm.externalUrl} onChange={(e) => setEditForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL externa (opcional)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
@@ -1014,7 +1014,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
 
       <div style={{ background: "rgba(245,240,232,0.03)", border: "1px solid rgba(245,240,232,0.08)", borderRadius: "6px", padding: "20px" }}>
         <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-muted)", letterSpacing: "3px" }}>AGREGAR RECURSO</p>
-        <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
           <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título del recurso..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
           <input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
           <input value={form.externalUrl} onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL externa (opcional)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
@@ -1097,7 +1097,7 @@ function DigitalAssetsTab({ clientId }: { clientId: number }) {
           {editingId === a.id ? (
             <div style={{ background: "rgba(154,230,180,0.05)", border: "1px solid rgba(154,230,180,0.2)", borderRadius: "6px", padding: "20px" }}>
               <p className="text-xs tracking-widest mb-4" style={{ color: "var(--gj-mint)", letterSpacing: "3px" }}>EDITANDO ACTIVO</p>
-              <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <input value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
                 <input value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
                 <input value={editForm.externalUrl} onChange={(e) => setEditForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL externa (página, herramienta, Drive...)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
@@ -1526,6 +1526,8 @@ const ACTION_BADGE: Record<string, { label: string; color: string }> = {
   update_okr:       { label: "OBJETIVO",      color: "#b87fd4" },
   create_metric:    { label: "MÉTRICA",       color: "#4eba8a" },
   create_learning:  { label: "APRENDIZAJE",   color: "#E0913F" },
+  create_resource:  { label: "RECURSO",       color: "#4db6e8" },
+  create_backlog:   { label: "IDEA",          color: "#b87fd4" },
 };
 
 function AsistenteWidget({ clientId }: { clientId: number }) {
@@ -1677,7 +1679,7 @@ function AsistenteWidget({ clientId }: { clientId: number }) {
               </label>
             );
           })}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-wrap gap-2 pt-2">
             <button onClick={confirmActions} disabled={execute.isPending || included.every((v) => !v)}
               className="flex items-center gap-2 text-xs px-4 py-2 rounded"
               style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px", opacity: (execute.isPending || included.every((v) => !v)) ? 0.5 : 1 }}>
