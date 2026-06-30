@@ -489,6 +489,7 @@ export const appRouter = router({
           category: z
             .enum(["document", "template", "script", "training", "guide", "other"])
             .default("other"),
+          area: z.string().optional(),
           fileUrl: z.string().optional(),
           externalUrl: z.string().optional(),
           content: z.string().optional(),
@@ -508,6 +509,7 @@ export const appRouter = router({
           category: z
             .enum(["document", "template", "script", "training", "guide", "other"])
             .optional(),
+          area: z.string().optional(),
           fileUrl: z.string().optional(),
           externalUrl: z.string().optional(),
           content: z.string().optional(),

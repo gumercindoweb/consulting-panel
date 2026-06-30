@@ -928,6 +928,8 @@ function ScopeTab({ clientId }: { clientId: number }) {
 }
 
 // ─── RESOURCES TAB ────────────────────────────────────────────────────────────
+const RESOURCE_AREAS = ["Ventas", "Operaciones", "Atención al Cliente / Soporte", "Social Media"];
+
 function ResourcesTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
   const { data: resources = [] } = trpc.resources.list.useQuery({ clientId });
@@ -944,7 +946,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
     onError: (e) => toast.error(e.message),
   });
 
-  const EMPTY_R = { title: "", description: "", category: "script" as const, externalUrl: "", fileUrl: "", content: "" };
+  const EMPTY_R = { title: "", description: "", category: "script" as const, area: "", externalUrl: "", fileUrl: "", content: "" };
   const [form, setForm] = useState(EMPTY_R);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState(EMPTY_R);
@@ -969,7 +971,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
                   }
                 </div>
                 <textarea value={editForm.content} onChange={(e) => setEditForm((f) => ({ ...f, content: e.target.value }))} placeholder="Contenido de texto (opcional)..." rows={3} className="col-span-2 px-3 py-2 text-sm resize-none" style={inputStyle} />
-                <select value={editForm.category} onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={inputStyle}>
+                <select value={editForm.category} onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value as any }))} className="px-3 py-2 text-sm" style={inputStyle}>
                   <option value="script">Videotutorial</option>
                   <option value="training">Curso</option>
                   <option value="document">Presentación</option>
@@ -977,9 +979,10 @@ function ResourcesTab({ clientId }: { clientId: number }) {
                   <option value="template">Material de Apoyo</option>
                   <option value="other">Otro</option>
                 </select>
+                <input list="resource-areas" value={editForm.area} onChange={(e) => setEditForm((f) => ({ ...f, area: e.target.value }))} placeholder="Área / departamento (ej. Ventas)" className="px-3 py-2 text-sm" style={inputStyle} />
               </div>
               <div className="flex gap-2">
-                <button onClick={() => { if (editForm.title) updateResource.mutate({ id: r.id, clientId, title: editForm.title, description: editForm.description, category: editForm.category, externalUrl: editForm.externalUrl || undefined, fileUrl: editForm.fileUrl || undefined, content: editForm.content || undefined }); }} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
+                <button onClick={() => { if (editForm.title) updateResource.mutate({ id: r.id, clientId, title: editForm.title, description: editForm.description, category: editForm.category, area: editForm.area || undefined, externalUrl: editForm.externalUrl || undefined, fileUrl: editForm.fileUrl || undefined, content: editForm.content || undefined }); }} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
                   <Save size={13} /> GUARDAR
                 </button>
                 <button onClick={() => setEditingId(null)} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "var(--gj-muted)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
@@ -991,12 +994,13 @@ function ResourcesTab({ clientId }: { clientId: number }) {
             <div className="gj-card p-4 flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <span className="text-xs" style={{ color: "var(--gj-mint)", letterSpacing: "2px" }}>{r.category.toUpperCase()}</span>
+                {(r as any).area && <span className="text-xs ml-2 px-2 py-0.5 rounded" style={{ background: "rgba(77,182,232,0.15)", color: "#4db6e8", letterSpacing: "1px" }}>{(r as any).area}</span>}
                 <p className="text-sm font-medium mt-1" style={{ color: "var(--gj-cream)" }}>{r.title}</p>
                 {r.description && <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{r.description}</p>}
                 {r.externalUrl && <a href={r.externalUrl} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 block" style={{ color: "var(--gj-green)" }}>{r.externalUrl}</a>}
               </div>
               <div className="flex gap-1 flex-shrink-0">
-                <button onClick={() => { setEditingId(r.id); setEditForm({ title: r.title, description: r.description || "", category: r.category as any, externalUrl: r.externalUrl || "", fileUrl: (r as any).fileUrl || "", content: (r as any).content || "" }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-mint)", padding: "4px" }}>
+                <button onClick={() => { setEditingId(r.id); setEditForm({ title: r.title, description: r.description || "", category: r.category as any, area: (r as any).area || "", externalUrl: r.externalUrl || "", fileUrl: (r as any).fileUrl || "", content: (r as any).content || "" }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-mint)", padding: "4px" }}>
                   <Edit3 size={14} />
                 </button>
                 <button onClick={() => deleteResource.mutate({ id: r.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}>
@@ -1021,7 +1025,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
             }
           </div>
           <textarea value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} placeholder="Contenido de texto (opcional)..." rows={3} className="col-span-2 px-3 py-2 text-sm resize-none" style={inputStyle} />
-          <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={inputStyle}>
+          <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))} className="px-3 py-2 text-sm" style={inputStyle}>
             <option value="script">Videotutorial</option>
             <option value="training">Curso</option>
             <option value="document">Presentación</option>
@@ -1029,9 +1033,13 @@ function ResourcesTab({ clientId }: { clientId: number }) {
             <option value="template">Material de Apoyo</option>
             <option value="other">Otro</option>
           </select>
+          <input list="resource-areas" value={form.area} onChange={(e) => setForm((f) => ({ ...f, area: e.target.value }))} placeholder="Área / departamento (ej. Ventas)" className="px-3 py-2 text-sm" style={inputStyle} />
+          <datalist id="resource-areas">
+            {RESOURCE_AREAS.map((a) => <option key={a} value={a} />)}
+          </datalist>
         </div>
         <button
-          onClick={() => { if (form.title) { createResource.mutate({ clientId, title: form.title, description: form.description || undefined, category: form.category, externalUrl: form.externalUrl || undefined, fileUrl: form.fileUrl || undefined, content: form.content || undefined, order: resources.length }); setForm(EMPTY_R); } }}
+          onClick={() => { if (form.title) { createResource.mutate({ clientId, title: form.title, description: form.description || undefined, category: form.category, area: form.area || undefined, externalUrl: form.externalUrl || undefined, fileUrl: form.fileUrl || undefined, content: form.content || undefined, order: resources.length }); setForm(EMPTY_R); } }}
           className="flex items-center gap-1 text-xs px-4 py-2 rounded"
           style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
         >

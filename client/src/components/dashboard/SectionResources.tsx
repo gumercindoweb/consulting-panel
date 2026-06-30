@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import { FileText, BookOpen, Video, FileCode, HelpCircle, ExternalLink, Download, Bookmark } from "lucide-react";
+import { FileText, BookOpen, Video, FileCode, HelpCircle, ExternalLink, Download, Bookmark, FolderOpen } from "lucide-react";
 
 interface Props { clientId: number; }
 
@@ -12,11 +12,14 @@ const CATEGORY_CONFIG: Record<string, { label: string; color: string; Icon: any 
   other:    { label: "Otro",              color: "var(--gris)", Icon: HelpCircle },
 };
 
+// Paleta para distinguir visualmente cada área/departamento.
+const AREA_COLORS = ["#4db6e8", "#e0913f", "#4eba8a", "#b87fd4", "#e05252", "#7c6fcd"];
+
 export default function SectionResources({ clientId }: Props) {
   const { data: resources = [], isLoading } = trpc.resources.list.useQuery({ clientId });
 
   const grouped = resources.reduce<Record<string, typeof resources>>((acc, r) => {
-    const key = r.category;
+    const key = (r as any).area?.trim() || "General";
     if (!acc[key]) acc[key] = [];
     acc[key].push(r);
     return acc;
@@ -51,20 +54,19 @@ export default function SectionResources({ clientId }: Props) {
         </div>
       ) : (
         <div className="space-y-10">
-          {Object.entries(grouped).map(([category, items]) => {
-            const cfg = CATEGORY_CONFIG[category] || CATEGORY_CONFIG.other;
-            const Icon = cfg.Icon;
+          {Object.entries(grouped).map(([area, items], areaIdx) => {
+            const areaColor = AREA_COLORS[areaIdx % AREA_COLORS.length];
             return (
-              <div key={category}>
+              <div key={area}>
                 <div className="flex items-center gap-3 mb-5">
                   <div
                     className="w-7 h-7 rounded flex items-center justify-center"
-                    style={{ background: `${cfg.color}15`, border: `1px solid ${cfg.color}30` }}
+                    style={{ background: `${areaColor}15`, border: `1px solid ${areaColor}30` }}
                   >
-                    <Icon size={14} style={{ color: cfg.color }} />
+                    <FolderOpen size={14} style={{ color: areaColor }} />
                   </div>
-                  <p className="font-label text-xs tracking-widest" style={{ color: cfg.color, letterSpacing: "4px" }}>
-                    {cfg.label.toUpperCase()}S
+                  <p className="font-label text-xs tracking-widest" style={{ color: areaColor, letterSpacing: "4px" }}>
+                    {area.toUpperCase()}
                   </p>
                   <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.05)" }} />
                   <span className="font-label text-xs" style={{ color: "var(--gris)", letterSpacing: "2px" }}>
@@ -73,7 +75,10 @@ export default function SectionResources({ clientId }: Props) {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {items.map((resource) => (
+                  {items.map((resource) => {
+                    const cfg = CATEGORY_CONFIG[resource.category] || CATEGORY_CONFIG.other;
+                    const Icon = cfg.Icon;
+                    return (
                     <div key={resource.id} className="sdt-card p-5">
                       <div className="flex items-start gap-3">
                         <div
@@ -83,7 +88,10 @@ export default function SectionResources({ clientId }: Props) {
                           <Icon size={16} style={{ color: cfg.color }} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-body text-sm font-medium mb-1" style={{ color: "var(--creme)" }}>
+                          <span className="font-label text-xs" style={{ color: cfg.color, letterSpacing: "2px" }}>
+                            {cfg.label.toUpperCase()}
+                          </span>
+                          <h4 className="font-body text-sm font-medium mb-1 mt-0.5" style={{ color: "var(--creme)" }}>
                             {resource.title}
                           </h4>
                           {resource.description && (
@@ -146,7 +154,8 @@ export default function SectionResources({ clientId }: Props) {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );
