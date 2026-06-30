@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff, Upload, Paperclip, Sparkles, Send, Check, Copy, Lock, Shield } from "lucide-react";
-import { MEMBER_GATED_SECTIONS } from "@shared/const";
+import { MEMBER_GATED_SECTIONS, CLIENT_PORTAL_SECTIONS } from "@shared/const";
 import TimelineTab from "@/components/admin/TimelineTab";
 import SectionFeed from "@/components/dashboard/SectionFeed";
 import SectionMilestones from "@/components/dashboard/SectionMilestones";
@@ -1554,13 +1554,9 @@ function BacklogTab({ clientId }: { clientId: number }) {
 }
 
 // ─── USERS TAB ────────────────────────────────────────────────────────────────
-const MEMBER_SECTION_LABELS: Record<string, string> = {
-  resources: "Biblioteca de formación",
-  digital_assets: "Activos digitales",
-  backlog: "Backlog de ideas",
-  okrs: "Objetivos",
-  updates: "Actualizaciones",
-};
+const MEMBER_SECTION_LABELS: Record<string, string> = Object.fromEntries(
+  CLIENT_PORTAL_SECTIONS.map((s) => [s.id, s.label])
+);
 
 function UsersTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
@@ -1606,7 +1602,7 @@ function UsersTab({ clientId }: { clientId: number }) {
 
   return (
     <div className="space-y-6">
-      {/* Secciones confidenciales para usuarios "Miembro del equipo" */}
+      {/* Visibilidad por sección para usuarios "Miembro del equipo" */}
       <div className="gj-card p-5 space-y-3" style={{ borderLeft: "3px solid #E0913F" }}>
         <div className="flex items-center gap-2">
           <Shield size={14} style={{ color: "#E0913F" }} />
@@ -1615,9 +1611,10 @@ function UsersTab({ clientId }: { clientId: number }) {
           </p>
         </div>
         <p className="text-xs" style={{ color: "var(--gj-muted)", lineHeight: 1.5 }}>
-          Los usuarios "Miembro del equipo" (empleados del cliente) ven el resto del portal igual que el dueño,
-          pero estas secciones son confidenciales por defecto. Habilitá acá las que puedan ver — aplica a todos
-          los miembros de este cliente.
+          Los usuarios "Miembro del equipo" (empleados del cliente) NO ven ninguna sección por defecto, salvo el
+          Resumen ejecutivo. Habilitá acá (ojito = visible, candado = oculto) cuáles puede ver — aplica a todos
+          los miembros de este cliente. Esto es independiente del toggle "Dueño" general, que ya controla qué ve
+          el cliente principal.
         </p>
         <div className="flex flex-wrap gap-2 pt-1">
           {MEMBER_GATED_SECTIONS.map((id) => {
@@ -2033,19 +2030,7 @@ export default function AdminClientDetail() {
     onSuccess: () => utils.clients.get.invalidate({ id: clientId }),
   });
 
-  const PORTAL_SECTIONS = [
-    { id: "overview",       label: "Resumen ejecutivo" },
-    { id: "updates",        label: "Actualizaciones" },
-    { id: "timeline",       label: "Hoja de Ruta" },
-    { id: "milestones",     label: "Hitos e implementaciones" },
-    { id: "okrs",           label: "Objetivos" },
-    { id: "metrics",        label: "Métricas del negocio" },
-    { id: "learnings",      label: "Aprendizajes y obstáculos" },
-    { id: "scope",          label: "Alcance del proyecto" },
-    { id: "resources",      label: "Biblioteca de formación" },
-    { id: "digital_assets", label: "Activos digitales" },
-    { id: "backlog",        label: "Backlog de ideas" },
-  ];
+  const PORTAL_SECTIONS = CLIENT_PORTAL_SECTIONS;
 
   function toggleSection(sectionId: string) {
     if (!client) return;

@@ -10,10 +10,17 @@ const FUTURA = "'Futura Std', 'Futura', sans-serif";
 const FUTURA_CONDENSED = "'Futura Std Condensed', 'Futura Std', 'Futura', sans-serif";
 
 export default function SectionOverview({ clientId, client }: Props) {
-  const { data: metrics = [] } = trpc.metrics.list.useQuery({ clientId });
-  const { data: okrs = [] } = trpc.okrs.list.useQuery({ clientId });
-  const { data: phases = [] } = trpc.phases.list.useQuery({ clientId });
-  const { data: milestones = [] } = trpc.milestones.list.useQuery({ clientId });
+  // Si el usuario es "member" (empleado del cliente), cada tarjeta del resumen
+  // solo pide datos de las secciones que tiene habilitadas — evita que la
+  // página rompa con un error FORBIDDEN si no tiene, por ejemplo, Objetivos.
+  const isMember = (client as any).accessLevel === "member";
+  const memberSections = ((client as any).memberVisibleSections as string[] | null) ?? [];
+  const canSee = (id: string) => !isMember || memberSections.includes(id);
+
+  const { data: metrics = [] } = trpc.metrics.list.useQuery({ clientId }, { enabled: canSee("metrics") });
+  const { data: okrs = [] } = trpc.okrs.list.useQuery({ clientId }, { enabled: canSee("okrs") });
+  const { data: phases = [] } = trpc.phases.list.useQuery({ clientId }, { enabled: canSee("timeline") });
+  const { data: milestones = [] } = trpc.milestones.list.useQuery({ clientId }, { enabled: canSee("timeline") || canSee("milestones") });
 
   const completedPhases = phases.filter((p) => p.status === "completed").length;
   const completedMilestones = milestones.filter((m) => m.status === "completed").length;

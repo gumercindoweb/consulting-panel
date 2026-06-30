@@ -90,16 +90,24 @@ async function assertClientAccess(userId: number, clientId: number) {
 // "member" (empleado del cliente) solo puede leerlas si están en
 // clients.memberVisibleSections. El "owner" (cliente principal) no se ve
 // afectado por este chequeo — solo aplica a members.
-async function assertSectionAccess(userId: number, clientId: number, section: string) {
-  if (!(MEMBER_GATED_SECTIONS as readonly string[]).includes(section)) return;
+// Algunos endpoints alimentan más de una sección del portal a la vez (ej.
+// milestones.list lo usan tanto "Hoja de Ruta" como "Hitos e implementaciones").
+// Pasa si el member tiene habilitada AL MENOS UNA de las secciones dadas.
+async function assertAnySectionAccess(userId: number, clientId: number, sections: string[]) {
+  const validSections = sections.filter((s) => (MEMBER_GATED_SECTIONS as readonly string[]).includes(s));
+  if (validSections.length === 0) return;
   const accesses = await getClientAccessForUser(userId);
   const access = accesses.find((a) => a.clientId === clientId);
   if (!access || access.accessLevel !== "member") return;
   const client = await getClientById(clientId);
   const allowed = (client?.memberVisibleSections as string[] | null) ?? [];
-  if (!allowed.includes(section)) {
+  if (!validSections.some((s) => allowed.includes(s))) {
     throw new TRPCError({ code: "FORBIDDEN", message: "No tenés acceso a esta sección." });
   }
+}
+
+async function assertSectionAccess(userId: number, clientId: number, section: string) {
+  return assertAnySectionAccess(userId, clientId, [section]);
 }
 
 // ─── ROUTERS ──────────────────────────────────────────────────────────────────
@@ -236,7 +244,10 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+        if (ctx.user.role !== "admin") {
+          await assertClientAccess(ctx.user.id, input.clientId);
+          await assertSectionAccess(ctx.user.id, input.clientId, "timeline");
+        }
         return getPhasesByClient(input.clientId);
       }),
 
@@ -346,7 +357,10 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+        if (ctx.user.role !== "admin") {
+          await assertClientAccess(ctx.user.id, input.clientId);
+          await assertAnySectionAccess(ctx.user.id, input.clientId, ["timeline", "milestones"]);
+        }
         return getMilestonesByClient(input.clientId, ctx.user.role === "admin");
       }),
 
@@ -406,7 +420,10 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+        if (ctx.user.role !== "admin") {
+          await assertClientAccess(ctx.user.id, input.clientId);
+          await assertSectionAccess(ctx.user.id, input.clientId, "learnings");
+        }
         return getLearningsByClient(input.clientId);
       }),
 
@@ -457,7 +474,10 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+        if (ctx.user.role !== "admin") {
+          await assertClientAccess(ctx.user.id, input.clientId);
+          await assertSectionAccess(ctx.user.id, input.clientId, "scope");
+        }
         return getScopeByClient(input.clientId);
       }),
 
@@ -648,7 +668,10 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+        if (ctx.user.role !== "admin") {
+          await assertClientAccess(ctx.user.id, input.clientId);
+          await assertSectionAccess(ctx.user.id, input.clientId, "metrics");
+        }
         return getMetricsByClient(input.clientId);
       }),
 
@@ -700,7 +723,7 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         if (ctx.user.role !== "admin") {
           await assertClientAccess(ctx.user.id, input.clientId);
-          await assertSectionAccess(ctx.user.id, input.clientId, "updates");
+          await assertAnySectionAccess(ctx.user.id, input.clientId, ["updates", "timeline"]);
         }
         const all = await getUpdatesByClient(input.clientId);
         if (ctx.user.role !== "admin") return all.filter((u) => u.isPublic === true);

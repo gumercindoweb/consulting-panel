@@ -736,13 +736,20 @@ var ONE_YEAR_MS = 1e3 * 60 * 60 * 24 * 365;
 var AXIOS_TIMEOUT_MS = 3e4;
 var UNAUTHED_ERR_MSG = "Please login (10001)";
 var NOT_ADMIN_ERR_MSG = "You do not have required permission (10002)";
-var MEMBER_GATED_SECTIONS = [
-  "resources",
-  "digital_assets",
-  "backlog",
-  "okrs",
-  "updates"
+var CLIENT_PORTAL_SECTIONS = [
+  { id: "overview", label: "Resumen ejecutivo" },
+  { id: "updates", label: "Actualizaciones" },
+  { id: "timeline", label: "Hoja de Ruta" },
+  { id: "milestones", label: "Hitos e implementaciones" },
+  { id: "okrs", label: "Objetivos" },
+  { id: "metrics", label: "M\xE9tricas del negocio" },
+  { id: "learnings", label: "Aprendizajes y obst\xE1culos" },
+  { id: "scope", label: "Alcance del proyecto" },
+  { id: "resources", label: "Biblioteca de formaci\xF3n" },
+  { id: "digital_assets", label: "Activos digitales" },
+  { id: "backlog", label: "Backlog de ideas" }
 ];
+var MEMBER_GATED_SECTIONS = CLIENT_PORTAL_SECTIONS.filter((s) => s.id !== "overview").map((s) => s.id);
 
 // server/_core/cookies.ts
 function isSecureRequest(req) {
@@ -1719,16 +1726,20 @@ async function assertClientAccess(userId, clientId) {
     throw new TRPCError3({ code: "FORBIDDEN", message: "No ten\xE9s acceso a este cliente." });
   }
 }
-async function assertSectionAccess(userId, clientId, section) {
-  if (!MEMBER_GATED_SECTIONS.includes(section)) return;
+async function assertAnySectionAccess(userId, clientId, sections) {
+  const validSections = sections.filter((s) => MEMBER_GATED_SECTIONS.includes(s));
+  if (validSections.length === 0) return;
   const accesses = await getClientAccessForUser(userId);
   const access = accesses.find((a) => a.clientId === clientId);
   if (!access || access.accessLevel !== "member") return;
   const client = await getClientById(clientId);
   const allowed = client?.memberVisibleSections ?? [];
-  if (!allowed.includes(section)) {
+  if (!validSections.some((s) => allowed.includes(s))) {
     throw new TRPCError3({ code: "FORBIDDEN", message: "No ten\xE9s acceso a esta secci\xF3n." });
   }
+}
+async function assertSectionAccess(userId, clientId, section) {
+  return assertAnySectionAccess(userId, clientId, [section]);
 }
 var appRouter = router({
   system: systemRouter,
@@ -1832,7 +1843,10 @@ var appRouter = router({
   // ─── PHASES ──────────────────────────────────────────────────────────────
   phases: router({
     list: protectedProcedure.input(z3.object({ clientId: z3.number() })).query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+      if (ctx.user.role !== "admin") {
+        await assertClientAccess(ctx.user.id, input.clientId);
+        await assertSectionAccess(ctx.user.id, input.clientId, "timeline");
+      }
       return getPhasesByClient(input.clientId);
     }),
     create: adminProcedure2.input(
@@ -1912,7 +1926,10 @@ var appRouter = router({
   // ─── MILESTONES ──────────────────────────────────────────────────────────
   milestones: router({
     list: protectedProcedure.input(z3.object({ clientId: z3.number() })).query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+      if (ctx.user.role !== "admin") {
+        await assertClientAccess(ctx.user.id, input.clientId);
+        await assertAnySectionAccess(ctx.user.id, input.clientId, ["timeline", "milestones"]);
+      }
       return getMilestonesByClient(input.clientId, ctx.user.role === "admin");
     }),
     pause: adminProcedure2.input(z3.object({ id: z3.number(), clientId: z3.number(), isPaused: z3.boolean() })).mutation(({ input }) => pauseMilestone(input.id, input.clientId, input.isPaused)),
@@ -1950,7 +1967,10 @@ var appRouter = router({
   // ─── LEARNINGS ───────────────────────────────────────────────────────────
   learnings: router({
     list: protectedProcedure.input(z3.object({ clientId: z3.number() })).query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+      if (ctx.user.role !== "admin") {
+        await assertClientAccess(ctx.user.id, input.clientId);
+        await assertSectionAccess(ctx.user.id, input.clientId, "learnings");
+      }
       return getLearningsByClient(input.clientId);
     }),
     create: adminProcedure2.input(
@@ -1986,7 +2006,10 @@ var appRouter = router({
   // ─── SCOPE ───────────────────────────────────────────────────────────────
   scope: router({
     list: protectedProcedure.input(z3.object({ clientId: z3.number() })).query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+      if (ctx.user.role !== "admin") {
+        await assertClientAccess(ctx.user.id, input.clientId);
+        await assertSectionAccess(ctx.user.id, input.clientId, "scope");
+      }
       return getScopeByClient(input.clientId);
     }),
     create: adminProcedure2.input(
@@ -2128,7 +2151,10 @@ var appRouter = router({
   // ─── METRICS ─────────────────────────────────────────────────────────────
   metrics: router({
     list: protectedProcedure.input(z3.object({ clientId: z3.number() })).query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") await assertClientAccess(ctx.user.id, input.clientId);
+      if (ctx.user.role !== "admin") {
+        await assertClientAccess(ctx.user.id, input.clientId);
+        await assertSectionAccess(ctx.user.id, input.clientId, "metrics");
+      }
       return getMetricsByClient(input.clientId);
     }),
     create: adminProcedure2.input(
@@ -2168,7 +2194,7 @@ var appRouter = router({
     list: protectedProcedure.input(z3.object({ clientId: z3.number() })).query(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
         await assertClientAccess(ctx.user.id, input.clientId);
-        await assertSectionAccess(ctx.user.id, input.clientId, "updates");
+        await assertAnySectionAccess(ctx.user.id, input.clientId, ["updates", "timeline"]);
       }
       const all = await getUpdatesByClient(input.clientId);
       if (ctx.user.role !== "admin") return all.filter((u) => u.isPublic === true);
