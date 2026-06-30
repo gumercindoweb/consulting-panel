@@ -7,6 +7,7 @@ import { hashPassword, verifyPassword } from "./_core/password";
 import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { interpretMessage, executeActions, actionSchema } from "./ai";
 import {
   createBacklogItem,
   createClient,
@@ -781,6 +782,38 @@ export const appRouter = router({
         const publicUrl = `${ENV.supabaseUrl}/storage/v1/object/public/panel-assets/${path}`;
         return { signedUrl: data.signedUrl, path, publicUrl, ext };
       }),
+  }),
+
+  // ─── AI ASSISTANT (admin only) ───────────────────────────────────────────
+  // El consultor describe en lenguaje natural qué pasó; la IA propone acciones
+  // (interpret) que el admin revisa y confirma antes de aplicarlas (execute).
+  ai: router({
+    interpret: adminProcedure
+      .input(z.object({
+        clientId: z.number(),
+        message: z.string().min(1),
+        history: z.array(z.object({
+          role: z.enum(["user", "assistant"]),
+          content: z.string(),
+        })).default([]),
+      }))
+      .mutation(async ({ input }) => {
+        const client = await getClientById(input.clientId);
+        if (!client) throw new TRPCError({ code: "NOT_FOUND", message: "Cliente no encontrado." });
+        return interpretMessage({
+          clientId: input.clientId,
+          clientName: client.name,
+          message: input.message,
+          history: input.history,
+        });
+      }),
+
+    execute: adminProcedure
+      .input(z.object({
+        clientId: z.number(),
+        actions: z.array(actionSchema),
+      }))
+      .mutation(({ input }) => executeActions({ clientId: input.clientId, actions: input.actions })),
   }),
 });
 

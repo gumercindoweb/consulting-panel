@@ -11,6 +11,9 @@ export const ENV = {
   devAutoLogin: process.env.DEV_AUTOLOGIN === "1",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  // Modelo de Anthropic a usar por el asistente IA. Se puede cambiar desde
+  // Vercel sin tocar código. Default: Claude Sonnet 4 (buen balance precio/calidad).
+  forgeModel: process.env.BUILT_IN_FORGE_MODEL ?? "claude-sonnet-4-20250514",
   supabaseUrl: process.env.SUPABASE_URL ?? "",
   supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY ?? "",
 };

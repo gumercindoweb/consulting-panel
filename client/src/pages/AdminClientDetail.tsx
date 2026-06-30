@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
-import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff, Upload, Paperclip } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff, Upload, Paperclip, Sparkles, Send, Check } from "lucide-react";
 import TimelineTab from "@/components/admin/TimelineTab";
 import SectionFeed from "@/components/dashboard/SectionFeed";
 import SectionMilestones from "@/components/dashboard/SectionMilestones";
@@ -33,12 +33,13 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type Tab = "timeline" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates" | "digital_assets" | "backlog" | "users";
+type Tab = "assistant" | "timeline" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates" | "digital_assets" | "backlog" | "users";
 
 // Los labels coinciden 1:1 con las secciones del portal del cliente (ver
 // DashboardSidebar NAV_ITEMS y PORTAL_SECTIONS). El orden también espeja al portal.
 // Única pestaña admin-only: ACCESOS (gestión de usuarios, el cliente no la ve).
 const TABS: { id: Tab; label: string; icon: React.FC<any>; title: string; subtitle: string }[] = [
+  { id: "assistant", label: "ASISTENTE IA", icon: Sparkles, title: "Asistente de Carga IA", subtitle: "Contale en lenguaje natural qué pasó en el proyecto y la IA propone las acciones para que las revises y confirmes antes de guardar." },
   { id: "updates", label: "ACTUALIZACIONES", icon: Rss, title: "Actualizaciones del Proyecto", subtitle: "Publicá avances diarios que el cliente puede ver en su portal." },
   { id: "timeline", label: "HOJA DE RUTA", icon: CheckSquare, title: "Hoja de Ruta", subtitle: "Etapas, hitos y actualizaciones en la misma jerarquía que ve el cliente. Usá 'VISTA PREVIA' para confirmar cómo se ve en el portal." },
   { id: "milestones", label: "HITOS E IMPLEMENTACIONES", icon: BarChart3, title: "Hitos e Implementaciones", subtitle: "Logros y entregas clave que cuelgan de cada etapa." },
@@ -1507,6 +1508,189 @@ function UsersTab({ clientId }: { clientId: number }) {
   );
 }
 
+// ─── ASISTENTE IA TAB ─────────────────────────────────────────────────────────
+const ACTION_BADGE: Record<string, { label: string; color: string }> = {
+  create_phase:     { label: "ETAPA",         color: "#4db6e8" },
+  update_phase:     { label: "ETAPA",         color: "#4db6e8" },
+  create_milestone: { label: "HITO",          color: "#E0913F" },
+  update_milestone: { label: "HITO",          color: "#E0913F" },
+  create_update:    { label: "ACTUALIZACIÓN", color: "#9ae6b4" },
+  create_okr:       { label: "OBJETIVO",      color: "#b87fd4" },
+  update_okr:       { label: "OBJETIVO",      color: "#b87fd4" },
+  create_metric:    { label: "MÉTRICA",       color: "#4eba8a" },
+  create_learning:  { label: "APRENDIZAJE",   color: "#E0913F" },
+};
+
+function AsistenteTab({ clientId }: { clientId: number }) {
+  const utils = trpc.useUtils();
+  const [thread, setThread] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [input, setInput] = useState("");
+  const [pending, setPending] = useState<any[]>([]);
+  const [included, setIncluded] = useState<boolean[]>([]);
+  const [results, setResults] = useState<{ label: string; ok: boolean; error?: string }[] | null>(null);
+
+  const interpret = trpc.ai.interpret.useMutation({
+    onSuccess: (res) => {
+      setThread((t) => [...t, { role: "assistant", content: res.reply }]);
+      setPending(res.actions ?? []);
+      setIncluded((res.actions ?? []).map(() => true));
+      setResults(null);
+    },
+    onError: (e) => setThread((t) => [...t, { role: "assistant", content: `⚠️ ${e.message}` }]),
+  });
+
+  const execute = trpc.ai.execute.useMutation({
+    onSuccess: (res) => {
+      setResults(res);
+      setPending([]);
+      setIncluded([]);
+      utils.invalidate();
+      const ok = res.filter((r) => r.ok).length;
+      setThread((t) => [...t, { role: "assistant", content: `✅ Apliqué ${ok} de ${res.length} ${res.length === 1 ? "acción" : "acciones"} al panel.` }]);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  function send(text: string) {
+    const msg = text.trim();
+    if (!msg || interpret.isPending) return;
+    const history = thread;
+    setThread((t) => [...t, { role: "user", content: msg }]);
+    setInput("");
+    setPending([]);
+    setIncluded([]);
+    interpret.mutate({ clientId, message: msg, history });
+  }
+
+  function confirmActions() {
+    const actions = pending.filter((_, i) => included[i]);
+    if (actions.length === 0) return;
+    execute.mutate({ clientId, actions });
+  }
+
+  const inp = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", fontSize: "14px", padding: "12px 14px", width: "100%", outline: "none", resize: "none" as const };
+
+  const SUGGESTIONS = [
+    "Tuvimos sesión hoy y definimos los pilares de contenido orgánico.",
+    "Marcá el hito del Lead Magnet como completado.",
+    "Subió la métrica de leads a 120 este mes.",
+  ];
+
+  return (
+    <div className="space-y-5" style={{ maxWidth: 720 }}>
+      {/* Hilo de conversación */}
+      <div className="space-y-3">
+        {thread.length === 0 && (
+          <div className="gj-card p-6" style={{ textAlign: "center" }}>
+            <Sparkles size={28} style={{ color: "var(--gj-green)", margin: "0 auto 10px" }} />
+            <p className="text-sm" style={{ color: "var(--gj-cream)", marginBottom: 4, fontWeight: 600 }}>
+              Contale a la IA qué pasó en el proyecto
+            </p>
+            <p className="text-xs" style={{ color: "var(--gj-muted)", marginBottom: 16 }}>
+              Propone las acciones (crear etapas, hitos, actualizaciones, objetivos…) y vos confirmás antes de guardar.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {SUGGESTIONS.map((s) => (
+                <button key={s} onClick={() => send(s)}
+                  style={{ textAlign: "left", fontSize: 12, padding: "8px 12px", borderRadius: 6, border: "1px solid rgba(154,230,180,0.2)", background: "transparent", color: "var(--gj-muted)", cursor: "pointer" }}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {thread.map((m, i) => (
+          <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+            <div style={{
+              maxWidth: "85%", padding: "10px 14px", borderRadius: 10, fontSize: 13, lineHeight: 1.5,
+              whiteSpace: "pre-wrap", fontFamily: "var(--gj-font)", color: "var(--gj-cream)",
+              background: m.role === "user" ? "var(--gj-green)" : "rgba(255,255,255,0.05)",
+              border: m.role === "user" ? "none" : "1px solid rgba(255,255,255,0.08)",
+            }}>
+              {m.content}
+            </div>
+          </div>
+        ))}
+
+        {interpret.isPending && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--gj-muted)" }}>
+            <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--gj-green)" }} />
+            <span className="text-xs">La IA está pensando…</span>
+          </div>
+        )}
+      </div>
+
+      {/* Acciones propuestas */}
+      {pending.length > 0 && (
+        <div className="gj-card p-5 space-y-3" style={{ border: "1px solid rgba(154,230,180,0.25)" }}>
+          <p className="text-xs tracking-widest" style={{ color: "var(--gj-mint)", letterSpacing: "3px", fontWeight: 600 }}>
+            ACCIONES PROPUESTAS — REVISÁ Y CONFIRMÁ
+          </p>
+          {pending.map((a, i) => {
+            const badge = ACTION_BADGE[a.type] ?? { label: a.type, color: "var(--gj-muted)" };
+            return (
+              <label key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", padding: "8px 0", borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.06)" }}>
+                <input type="checkbox" checked={included[i] ?? true}
+                  onChange={(e) => setIncluded((arr) => arr.map((v, j) => (j === i ? e.target.checked : v)))}
+                  style={{ marginTop: 3, accentColor: "var(--gj-green)" }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 9, letterSpacing: 2, padding: "2px 8px", borderRadius: 20, background: `${badge.color}22`, color: badge.color, fontFamily: "var(--gj-font)" }}>
+                    {badge.label}
+                  </span>
+                  <p className="text-sm" style={{ color: "var(--gj-cream)", marginTop: 6 }}>{a.label}</p>
+                </div>
+              </label>
+            );
+          })}
+          <div className="flex gap-3 pt-2">
+            <button onClick={confirmActions} disabled={execute.isPending || included.every((v) => !v)}
+              className="flex items-center gap-2 text-xs px-4 py-2 rounded"
+              style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px", opacity: (execute.isPending || included.every((v) => !v)) ? 0.5 : 1 }}>
+              <Check size={14} /> {execute.isPending ? "GUARDANDO..." : "CONFIRMAR Y GUARDAR"}
+            </button>
+            <button onClick={() => { setPending([]); setIncluded([]); }}
+              className="text-xs px-4 py-2 rounded"
+              style={{ background: "transparent", color: "var(--gj-muted)", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", letterSpacing: "2px" }}>
+              DESCARTAR
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Resultados de ejecución */}
+      {results && results.length > 0 && (
+        <div className="gj-card p-4 space-y-2">
+          <p className="text-xs tracking-widest" style={{ color: "var(--gj-muted)", letterSpacing: "3px" }}>RESULTADO</p>
+          {results.map((r, i) => (
+            <div key={i} className="flex items-start gap-2 text-xs">
+              <span style={{ color: r.ok ? "#4eba8a" : "var(--rojo-vivo)" }}>{r.ok ? "✓" : "✕"}</span>
+              <span style={{ color: "var(--gj-cream)" }}>{r.label}{r.error ? ` — ${r.error}` : ""}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Input */}
+      <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
+          placeholder="Ej: Hoy tuvimos sesión y lanzamos la primera serie de Instagram…"
+          rows={2}
+          style={inp}
+        />
+        <button onClick={() => send(input)} disabled={!input.trim() || interpret.isPending}
+          className="flex items-center justify-center rounded"
+          style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", width: 44, height: 44, flexShrink: 0, opacity: (!input.trim() || interpret.isPending) ? 0.5 : 1 }}>
+          <Send size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminClientDetail() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
@@ -1824,6 +2008,7 @@ export default function AdminClientDetail() {
                 {activeTab === "metrics" && <MetricsTab clientId={clientId} />}
                 {activeTab === "backlog" && <BacklogTab clientId={clientId} />}
                 {activeTab === "users" && <UsersTab clientId={clientId} />}
+                {activeTab === "assistant" && <AsistenteTab clientId={clientId} />}
               </>
             );
           })()}
