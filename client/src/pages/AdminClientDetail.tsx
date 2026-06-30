@@ -33,13 +33,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type Tab = "assistant" | "timeline" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates" | "digital_assets" | "backlog" | "users";
+type Tab = "timeline" | "milestones" | "okrs" | "learnings" | "scope" | "resources" | "metrics" | "updates" | "digital_assets" | "backlog" | "users";
 
 // Los labels coinciden 1:1 con las secciones del portal del cliente (ver
 // DashboardSidebar NAV_ITEMS y PORTAL_SECTIONS). El orden también espeja al portal.
 // Única pestaña admin-only: ACCESOS (gestión de usuarios, el cliente no la ve).
 const TABS: { id: Tab; label: string; icon: React.FC<any>; title: string; subtitle: string }[] = [
-  { id: "assistant", label: "ASISTENTE IA", icon: Sparkles, title: "Asistente de Carga IA", subtitle: "Contale en lenguaje natural qué pasó en el proyecto y la IA propone las acciones para que las revises y confirmes antes de guardar." },
   { id: "updates", label: "ACTUALIZACIONES", icon: Rss, title: "Actualizaciones del Proyecto", subtitle: "Publicá avances diarios que el cliente puede ver en su portal." },
   { id: "timeline", label: "HOJA DE RUTA", icon: CheckSquare, title: "Hoja de Ruta", subtitle: "Etapas, hitos y actualizaciones en la misma jerarquía que ve el cliente. Usá 'VISTA PREVIA' para confirmar cómo se ve en el portal." },
   { id: "milestones", label: "HITOS E IMPLEMENTACIONES", icon: BarChart3, title: "Hitos e Implementaciones", subtitle: "Logros y entregas clave que cuelgan de cada etapa." },
@@ -1521,7 +1520,9 @@ const ACTION_BADGE: Record<string, { label: string; color: string }> = {
   create_learning:  { label: "APRENDIZAJE",   color: "#E0913F" },
 };
 
-function AsistenteTab({ clientId }: { clientId: number }) {
+function AsistenteWidget({ clientId }: { clientId: number }) {
+  const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
   const utils = trpc.useUtils();
   const [thread, setThread] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [input, setInput] = useState("");
@@ -1577,7 +1578,32 @@ function AsistenteTab({ clientId }: { clientId: number }) {
   ];
 
   return (
-    <div className="space-y-5" style={{ maxWidth: 720 }}>
+    <>
+      {!open && (
+        <button onClick={() => setOpen(true)} aria-label="Abrir Asistente IA"
+          style={{ position: "fixed", bottom: 24, right: 24, zIndex: 55, border: "none", background: "transparent", cursor: "pointer", padding: 0 }}>
+          <span className="animate-ping" style={{ position: "absolute", inset: 0, borderRadius: 9999, background: "rgba(77,182,232,0.30)" }} />
+          <span style={{ position: "relative", display: "flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: 9999, background: "linear-gradient(135deg, #0a8769 0%, #4db6e8 100%)", color: "#fff", fontWeight: 700, fontSize: 13, letterSpacing: 0.3, boxShadow: "0 10px 30px rgba(10,135,105,0.55)", fontFamily: "var(--gj-font)" }}>
+            <Sparkles size={18} /> Asistente IA
+          </span>
+        </button>
+      )}
+
+      {open && (
+        <div style={{ position: "fixed", bottom: isMobile ? 12 : 24, right: isMobile ? 12 : 24, left: isMobile ? 12 : "auto", width: isMobile ? "auto" : 400, height: isMobile ? "78vh" : 600, maxHeight: "calc(100vh - 40px)", display: "flex", flexDirection: "column", background: "rgb(14,10,12)", border: "1px solid rgba(154,230,180,0.2)", borderRadius: 16, overflow: "hidden", zIndex: 60, boxShadow: "0 24px 60px rgba(0,0,0,0.55)", fontFamily: "var(--gj-font)" }}>
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "linear-gradient(135deg, #0a8769 0%, #4db6e8 100%)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Sparkles size={18} style={{ color: "#fff" }} />
+              <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>Asistente IA</span>
+            </div>
+            <button onClick={() => setOpen(false)} aria-label="Cerrar" style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 8, cursor: "pointer", color: "#fff", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Cuerpo scrollable */}
+          <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
       {/* Hilo de conversación */}
       <div className="space-y-3">
         {thread.length === 0 && (
@@ -1671,8 +1697,10 @@ function AsistenteTab({ clientId }: { clientId: number }) {
         </div>
       )}
 
-      {/* Input */}
-      <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+          </div>
+
+          {/* Input (footer) */}
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-end", padding: 12, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -1687,7 +1715,9 @@ function AsistenteTab({ clientId }: { clientId: number }) {
           <Send size={16} />
         </button>
       </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -2008,12 +2038,12 @@ export default function AdminClientDetail() {
                 {activeTab === "metrics" && <MetricsTab clientId={clientId} />}
                 {activeTab === "backlog" && <BacklogTab clientId={clientId} />}
                 {activeTab === "users" && <UsersTab clientId={clientId} />}
-                {activeTab === "assistant" && <AsistenteTab clientId={clientId} />}
               </>
             );
           })()}
         </div>
       </main>
+      <AsistenteWidget clientId={clientId} />
     </div>
   );
 }
