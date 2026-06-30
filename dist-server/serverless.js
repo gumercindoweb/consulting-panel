@@ -189,6 +189,10 @@ var init_schema = __esm({
       area: varchar("area", { length: 64 }),
       areas: text("areas").array(),
       fileUrl: text("fileUrl"),
+      // Varios archivos por recurso (ej. slides + handout + video de una misma
+      // capacitación). fileUrl queda solo por compat de lectura — los recursos
+      // nuevos escriben acá.
+      fileUrls: json("fileUrls").$type(),
       externalUrl: text("externalUrl"),
       content: text("content"),
       isPublic: boolean("isPublic").default(true).notNull(),
@@ -1671,7 +1675,7 @@ async function executeActions(opts) {
             description: action.data.description,
             category: action.data.category ?? "other",
             areas: action.data.areas,
-            fileUrl: action.data.fileUrl,
+            fileUrls: action.data.fileUrl ? [{ url: action.data.fileUrl, name: action.data.fileUrl.split("/").pop() ?? "archivo" }] : void 0,
             externalUrl: action.data.externalUrl,
             content: action.data.content
           });
@@ -2029,6 +2033,7 @@ var appRouter = router({
         area: z3.string().optional(),
         areas: z3.array(z3.string()).optional(),
         fileUrl: z3.string().optional(),
+        fileUrls: z3.array(z3.object({ url: z3.string(), name: z3.string() })).optional(),
         externalUrl: z3.string().optional(),
         content: z3.string().optional(),
         isPublic: z3.boolean().default(true),
@@ -2044,6 +2049,7 @@ var appRouter = router({
         category: z3.enum(["document", "template", "script", "training", "guide", "other"]).default("other"),
         areas: z3.array(z3.string()).optional(),
         fileUrl: z3.string().optional(),
+        fileUrls: z3.array(z3.object({ url: z3.string(), name: z3.string() })).optional(),
         externalUrl: z3.string().optional(),
         content: z3.string().optional()
       })
@@ -2066,6 +2072,7 @@ var appRouter = router({
         area: z3.string().optional(),
         areas: z3.array(z3.string()).optional(),
         fileUrl: z3.string().optional(),
+        fileUrls: z3.array(z3.object({ url: z3.string(), name: z3.string() })).optional(),
         externalUrl: z3.string().optional(),
         content: z3.string().optional(),
         isPublic: z3.boolean().optional(),

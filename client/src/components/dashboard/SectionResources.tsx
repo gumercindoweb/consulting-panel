@@ -15,6 +15,11 @@ const CATEGORY_CONFIG: Record<string, { label: string; color: string; Icon: any 
 // Paleta para distinguir visualmente cada área/departamento.
 const AREA_COLORS = ["#4db6e8", "#e0913f", "#4eba8a", "#b87fd4", "#e05252", "#7c6fcd"];
 
+const rFiles = (r: any): { url: string; name: string }[] =>
+  Array.isArray(r?.fileUrls) && r.fileUrls.length
+    ? r.fileUrls
+    : (r?.fileUrl ? [{ url: r.fileUrl, name: r.fileUrl.split("/").pop() ?? "archivo" }] : []);
+
 export default function SectionResources({ clientId }: Props) {
   const { data: resources = [], isLoading } = trpc.resources.list.useQuery({ clientId });
 
@@ -103,7 +108,7 @@ export default function SectionResources({ clientId }: Props) {
                               {resource.description}
                             </p>
                           )}
-                          {resource.content && !resource.fileUrl && !resource.externalUrl && (
+                          {resource.content && rFiles(resource).length === 0 && !resource.externalUrl && (
                             <div
                               className="text-xs p-3 rounded mt-2"
                               style={{
@@ -118,10 +123,11 @@ export default function SectionResources({ clientId }: Props) {
                               {resource.content}
                             </div>
                           )}
-                          <div className="flex items-center gap-2 mt-3">
-                            {resource.fileUrl && (
+                          <div className="flex flex-wrap items-center gap-2 mt-3">
+                            {rFiles(resource).map((f) => (
                               <a
-                                href={resource.fileUrl}
+                                key={f.url}
+                                href={f.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1.5 font-label text-xs px-3 py-1.5 rounded transition-all"
@@ -133,9 +139,9 @@ export default function SectionResources({ clientId }: Props) {
                                 }}
                               >
                                 <Download size={11} />
-                                DESCARGAR
+                                {rFiles(resource).length > 1 ? f.name : "DESCARGAR"}
                               </a>
-                            )}
+                            ))}
                             {resource.externalUrl && (
                               <a
                                 href={resource.externalUrl}

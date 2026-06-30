@@ -517,7 +517,9 @@ export async function executeActions(opts: {
             description: action.data.description,
             category: action.data.category ?? "other",
             areas: action.data.areas,
-            fileUrl: action.data.fileUrl,
+            fileUrls: action.data.fileUrl
+              ? [{ url: action.data.fileUrl, name: action.data.fileUrl.split("/").pop() ?? "archivo" }]
+              : undefined,
             externalUrl: action.data.externalUrl,
             content: action.data.content,
           } as any);

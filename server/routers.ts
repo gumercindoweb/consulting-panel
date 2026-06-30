@@ -520,6 +520,7 @@ export const appRouter = router({
           area: z.string().optional(),
           areas: z.array(z.string()).optional(),
           fileUrl: z.string().optional(),
+          fileUrls: z.array(z.object({ url: z.string(), name: z.string() })).optional(),
           externalUrl: z.string().optional(),
           content: z.string().optional(),
           isPublic: z.boolean().default(true),
@@ -540,6 +541,7 @@ export const appRouter = router({
             .default("other"),
           areas: z.array(z.string()).optional(),
           fileUrl: z.string().optional(),
+          fileUrls: z.array(z.object({ url: z.string(), name: z.string() })).optional(),
           externalUrl: z.string().optional(),
           content: z.string().optional(),
         })
@@ -567,6 +569,7 @@ export const appRouter = router({
           area: z.string().optional(),
           areas: z.array(z.string()).optional(),
           fileUrl: z.string().optional(),
+          fileUrls: z.array(z.object({ url: z.string(), name: z.string() })).optional(),
           externalUrl: z.string().optional(),
           content: z.string().optional(),
           isPublic: z.boolean().optional(),

@@ -193,6 +193,10 @@ export const resources = pgTable("resources", {
   area: varchar("area", { length: 64 }),
   areas: text("areas").array(),
   fileUrl: text("fileUrl"),
+  // Varios archivos por recurso (ej. slides + handout + video de una misma
+  // capacitación). fileUrl queda solo por compat de lectura — los recursos
+  // nuevos escriben acá.
+  fileUrls: json("fileUrls").$type<{ url: string; name: string }[]>(),
   externalUrl: text("externalUrl"),
   content: text("content"),
   isPublic: boolean("isPublic").default(true).notNull(),

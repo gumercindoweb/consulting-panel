@@ -94,6 +94,54 @@ function FileUploadButton({ clientId, onUploaded, label = "SUBIR ARCHIVO" }: {
   );
 }
 
+// Variante que acepta varios archivos a la vez: los sube uno por uno y
+// llama onUploaded por cada uno (el caller se encarga de acumularlos).
+function MultiFileUploadButton({ clientId, onUploaded, label = "SUBIR ARCHIVOS" }: {
+  clientId: number;
+  onUploaded: (publicUrl: string, filename: string) => void;
+  label?: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    setUploading(true);
+    let okCount = 0;
+    try {
+      for (const file of files) {
+        try {
+          const { publicUrl } = await uploadClientFile(clientId, file);
+          onUploaded(publicUrl, file.name);
+          okCount++;
+        } catch (err: any) {
+          toast.error(`${file.name}: ${err?.message ?? "error al subir"}`);
+        }
+      }
+      if (okCount > 0) toast.success(`${okCount} archivo${okCount === 1 ? "" : "s"} subido${okCount === 1 ? "" : "s"} correctamente.`);
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  return (
+    <label
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        background: "rgba(255,255,255,0.06)", border: "1px dashed rgba(255,255,255,0.2)",
+        borderRadius: "4px", cursor: uploading ? "wait" : "pointer",
+        padding: "6px 12px", fontSize: "11px", letterSpacing: "2px", color: "var(--gj-muted)",
+        opacity: uploading ? 0.6 : 1, transition: "all 0.2s",
+      }}
+    >
+      {uploading ? <Upload size={12} className="animate-spin" /> : <Paperclip size={12} />}
+      {uploading ? "SUBIENDO..." : label}
+      <input type="file" multiple style={{ display: "none" }} onChange={handleFiles} disabled={uploading} />
+    </label>
+  );
+}
+
 // ─── UPDATES TAB ──────────────────────────────────────────────────────────────
 function UpdatesTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
@@ -931,6 +979,10 @@ function ScopeTab({ clientId }: { clientId: number }) {
 // ─── RESOURCES TAB ────────────────────────────────────────────────────────────
 const RESOURCE_AREAS = ["Ventas", "Operaciones", "Atención al Cliente / Soporte", "Social Media"];
 const rAreas = (r: any): string[] => (Array.isArray(r?.areas) && r.areas.length ? r.areas : (r?.area ? [r.area] : []));
+const rFiles = (r: any): { url: string; name: string }[] =>
+  Array.isArray(r?.fileUrls) && r.fileUrls.length
+    ? r.fileUrls
+    : (r?.fileUrl ? [{ url: r.fileUrl, name: r.fileUrl.split("/").pop() ?? "archivo" }] : []);
 
 // Selector de áreas con checkboxes (multi-selección) + agregar área nueva.
 function AreaPicker({ value, onChange, available, onAddCustom, inputStyle }: { value: string[]; onChange: (v: string[]) => void; available: string[]; onAddCustom: (a: string) => void; inputStyle: any }) {
@@ -980,7 +1032,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
     onError: (e) => toast.error(e.message),
   });
 
-  const EMPTY_R = { title: "", description: "", category: "script" as const, areas: [] as string[], externalUrl: "", fileUrl: "", content: "" };
+  const EMPTY_R = { title: "", description: "", category: "script" as const, areas: [] as string[], externalUrl: "", fileUrls: [] as { url: string; name: string }[], content: "" };
   const [form, setForm] = useState(EMPTY_R);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState(EMPTY_R);
@@ -1007,11 +1059,14 @@ function ResourcesTab({ clientId }: { clientId: number }) {
                 <input value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
                 <input value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
                 <input value={editForm.externalUrl} onChange={(e) => setEditForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL externa (opcional)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
-                <div className="col-span-2 flex items-center gap-3">
-                  {editForm.fileUrl
-                    ? <span className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}><Paperclip size={12} /> {editForm.fileUrl.split("/").pop()}<button type="button" onClick={() => setEditForm(f => ({ ...f, fileUrl: "" }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button></span>
-                    : <FileUploadButton clientId={clientId} onUploaded={(url) => setEditForm(f => ({ ...f, fileUrl: url }))} />
-                  }
+                <div className="col-span-2 flex flex-wrap items-center gap-2">
+                  {editForm.fileUrls.map((f, i) => (
+                    <span key={f.url} className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}>
+                      <Paperclip size={12} /> {f.name}
+                      <button type="button" onClick={() => setEditForm((ef) => ({ ...ef, fileUrls: ef.fileUrls.filter((_, idx) => idx !== i) }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button>
+                    </span>
+                  ))}
+                  <MultiFileUploadButton clientId={clientId} onUploaded={(url, name) => setEditForm((ef) => ({ ...ef, fileUrls: [...ef.fileUrls, { url, name }] }))} />
                 </div>
                 <textarea value={editForm.content} onChange={(e) => setEditForm((f) => ({ ...f, content: e.target.value }))} placeholder="Contenido de texto (opcional)..." rows={3} className="col-span-2 px-3 py-2 text-sm resize-none" style={inputStyle} />
                 <select value={editForm.category} onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={inputStyle}>
@@ -1025,7 +1080,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
                 <AreaPicker value={editForm.areas} onChange={(v) => setEditForm((f) => ({ ...f, areas: v }))} available={availableAreas} onAddCustom={addCustom} inputStyle={inputStyle} />
               </div>
               <div className="flex gap-2">
-                <button onClick={() => { if (editForm.title) updateResource.mutate({ id: r.id, clientId, title: editForm.title, description: editForm.description, category: editForm.category, areas: editForm.areas, externalUrl: editForm.externalUrl || undefined, fileUrl: editForm.fileUrl || undefined, content: editForm.content || undefined }); }} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
+                <button onClick={() => { if (editForm.title) updateResource.mutate({ id: r.id, clientId, title: editForm.title, description: editForm.description, category: editForm.category, areas: editForm.areas, externalUrl: editForm.externalUrl || undefined, fileUrls: editForm.fileUrls, content: editForm.content || undefined }); }} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
                   <Save size={13} /> GUARDAR
                 </button>
                 <button onClick={() => setEditingId(null)} className="flex items-center gap-1 text-xs px-4 py-2 rounded" style={{ background: "rgba(255,255,255,0.06)", color: "var(--gj-muted)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
@@ -1042,6 +1097,15 @@ function ResourcesTab({ clientId }: { clientId: number }) {
                   <p className="text-sm font-medium mt-1" style={{ color: "var(--gj-cream)" }}>{r.title}</p>
                   {r.description && <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{r.description}</p>}
                   {r.externalUrl && <a href={r.externalUrl} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 block" style={{ color: "var(--gj-green)" }}>{r.externalUrl}</a>}
+                  {rFiles(r).length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-1.5">
+                      {rFiles(r).map((f) => (
+                        <span key={f.url} className="text-xs flex items-center gap-1" style={{ color: "var(--gj-muted)" }}>
+                          <Paperclip size={11} /> {f.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
                   {otherClients.length > 0 && (
@@ -1049,7 +1113,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
                     <Copy size={14} />
                   </button>
                   )}
-                  <button onClick={() => { setEditingId(r.id); setEditForm({ title: r.title, description: r.description || "", category: r.category as any, areas: rAreas(r), externalUrl: r.externalUrl || "", fileUrl: (r as any).fileUrl || "", content: (r as any).content || "" }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-mint)", padding: "4px" }}>
+                  <button onClick={() => { setEditingId(r.id); setEditForm({ title: r.title, description: r.description || "", category: r.category as any, areas: rAreas(r), externalUrl: r.externalUrl || "", fileUrls: rFiles(r), content: (r as any).content || "" }); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-mint)", padding: "4px" }}>
                     <Edit3 size={14} />
                   </button>
                   <button onClick={() => deleteResource.mutate({ id: r.id, clientId })} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}>
@@ -1075,7 +1139,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
                   <button
                     onClick={() => {
                       if (copyTargets.length === 0) { toast.error("Elegí al menos un cliente."); return; }
-                      createForClients.mutate({ clientIds: copyTargets, title: r.title, description: r.description || undefined, category: r.category, areas: rAreas(r).length ? rAreas(r) : undefined, externalUrl: r.externalUrl || undefined, fileUrl: (r as any).fileUrl || undefined, content: (r as any).content || undefined });
+                      createForClients.mutate({ clientIds: copyTargets, title: r.title, description: r.description || undefined, category: r.category, areas: rAreas(r).length ? rAreas(r) : undefined, externalUrl: r.externalUrl || undefined, fileUrls: rFiles(r).length ? rFiles(r) : undefined, content: (r as any).content || undefined });
                       setCopyingId(null); setCopyTargets([]);
                     }}
                     className="flex items-center gap-1 text-xs px-4 py-2 rounded"
@@ -1096,11 +1160,14 @@ function ResourcesTab({ clientId }: { clientId: number }) {
           <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Título del recurso..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
           <input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Descripción..." className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
           <input value={form.externalUrl} onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))} placeholder="URL externa (opcional)" className="col-span-2 px-3 py-2 text-sm" style={inputStyle} />
-          <div className="col-span-2 flex items-center gap-3">
-            {form.fileUrl
-              ? <span className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}><Paperclip size={12} /> {form.fileUrl.split("/").pop()}<button type="button" onClick={() => setForm(f => ({ ...f, fileUrl: "" }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button></span>
-              : <FileUploadButton clientId={clientId} onUploaded={(url) => setForm(f => ({ ...f, fileUrl: url }))} />
-            }
+          <div className="col-span-2 flex flex-wrap items-center gap-2">
+            {form.fileUrls.map((f, i) => (
+              <span key={f.url} className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}>
+                <Paperclip size={12} /> {f.name}
+                <button type="button" onClick={() => setForm((cf) => ({ ...cf, fileUrls: cf.fileUrls.filter((_, idx) => idx !== i) }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button>
+              </span>
+            ))}
+            <MultiFileUploadButton clientId={clientId} onUploaded={(url, name) => setForm((cf) => ({ ...cf, fileUrls: [...cf.fileUrls, { url, name }] }))} />
           </div>
           <textarea value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} placeholder="Contenido de texto (opcional)..." rows={3} className="col-span-2 px-3 py-2 text-sm resize-none" style={inputStyle} />
           <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as any }))} className="col-span-2 px-3 py-2 text-sm" style={inputStyle}>
@@ -1133,7 +1200,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
         <button
           onClick={() => {
             if (!form.title.trim()) { toast.error("Poné un título al recurso."); return; }
-            const base = { title: form.title, description: form.description || undefined, category: form.category, areas: form.areas.length ? form.areas : undefined, externalUrl: form.externalUrl || undefined, fileUrl: form.fileUrl || undefined, content: form.content || undefined };
+            const base = { title: form.title, description: form.description || undefined, category: form.category, areas: form.areas.length ? form.areas : undefined, externalUrl: form.externalUrl || undefined, fileUrls: form.fileUrls.length ? form.fileUrls : undefined, content: form.content || undefined };
             if (targetClientIds.length > 0) {
               createForClients.mutate({ clientIds: [clientId, ...targetClientIds], ...base });
             } else {
