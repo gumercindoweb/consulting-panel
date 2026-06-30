@@ -443,6 +443,11 @@ export default function TimelineTab({ clientId }: Props) {
                                     <p style={{ fontSize: "11px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", marginTop: "1px" }}>
                                       {(u as any).title}
                                     </p>
+                                    {(u as any).url && (
+                                      <a href={(u as any).url} target="_blank" rel="noopener noreferrer" style={{ fontSize: "10px", color: "var(--gj-mint)", letterSpacing: "1px" }}>
+                                        🔗 Ver referencia
+                                      </a>
+                                    )}
                                   </div>
                                 ))}
                               </div>

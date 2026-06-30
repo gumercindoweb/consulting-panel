@@ -183,6 +183,11 @@ export default function SectionTimeline({ clientId }: Props) {
                                       {u.body.slice(0, 140)}{u.body.length > 140 ? "…" : ""}
                                     </p>
                                   )}
+                                  {(u as any).url && (
+                                    <a href={(u as any).url} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 inline-block" style={{ color: "var(--rojo)", letterSpacing: "1px" }}>
+                                      🔗 Ver referencia
+                                    </a>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -208,6 +213,11 @@ export default function SectionTimeline({ clientId }: Props) {
                           </span>
                         </div>
                         <p className="text-xs font-medium" style={{ color: "var(--creme)" }}>{u.title}</p>
+                        {(u as any).url && (
+                          <a href={(u as any).url} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 inline-block" style={{ color: "var(--rojo)", letterSpacing: "1px" }}>
+                            🔗 Ver referencia
+                          </a>
+                        )}
                       </div>
                     ))}
                   </div>

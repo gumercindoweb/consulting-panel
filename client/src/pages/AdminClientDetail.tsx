@@ -161,7 +161,7 @@ function UpdatesTab({ clientId }: { clientId: number }) {
     onError: (e) => toast.error(e.message),
   });
 
-  const EMPTY = { title: "", body: "", category: "general" as const, status: "on_track" as const, impact: "medium" as const, isPublic: true, date: new Date().toISOString().split("T")[0], phaseId: undefined as number | undefined, milestoneId: undefined as number | undefined };
+  const EMPTY = { title: "", body: "", category: "general" as const, status: "on_track" as const, impact: "medium" as const, url: "", isPublic: true, date: new Date().toISOString().split("T")[0], phaseId: undefined as number | undefined, milestoneId: undefined as number | undefined };
   const [form, setForm] = useState(EMPTY);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -211,6 +211,7 @@ function UpdatesTab({ clientId }: { clientId: number }) {
               {milestonesForPhase(form.phaseId).map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
             </select>
           </div>
+          <input style={inp} placeholder="URL de referencia (opcional) — ej. publicación, entregable, documento" value={form.url} onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))} />
           <label className="flex items-center gap-2 text-xs" style={{ color: "var(--gj-muted)", cursor: "pointer" }}>
             <input type="checkbox" checked={form.isPublic} onChange={(e) => setForm((f) => ({ ...f, isPublic: e.target.checked }))} />
             Visible para el cliente
@@ -257,6 +258,7 @@ function UpdatesTab({ clientId }: { clientId: number }) {
                     {milestonesForPhase(editPhaseId).map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
                   </select>
                 </div>
+                <input style={inp} placeholder="URL de referencia (opcional)" value={editData.url ?? u.url ?? ""} onChange={(e) => setEditData((d: any) => ({ ...d, url: e.target.value }))} />
                 <div className="flex gap-2">
                   <button onClick={() => updateUpdate.mutate({ id: u.id, clientId, ...editData })} className="flex items-center gap-1 text-xs px-3 py-1 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}><Save size={12} /> GUARDAR</button>
                   <button onClick={() => { setEditingId(null); setEditData({}); }} className="text-xs px-3 py-1 rounded" style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "var(--gj-muted)", cursor: "pointer", letterSpacing: "2px" }}>CANCELAR</button>
@@ -275,6 +277,7 @@ function UpdatesTab({ clientId }: { clientId: number }) {
                   </div>
                   <p className="text-sm font-medium" style={{ color: "var(--gj-cream)" }}>{u.title}</p>
                   <p className="text-xs mt-1" style={{ color: "var(--gj-muted)", lineHeight: 1.5 }}>{u.body.slice(0, 120)}{u.body.length > 120 ? "…" : ""}</p>
+                  {(u as any).url && <a href={(u as any).url} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 inline-block" style={{ color: "var(--gj-mint)", wordBreak: "break-all" }}>🔗 {(u as any).url}</a>}
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
                   <button onClick={() => { setEditingId(u.id); setEditData({}); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}><Edit3 size={13} /></button>

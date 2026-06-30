@@ -76,6 +76,7 @@ const createUpdateData = z.object({
   category: z.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).optional(),
   status: z.enum(["on_track", "at_risk", "blocked", "completed"]).optional(),
   impact: z.enum(["high", "medium", "low"]).optional(),
+  url: z.string().optional(),
   date: dateStr,
   isPublic: z.boolean().optional(),
 });
@@ -225,7 +226,7 @@ La fecha de hoy es ${today}.
 
 1. **Etapas** (fases del proyecto): name, description, status (completed | in_progress | pending), startDate, endDate.
 2. **Hitos** (milestones, entregables clave): title, description, date (obligatoria), status (completed | in_progress | pending), category (strategy | implementation | training | automation | content | analytics | other), impact (high | medium | low). Un hito puede colgar de una etapa vía phaseId.
-3. **Actualizaciones** (novedades/sesiones): title, body, category (session | result | delivery | insight | blocker | win | general), status (on_track | at_risk | blocked | completed), date. Puede vincularse a una etapa (phaseId) y/o a un hito (milestoneId).
+3. **Actualizaciones** (novedades/sesiones): title, body, category (session | result | delivery | insight | blocker | win | general), status (on_track | at_risk | blocked | completed), date, url (link de referencia opcional: publicación, entregable, documento). Puede vincularse a una etapa (phaseId) y/o a un hito (milestoneId).
 4. **Objetivos (OKRs)**: objective, keyResult, targetValue, currentValue, unit, progressPct (0-100), status (on_track | at_risk | off_track | completed), period.
 5. **Métricas (KPIs)**: name, value, previousValue, unit, trend (up | down | stable), period.
 6. **Aprendizajes**: type (learning | obstacle | win), title, description, resolution, date.
@@ -449,6 +450,7 @@ export async function executeActions(opts: {
             category: action.data.category ?? "general",
             status: action.data.status ?? "on_track",
             impact: action.data.impact ?? "medium",
+            url: action.data.url,
             isPublic: action.data.isPublic ?? true,
             date: new Date(action.data.date),
           } as any);

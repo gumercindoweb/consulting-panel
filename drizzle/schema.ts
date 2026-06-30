@@ -257,6 +257,9 @@ export const projectUpdates = pgTable("project_updates", {
   category: updateCategoryEnum("category").default("general").notNull(),
   status: updateStatusEnum("status").default("on_track").notNull(),
   impact: impactEnum("impact").default("medium").notNull(),
+  // URL de referencia opcional (ej. publicación, entregable, documento) que se
+  // muestra como link en la actualización, tanto en el feed como en la Hoja de Ruta.
+  url: text("url"),
   isPublic: boolean("isPublic").default(true).notNull(),
   date: timestamp("date").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

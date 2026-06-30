@@ -238,6 +238,9 @@ var init_schema = __esm({
       category: updateCategoryEnum("category").default("general").notNull(),
       status: updateStatusEnum("status").default("on_track").notNull(),
       impact: impactEnum("impact").default("medium").notNull(),
+      // URL de referencia opcional (ej. publicación, entregable, documento) que se
+      // muestra como link en la actualización, tanto en el feed como en la Hoja de Ruta.
+      url: text("url"),
       isPublic: boolean("isPublic").default(true).notNull(),
       date: timestamp("date").notNull(),
       createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -1300,6 +1303,7 @@ var createUpdateData = z2.object({
   category: z2.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).optional(),
   status: z2.enum(["on_track", "at_risk", "blocked", "completed"]).optional(),
   impact: z2.enum(["high", "medium", "low"]).optional(),
+  url: z2.string().optional(),
   date: dateStr,
   isPublic: z2.boolean().optional()
 });
@@ -1429,7 +1433,7 @@ La fecha de hoy es ${today}.
 
 1. **Etapas** (fases del proyecto): name, description, status (completed | in_progress | pending), startDate, endDate.
 2. **Hitos** (milestones, entregables clave): title, description, date (obligatoria), status (completed | in_progress | pending), category (strategy | implementation | training | automation | content | analytics | other), impact (high | medium | low). Un hito puede colgar de una etapa v\xEDa phaseId.
-3. **Actualizaciones** (novedades/sesiones): title, body, category (session | result | delivery | insight | blocker | win | general), status (on_track | at_risk | blocked | completed), date. Puede vincularse a una etapa (phaseId) y/o a un hito (milestoneId).
+3. **Actualizaciones** (novedades/sesiones): title, body, category (session | result | delivery | insight | blocker | win | general), status (on_track | at_risk | blocked | completed), date, url (link de referencia opcional: publicaci\xF3n, entregable, documento). Puede vincularse a una etapa (phaseId) y/o a un hito (milestoneId).
 4. **Objetivos (OKRs)**: objective, keyResult, targetValue, currentValue, unit, progressPct (0-100), status (on_track | at_risk | off_track | completed), period.
 5. **M\xE9tricas (KPIs)**: name, value, previousValue, unit, trend (up | down | stable), period.
 6. **Aprendizajes**: type (learning | obstacle | win), title, description, resolution, date.
@@ -1614,6 +1618,7 @@ async function executeActions(opts) {
             category: action.data.category ?? "general",
             status: action.data.status ?? "on_track",
             impact: action.data.impact ?? "medium",
+            url: action.data.url,
             isPublic: action.data.isPublic ?? true,
             date: new Date(action.data.date)
           });
@@ -2209,6 +2214,7 @@ var appRouter = router({
       category: z3.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).default("general"),
       status: z3.enum(["on_track", "at_risk", "blocked", "completed"]).default("on_track"),
       impact: z3.enum(["high", "medium", "low"]).default("medium"),
+      url: z3.string().optional(),
       isPublic: z3.boolean().default(true),
       date: z3.string()
     })).mutation(({ input }) => {
@@ -2223,6 +2229,7 @@ var appRouter = router({
       category: z3.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).optional(),
       status: z3.enum(["on_track", "at_risk", "blocked", "completed"]).optional(),
       impact: z3.enum(["high", "medium", "low"]).optional(),
+      url: z3.string().optional(),
       isPublic: z3.boolean().optional(),
       phaseId: z3.number().optional(),
       milestoneId: z3.number().optional(),

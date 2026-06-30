@@ -740,6 +740,7 @@ export const appRouter = router({
         category: z.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).default("general"),
         status: z.enum(["on_track", "at_risk", "blocked", "completed"]).default("on_track"),
         impact: z.enum(["high", "medium", "low"]).default("medium"),
+        url: z.string().optional(),
         isPublic: z.boolean().default(true),
         date: z.string(),
       }))
@@ -757,6 +758,7 @@ export const appRouter = router({
         category: z.enum(["session", "result", "delivery", "insight", "blocker", "win", "general"]).optional(),
         status: z.enum(["on_track", "at_risk", "blocked", "completed"]).optional(),
         impact: z.enum(["high", "medium", "low"]).optional(),
+        url: z.string().optional(),
         isPublic: z.boolean().optional(),
         phaseId: z.number().optional(),
         milestoneId: z.number().optional(),

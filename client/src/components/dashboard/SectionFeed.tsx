@@ -129,6 +129,17 @@ export default function SectionFeed({ clientId }: { clientId: number }) {
                       {update.body}
                     </p>
                   )}
+                  {isExpanded && (update as any).url && (
+                    <a
+                      href={(update as any).url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginTop: "14px", fontSize: "11px", letterSpacing: "2px", padding: "6px 12px", borderRadius: "4px", background: `${CATEGORY_COLORS[cat]}18`, color: CATEGORY_COLORS[cat], border: `1px solid ${CATEGORY_COLORS[cat]}40`, textDecoration: "none", fontFamily: "var(--font-label)" }}
+                    >
+                      🔗 VER REFERENCIA
+                    </a>
+                  )}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
                   <span style={{ fontSize: "10px", letterSpacing: "1px", color: imp === "high" ? "var(--rojo)" : imp === "medium" ? "var(--ambar)" : "var(--gris)", fontFamily: "var(--font-label)" }}>
