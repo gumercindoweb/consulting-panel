@@ -225,6 +225,15 @@ ${JSON.stringify(snapshot, null, 2)}
 - El campo "label" de cada acción debe ser una frase corta y clara en español describiendo qué se va a hacer (ej. "Marcar hito 'Lanzamiento web' como completado").
 - "reply" es tu mensaje conversacional al consultor, en español, resumiendo qué entendiste.
 
+## Tipos de acción válidos — el campo "type" DEBE ser EXACTAMENTE uno de estos (en inglés, sin traducir):
+- create_phase, update_phase  → Etapas
+- create_milestone, update_milestone  → Hitos
+- create_update  → Actualizaciones (es "create_update", NUNCA "create_actualization" ni variantes en español)
+- create_okr, update_okr  → Objetivos
+- create_metric  → Métricas
+- create_learning  → Aprendizajes
+NUNCA inventes otros valores de "type" ni los traduzcas. Si ninguna acción aplica, devolvé "actions": [].
+
 ## Formato de salida (OBLIGATORIO)
 
 Respondé ÚNICAMENTE con un objeto JSON válido, sin texto antes ni después, sin bloques de código markdown. Estructura:
@@ -258,6 +267,30 @@ function extractJson(text: string): unknown {
   }
 }
 
+// El modelo a veces traduce o inventa el "type" (ej. "create_actualization" en
+// vez de "create_update"). Normalizamos los sinónimos más comunes antes de validar.
+const TYPE_ALIASES: Record<string, string> = {
+  create_actualization: "create_update",
+  create_actualizacion: "create_update",
+  "create_actualización": "create_update",
+  update_update: "create_update",
+  create_objetivo: "create_okr",
+  create_aprendizaje: "create_learning",
+  create_metrica: "create_metric",
+  "create_métrica": "create_metric",
+  create_hito: "create_milestone",
+  create_etapa: "create_phase",
+};
+
+function normalizeActionTypes(obj: any): void {
+  if (!obj || !Array.isArray(obj.actions)) return;
+  for (const a of obj.actions) {
+    if (a && typeof a.type === "string" && TYPE_ALIASES[a.type]) {
+      a.type = TYPE_ALIASES[a.type];
+    }
+  }
+}
+
 // ─── INTERPRET ───────────────────────────────────────────────────────────────
 export async function interpretMessage(opts: {
   clientId: number;
@@ -274,10 +307,19 @@ export async function interpretMessage(opts: {
   ];
 
   const raw = await invokeChat({ system, messages, maxTokens: 4096 });
-  const parsed = interpretResultSchema.safeParse(extractJson(raw));
-  if (!parsed.success) {
-    // Si el modelo se desvió del formato, devolvemos su texto como charla.
+  let extracted: any;
+  try {
+    extracted = extractJson(raw);
+  } catch {
     return { reply: raw.slice(0, 2000), actions: [] };
+  }
+  normalizeActionTypes(extracted);
+  const parsed = interpretResultSchema.safeParse(extracted);
+  if (!parsed.success) {
+    // Si el modelo se desvió del formato, mostramos al menos su "reply" legible.
+    const replyText =
+      extracted && typeof extracted.reply === "string" ? extracted.reply : raw.slice(0, 2000);
+    return { reply: replyText, actions: [] };
   }
 
   // Filtrar referencias a IDs que no pertenecen a este cliente (seguridad).
