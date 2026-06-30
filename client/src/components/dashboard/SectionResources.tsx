@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { FileText, BookOpen, Video, FileCode, HelpCircle, ExternalLink, Download, Bookmark, FolderOpen } from "lucide-react";
+import { FilePreviewButton, isPreviewable } from "@/components/FilePreview";
 
 interface Props { clientId: number; }
 
@@ -125,22 +126,34 @@ export default function SectionResources({ clientId }: Props) {
                           )}
                           <div className="flex flex-wrap items-center gap-2 mt-3">
                             {rFiles(resource).map((f) => (
-                              <a
-                                key={f.url}
-                                href={f.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 font-label text-xs px-3 py-1.5 rounded transition-all"
-                                style={{
-                                  color: "var(--creme)",
-                                  background: "var(--rojo)",
-                                  textDecoration: "none",
-                                  letterSpacing: "2px",
-                                }}
-                              >
-                                <Download size={11} />
-                                {rFiles(resource).length > 1 ? f.name : "DESCARGAR"}
-                              </a>
+                              <div key={f.url} className="flex flex-wrap items-center gap-2">
+                                {isPreviewable(f.name) && (
+                                  <FilePreviewButton
+                                    url={f.url}
+                                    name={f.name}
+                                    buttonStyle={{
+                                      color: cfg.color,
+                                      background: `${cfg.color}12`,
+                                      border: `1px solid ${cfg.color}30`,
+                                    }}
+                                  />
+                                )}
+                                <a
+                                  href={f.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1.5 font-label text-xs px-3 py-1.5 rounded transition-all"
+                                  style={{
+                                    color: "var(--creme)",
+                                    background: "var(--rojo)",
+                                    textDecoration: "none",
+                                    letterSpacing: "2px",
+                                  }}
+                                >
+                                  <Download size={11} />
+                                  {rFiles(resource).length > 1 ? f.name : "DESCARGAR"}
+                                </a>
+                              </div>
                             ))}
                             {resource.externalUrl && (
                               <a
