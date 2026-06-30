@@ -1,7 +1,22 @@
 import { trpc } from "@/lib/trpc";
 import { useState, useEffect, useRef } from "react";
-import { Plus, Edit3, Trash2, Flag, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Edit3, Trash2, Flag, AlertTriangle, ChevronDown, ChevronRight, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface Props { clientId: number }
 
@@ -54,11 +69,29 @@ const EMPTY_M = {
   impact: "medium" as const,
 };
 
+// Wrapper con drag handle para reordenar hitos dentro de una etapa.
+function SortableMilestone({ id, children }: { id: number; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  return (
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, position: "relative" }}>
+      <div {...attributes} {...listeners} style={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", cursor: "grab", color: "rgba(154,230,180,0.3)", zIndex: 1, padding: "4px", touchAction: "none" }}>
+        <GripVertical size={12} />
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export default function TimelineTab({ clientId }: Props) {
   const utils = trpc.useUtils();
   const { data: phases = [] } = trpc.phases.list.useQuery({ clientId });
-  const { data: milestones = [] } = trpc.milestones.list.useQuery({ clientId });
+  const { data: serverMilestones = [] } = trpc.milestones.list.useQuery({ clientId });
   const { data: updates = [] } = trpc.updates.list.useQuery({ clientId });
+
+  // Estado local optimista para poder reordenar con drag-and-drop sin esperar
+  // el round-trip del server; se resincroniza cuando cambia la query.
+  const [milestones, setMilestones] = useState(serverMilestones);
+  useEffect(() => { setMilestones(serverMilestones); }, [serverMilestones]);
 
   // Phase mutations
   const createPhase = trpc.phases.create.useMutation({
@@ -87,6 +120,28 @@ export default function TimelineTab({ clientId }: Props) {
     onSuccess: () => { utils.milestones.list.invalidate({ clientId }); toast.success("Hito eliminado."); },
     onError: (e) => toast.error(e.message),
   });
+  const reorderMilestones = trpc.milestones.reorder.useMutation({ onError: (e) => toast.error(e.message) });
+  const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  // Reordena los hitos DENTRO de una etapa, preservando la posición relativa
+  // de los hitos de las demás etapas (mismo mecanismo que MilestonesTab: un
+  // único sortOrder global, pero acá el drag queda acotado a una sola etapa
+  // para que mover un hito sea cómodo aunque tenga fechas lejanas entre sí).
+  function handleMilestoneDragEnd(phaseId: number, event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const phaseSubset = milestones.filter((m) => (m as any).phaseId === phaseId);
+    const oldIdx = phaseSubset.findIndex((m) => m.id === active.id);
+    const newIdx = phaseSubset.findIndex((m) => m.id === over.id);
+    if (oldIdx === -1 || newIdx === -1) return;
+    const reorderedSubset = arrayMove(phaseSubset, oldIdx, newIdx);
+    let cursor = 0;
+    const newItems = milestones.map((m) =>
+      (m as any).phaseId === phaseId ? reorderedSubset[cursor++] : m
+    );
+    setMilestones(newItems);
+    reorderMilestones.mutate({ clientId, ids: newItems.map((m) => m.id) });
+  }
 
   // Phase editing state
   const [editingPhaseId, setEditingPhaseId] = useState<number | null>(null);
@@ -271,15 +326,18 @@ export default function TimelineTab({ clientId }: Props) {
             {/* ── Milestones ── */}
             {phaseMilestones.length > 0 && (
               <div style={{ marginLeft: "24px", paddingLeft: "14px", paddingBottom: "4px", borderLeft: `2px solid ${cfg.color}25` }}>
+                <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={(e) => handleMilestoneDragEnd(phase.id, e)}>
+                <SortableContext items={phaseMilestones.map((m) => m.id)} strategy={verticalListSortingStrategy}>
                 {phaseMilestones.map((m) => {
                   const ms = M_STATUS[m.status] ?? M_STATUS.pending;
                   const mUpdates = updatesByMilestone(m.id);
                   const isEditingM = editingMilestoneId === m.id;
 
                   return (
-                    <div key={m.id} style={{ marginBottom: "8px" }}>
+                    <SortableMilestone key={m.id} id={m.id}>
+                    <div style={{ marginBottom: "8px" }}>
                       <div style={{
-                        padding: "8px 10px",
+                        padding: "8px 10px 8px 26px",
                         background: `${ms.color}08`,
                         borderLeft: `2px solid ${ms.color}55`,
                         borderRadius: "4px",
@@ -393,8 +451,11 @@ export default function TimelineTab({ clientId }: Props) {
                         </div>
                       </div>
                     </div>
+                    </SortableMilestone>
                   );
                 })}
+                </SortableContext>
+                </DndContext>
               </div>
             )}
 
