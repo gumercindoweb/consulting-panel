@@ -9,6 +9,14 @@ El admin (Gumercindo) gestiona todo el contenido.
 > trabajo desde cualquier cuenta/máquina de Claude. Manténlo actualizado al agregar
 > features grandes. El repo es **PÚBLICO**: nunca commitear API keys ni secretos aquí.
 
+## ⚠️ REGLA CRÍTICA — CUENTAS DE ESTE PROYECTO (NO NEGOCIABLE)
+Este proyecto usa **exclusivamente las cuentas de gumercindoweb (gumercindoweb@gmail.com)**.
+No usar, deployar, ni consultar recursos de ningún otro usuario/cuenta/organización.
+- **GitHub**: SOLO el repo `gumercindoweb/consulting-panel`. No pushear a otro remoto ni fork.
+- **Vercel**: SOLO el proyecto `consulting-panel` de gumercindoweb (projectId `prj_SwTIegVKPSQr53qJ3Y1NWpcTZ0yY`, teamId `team_0rVrS4XHYLVe0gqwblB3TZuE`, dominio `consulting-panel.vercel.app`). El MCP de Vercel puede mostrar por defecto **otra cuenta** (ej. "escuelanmroller") — **NUNCA** deployar/consultar ahí para este proyecto; pasar siempre ese projectId/teamId explícitamente.
+- **Supabase**: SOLO el proyecto prod "Consulting Panel", ref `keanbqmcnfxuzfudxjez`.
+- Ante la duda sobre qué cuenta usar, frená y confirmá con el usuario. Nunca mezclar con otro cliente/proyecto.
+
 ## Stack
 - **Front**: React 19 + Vite + TypeScript + TailwindCSS. Router en `client/src`.
 - **Back**: Express + **tRPC v11** (`server/routers.ts`) + **Drizzle ORM**.
