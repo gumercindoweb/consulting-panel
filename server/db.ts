@@ -40,6 +40,8 @@ import {
   digitalAssets,
   DigitalAsset,
   InsertDigitalAsset,
+  invitations,
+  Invitation,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -222,6 +224,58 @@ export async function revokeClientAccess(userId: number, clientId: number): Prom
   const db = await getDb();
   if (!db) return;
   await db.delete(clientAccess).where(and(eq(clientAccess.userId, userId), eq(clientAccess.clientId, clientId)));
+}
+
+// ─── INVITATIONS ──────────────────────────────────────────────────────────────
+export async function createInvitation(data: { clientId: number; accessLevel: "owner" | "member"; note?: string }): Promise<Invitation> {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const token = randomBytes(24).toString("hex");
+  const result = await db.insert(invitations).values({
+    clientId: data.clientId,
+    accessLevel: data.accessLevel,
+    note: data.note,
+    token,
+  }).returning();
+  return result[0];
+}
+
+export async function getInvitationsByClient(clientId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: invitations.id,
+    token: invitations.token,
+    accessLevel: invitations.accessLevel,
+    note: invitations.note,
+    status: invitations.status,
+    createdAt: invitations.createdAt,
+    acceptedAt: invitations.acceptedAt,
+    acceptedByName: users.name,
+  })
+    .from(invitations)
+    .leftJoin(users, eq(users.id, invitations.acceptedByUserId))
+    .where(eq(invitations.clientId, clientId))
+    .orderBy(desc(invitations.createdAt));
+}
+
+export async function getInvitationByToken(token: string): Promise<Invitation | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(invitations).where(eq(invitations.token, token)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function revokeInvitation(id: number, clientId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(invitations).set({ status: "revoked" }).where(and(eq(invitations.id, id), eq(invitations.clientId, clientId)));
+}
+
+export async function markInvitationAccepted(id: number, userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(invitations).set({ status: "accepted", acceptedByUserId: userId, acceptedAt: new Date() }).where(eq(invitations.id, id));
 }
 
 // ─── PROJECT PHASES ───────────────────────────────────────────────────────────

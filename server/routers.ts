@@ -12,6 +12,11 @@ import {
   createBacklogItem,
   createClient,
   createUserWithPassword,
+  createInvitation,
+  getInvitationsByClient,
+  getInvitationByToken,
+  revokeInvitation,
+  markInvitationAccepted,
   getUsersWithAccessToClient,
   revokeClientAccess,
   createLearning,
@@ -882,6 +887,88 @@ export const appRouter = router({
     revokeAccess: adminProcedure
       .input(z.object({ userId: z.number(), clientId: z.number() }))
       .mutation(({ input }) => revokeClientAccess(input.userId, input.clientId)),
+  }),
+
+  // ─── INVITATIONS ─────────────────────────────────────────────────────────
+  invitations: router({
+    listByClient: adminProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(({ input }) => getInvitationsByClient(input.clientId)),
+
+    create: adminProcedure
+      .input(z.object({
+        clientId: z.number(),
+        accessLevel: z.enum(["owner", "member"]).default("member"),
+        note: z.string().max(255).optional(),
+      }))
+      .mutation(({ input }) => createInvitation(input)),
+
+    revoke: adminProcedure
+      .input(z.object({ id: z.number(), clientId: z.number() }))
+      .mutation(({ input }) => revokeInvitation(input.id, input.clientId)),
+
+    // Público: la pantalla /invite/:token la usa para saber a qué cliente y
+    // nivel de acceso corresponde el link antes de mostrar el formulario.
+    getByToken: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        const invitation = await getInvitationByToken(input.token);
+        if (!invitation) return { valid: false as const, reason: "not_found" as const };
+        if (invitation.status !== "pending") return { valid: false as const, reason: invitation.status as "accepted" | "revoked" };
+        const client = await getClientById(invitation.clientId);
+        if (!client) return { valid: false as const, reason: "not_found" as const };
+        return {
+          valid: true as const,
+          clientName: client.name,
+          accessLevel: invitation.accessLevel as "owner" | "member",
+        };
+      }),
+
+    // Público: crea (o vincula) la cuenta de quien recibió el link. Si el
+    // email ya tiene cuenta, solo le otorgamos acceso — nunca iniciamos
+    // sesión en una cuenta existente sin haber verificado su contraseña real,
+    // para no habilitar un secuestro de cuenta vía email adivinado.
+    accept: publicProcedure
+      .input(z.object({
+        token: z.string(),
+        name: z.string().min(2).max(255),
+        email: z.string().email("Email inválido"),
+        password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const invitation = await getInvitationByToken(input.token);
+        if (!invitation || invitation.status !== "pending") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Este link de invitación no es válido o ya fue usado." });
+        }
+
+        const accessLevel = invitation.accessLevel as "owner" | "member";
+        const existingUser = await getUserByEmail(input.email);
+
+        if (existingUser) {
+          await grantClientAccess(existingUser.id, invitation.clientId, accessLevel);
+          await markInvitationAccepted(invitation.id, existingUser.id);
+          return { alreadyHadAccount: true as const };
+        }
+
+        const passwordHash = await hashPassword(input.password);
+        const userId = await createUserWithPassword({
+          email: input.email,
+          passwordHash,
+          name: input.name,
+        });
+        await grantClientAccess(userId, invitation.clientId, accessLevel);
+        await markInvitationAccepted(invitation.id, userId);
+
+        const user = await getUserByEmail(input.email);
+        const sessionToken = await sdk.signSession(
+          { openId: user!.openId, appId: ENV.appId || "consulting-panel", name: user!.name || "" },
+          { expiresInMs: ONE_YEAR_MS }
+        );
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+        return { alreadyHadAccount: false as const };
+      }),
   }),
 
   // ─── STORAGE ─────────────────────────────────────────────────────────────

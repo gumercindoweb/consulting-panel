@@ -8,12 +8,14 @@ import Login from "./pages/Login";
 import ClientDashboard from "./pages/ClientDashboard";
 import AdminPanel from "./pages/AdminPanel";
 import AdminClientDetail from "./pages/AdminClientDetail";
+import AcceptInvite from "./pages/AcceptInvite";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Login} />
       <Route path="/login" component={Login} />
+      <Route path="/invite/:token" component={AcceptInvite} />
       <Route path="/dashboard" component={ClientDashboard} />
       <Route path="/dashboard/:clientId" component={ClientDashboard} />
       <Route path="/admin" component={AdminPanel} />

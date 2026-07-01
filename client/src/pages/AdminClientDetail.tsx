@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
-import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff, Upload, Paperclip, Sparkles, Send, Check, Copy, Lock, Shield } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit3, Save, X, Rss, CheckSquare, BarChart3, Target, BookOpen, FileText, FolderOpen, LayoutDashboard, GripVertical, PauseCircle, PlayCircle, Package, Lightbulb, Menu, Users, Eye, EyeOff, Upload, Paperclip, Sparkles, Send, Check, Copy, Lock, Shield, Link2, Ban } from "lucide-react";
 import { MEMBER_GATED_SECTIONS, CLIENT_PORTAL_SECTIONS } from "@shared/const";
 import TimelineTab from "@/components/admin/TimelineTab";
 import SectionFeed from "@/components/dashboard/SectionFeed";
@@ -1717,12 +1717,36 @@ function UsersTab({ clientId }: { clientId: number }) {
     onSuccess: () => { utils.clients.get.invalidate({ id: clientId }); toast.success("Secciones para miembros actualizadas."); },
     onError: (e) => toast.error(e.message),
   });
+  const { data: invitationList = [] } = trpc.invitations.listByClient.useQuery({ clientId });
+  const createInvitation = trpc.invitations.create.useMutation({
+    onSuccess: (inv) => {
+      utils.invitations.listByClient.invalidate({ clientId });
+      setGeneratedToken(inv.token);
+      setInviteForm(EMPTY_INVITE);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const revokeInvitation = trpc.invitations.revoke.useMutation({
+    onSuccess: () => { utils.invitations.listByClient.invalidate({ clientId }); toast.success("Invitación revocada."); },
+    onError: (e) => toast.error(e.message),
+  });
 
   const EMPTY_FORM = { name: "", email: "", password: "", accessLevel: "owner" as "owner" | "member" };
   const [form, setForm] = useState(EMPTY_FORM);
   const [showForm, setShowForm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [revokingId, setRevokingId] = useState<number | null>(null);
+
+  const EMPTY_INVITE = { accessLevel: "member" as "owner" | "member", note: "" };
+  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [inviteForm, setInviteForm] = useState(EMPTY_INVITE);
+  const [generatedToken, setGeneratedToken] = useState<string | null>(null);
+
+  function copyInviteLink(token: string) {
+    const link = `${window.location.origin}/invite/${token}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Link copiado al portapapeles.");
+  }
 
   const inp = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: "var(--gj-cream)", fontFamily: "var(--gj-font)", fontSize: "13px", padding: "8px 12px", width: "100%", outline: "none" };
 
@@ -1773,15 +1797,122 @@ function UsersTab({ clientId }: { clientId: number }) {
         </div>
       </div>
 
-      {!showForm ? (
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 text-xs px-4 py-2 rounded"
-          style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
-        >
-          <Plus size={14} /> NUEVO ACCESO
-        </button>
-      ) : (
+      {!showForm && !showInviteForm && (
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-2 text-xs px-4 py-2 rounded"
+            style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}
+          >
+            <Plus size={14} /> NUEVO ACCESO
+          </button>
+          <button
+            onClick={() => setShowInviteForm(true)}
+            className="flex items-center gap-2 text-xs px-4 py-2 rounded"
+            style={{ background: "transparent", color: "var(--gj-mint)", border: "1px solid rgba(10,135,105,0.4)", cursor: "pointer", letterSpacing: "2px" }}
+          >
+            <Link2 size={14} /> INVITAR POR LINK
+          </button>
+        </div>
+      )}
+
+      {showInviteForm && (
+        <div className="gj-card p-5 space-y-4" style={{ maxWidth: 480 }}>
+          <p className="text-xs tracking-widest" style={{ color: "var(--gj-mint)", letterSpacing: "3px", fontWeight: 600 }}>INVITAR POR LINK</p>
+          <p className="text-xs" style={{ color: "var(--gj-muted)", lineHeight: 1.5 }}>
+            Generá un link único, mandaselo por WhatsApp o mail, y la persona elige su propio nombre y contraseña al abrirlo.
+          </p>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs block mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>PARA QUIÉN (opcional, solo para tu referencia)</label>
+              <input style={inp} placeholder="Ej. Juan - Recepción" value={inviteForm.note} onChange={(e) => setInviteForm(f => ({ ...f, note: e.target.value }))} />
+            </div>
+            <div>
+              <label className="text-xs block mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>NIVEL DE ACCESO</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setInviteForm((f) => ({ ...f, accessLevel: "owner" }))}
+                  style={{
+                    flex: 1, padding: "8px", borderRadius: "4px", fontSize: "12px", letterSpacing: "1px", cursor: "pointer",
+                    background: inviteForm.accessLevel === "owner" ? "rgba(10,135,105,0.15)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${inviteForm.accessLevel === "owner" ? "rgba(10,135,105,0.4)" : "rgba(255,255,255,0.1)"}`,
+                    color: inviteForm.accessLevel === "owner" ? "var(--gj-mint)" : "var(--gj-muted)",
+                  }}
+                >
+                  DUEÑO
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInviteForm((f) => ({ ...f, accessLevel: "member" }))}
+                  style={{
+                    flex: 1, padding: "8px", borderRadius: "4px", fontSize: "12px", letterSpacing: "1px", cursor: "pointer",
+                    background: inviteForm.accessLevel === "member" ? "rgba(224,145,63,0.15)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${inviteForm.accessLevel === "member" ? "rgba(224,145,63,0.4)" : "rgba(255,255,255,0.1)"}`,
+                    color: inviteForm.accessLevel === "member" ? "#E0913F" : "var(--gj-muted)",
+                  }}
+                >
+                  MIEMBRO DEL EQUIPO
+                </button>
+              </div>
+            </div>
+          </div>
+          {generatedToken && (
+            <div style={{ background: "rgba(10,135,105,0.08)", border: "1px solid rgba(10,135,105,0.3)", borderRadius: "4px", padding: "12px" }}>
+              <p className="text-xs mb-2" style={{ color: "var(--gj-mint)", letterSpacing: "1px" }}>LINK GENERADO — copialo y mandaselo a la persona:</p>
+              <div className="flex items-center gap-2">
+                <input readOnly value={`${window.location.origin}/invite/${generatedToken}`} style={{ ...inp, fontSize: "11px", color: "var(--gj-muted)" }} onFocus={(e) => e.target.select()} />
+                <button onClick={() => copyInviteLink(generatedToken)} style={{ flexShrink: 0, background: "var(--gj-green)", border: "none", borderRadius: "4px", padding: "8px 12px", cursor: "pointer", color: "var(--gj-cream)" }}>
+                  <Copy size={14} />
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="flex gap-3 pt-2">
+            <button onClick={() => { setShowInviteForm(false); setInviteForm(EMPTY_INVITE); setGeneratedToken(null); }} style={{ flex: 1, padding: "8px", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", color: "var(--gj-muted)", cursor: "pointer", fontSize: "12px", letterSpacing: "2px" }}>
+              CERRAR
+            </button>
+            <button
+              onClick={() => createInvitation.mutate({ clientId, ...inviteForm })}
+              disabled={createInvitation.isPending}
+              style={{ flex: 1, padding: "8px", background: "var(--gj-green)", border: "none", borderRadius: "4px", color: "var(--gj-cream)", cursor: "pointer", fontSize: "12px", letterSpacing: "2px", opacity: createInvitation.isPending ? 0.6 : 1 }}
+            >
+              {createInvitation.isPending ? "GENERANDO..." : "GENERAR LINK"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {invitationList.filter((i) => i.status === "pending").length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs tracking-widest" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>INVITACIONES PENDIENTES</p>
+          {invitationList.filter((i) => i.status === "pending").map((inv) => (
+            <div key={inv.id} className="gj-card p-3 flex items-center justify-between gap-3">
+              <div className="min-w-0 flex items-center gap-2">
+                <span style={{
+                  fontSize: "9px", letterSpacing: "1px", padding: "2px 6px", borderRadius: "3px", flexShrink: 0,
+                  background: inv.accessLevel === "member" ? "rgba(224,145,63,0.15)" : "rgba(10,135,105,0.15)",
+                  color: inv.accessLevel === "member" ? "#E0913F" : "var(--gj-mint)",
+                  border: `1px solid ${inv.accessLevel === "member" ? "rgba(224,145,63,0.35)" : "rgba(10,135,105,0.35)"}`,
+                }}>
+                  {inv.accessLevel === "member" ? "MIEMBRO" : "DUEÑO"}
+                </span>
+                <p className="text-xs truncate" style={{ color: "var(--gj-cream)" }}>{inv.note || "Sin nota"}</p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button onClick={() => copyInviteLink(inv.token)} title="Copiar link" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", cursor: "pointer", padding: "6px 8px", color: "var(--gj-muted)" }}>
+                  <Copy size={13} />
+                </button>
+                <button onClick={() => { if (confirm("¿Revocar esta invitación? El link dejará de funcionar.")) revokeInvitation.mutate({ id: inv.id, clientId }); }} title="Revocar" style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", cursor: "pointer", padding: "6px 8px", color: "#ef4444" }}>
+                  <Ban size={13} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showForm && (
         <div className="gj-card p-5 space-y-4" style={{ maxWidth: 480 }}>
           <p className="text-xs tracking-widest" style={{ color: "var(--gj-mint)", letterSpacing: "3px", fontWeight: 600 }}>CREAR ACCESO</p>
           <div className="space-y-3">

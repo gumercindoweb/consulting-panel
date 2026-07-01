@@ -91,6 +91,25 @@ export const clientAccess = pgTable("client_access", {
 
 export type ClientAccess = typeof clientAccess.$inferSelect;
 
+// ─── INVITATIONS ──────────────────────────────────────────────────────────────
+// Link de invitación: el admin lo genera para un cliente + nivel de acceso, lo
+// comparte a mano (WhatsApp/mail), y quien lo abre elige su propio nombre,
+// email y contraseña en /invite/:token. Un solo uso por link.
+export const invitations = pgTable("invitations", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  clientId: integer("clientId").notNull(),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  accessLevel: varchar("accessLevel", { length: 16 }).default("member").notNull(),
+  note: varchar("note", { length: 255 }),
+  status: varchar("status", { length: 16 }).default("pending").notNull(), // pending | accepted | revoked
+  acceptedByUserId: integer("acceptedByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  acceptedAt: timestamp("acceptedAt"),
+});
+
+export type Invitation = typeof invitations.$inferSelect;
+export type InsertInvitation = typeof invitations.$inferInsert;
+
 // ─── PROJECT PHASES ───────────────────────────────────────────────────────────
 export const projectPhases = pgTable("project_phases", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
