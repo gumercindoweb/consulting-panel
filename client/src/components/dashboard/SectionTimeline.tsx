@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { getQuarterLabel } from "@/lib/quarter";
 import { useState, useEffect, useRef } from "react";
 import { CheckCircle2, Circle, Clock, Flag, ChevronDown, ChevronRight } from "lucide-react";
 
@@ -146,6 +147,14 @@ export default function SectionTimeline({ clientId }: Props) {
                     <span className="flex items-center gap-1 text-xs" style={{ color: cfg.color }}>
                       <Icon size={12} /> {cfg.label}
                     </span>
+                    {getQuarterLabel(phase.startDate) && (
+                      <span
+                        className="font-label text-xs px-2 py-0.5 rounded"
+                        style={{ color: "var(--oro)", background: "rgba(224,145,63,0.1)", border: "1px solid rgba(224,145,63,0.3)", letterSpacing: "1px" }}
+                      >
+                        {getQuarterLabel(phase.startDate)}
+                      </span>
+                    )}
                     <span className="ml-auto" style={{ color: "var(--gris)", opacity: 0.5 }}>
                       {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                     </span>

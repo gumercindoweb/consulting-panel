@@ -293,8 +293,8 @@ export const appRouter = router({
           name: z.string().optional(),
           description: z.string().optional(),
           status: z.enum(["completed", "in_progress", "pending"]).optional(),
-          startDate: z.date().optional(),
-          endDate: z.date().optional(),
+          startDate: z.date().nullable().optional(),
+          endDate: z.date().nullable().optional(),
           order: z.number().optional(),
           color: z.string().optional(),
         })
