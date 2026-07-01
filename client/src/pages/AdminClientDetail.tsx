@@ -1041,7 +1041,7 @@ function ScopeTab({ clientId }: { clientId: number }) {
 }
 
 // ─── RESOURCES TAB ────────────────────────────────────────────────────────────
-const RESOURCE_AREAS = ["Ventas", "Operaciones", "Atención al Cliente / Soporte", "Social Media"];
+const RESOURCE_AREAS = ["Marketing", "Ventas", "Atención al Cliente / Soporte", "Operaciones"];
 const rAreas = (r: any): string[] => (Array.isArray(r?.areas) && r.areas.length ? r.areas : (r?.area ? [r.area] : []));
 const rFiles = (r: any): { url: string; name: string }[] =>
   Array.isArray(r?.fileUrls) && r.fileUrls.length
