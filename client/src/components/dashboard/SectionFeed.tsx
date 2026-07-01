@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
+import { FilePreviewButton, isPreviewable } from "@/components/FilePreview";
 
 type Category = "session" | "result" | "delivery" | "insight" | "blocker" | "win" | "general";
 type Status = "on_track" | "at_risk" | "blocked" | "completed";
@@ -129,16 +130,47 @@ export default function SectionFeed({ clientId }: { clientId: number }) {
                       {update.body}
                     </p>
                   )}
-                  {isExpanded && (update as any).url && (
-                    <a
-                      href={(update as any).url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      style={{ display: "inline-flex", alignItems: "center", gap: "6px", marginTop: "14px", fontSize: "11px", letterSpacing: "2px", padding: "6px 12px", borderRadius: "4px", background: `${CATEGORY_COLORS[cat]}18`, color: CATEGORY_COLORS[cat], border: `1px solid ${CATEGORY_COLORS[cat]}40`, textDecoration: "none", fontFamily: "var(--font-label)" }}
-                    >
-                      🔗 VER REFERENCIA
-                    </a>
+                  {isExpanded && ((update as any).fileUrl || (update as any).url) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "14px", flexWrap: "wrap" }}>
+                      {(update as any).fileUrl && isPreviewable((update as any).fileUrl) && (
+                        <FilePreviewButton
+                          url={(update as any).fileUrl}
+                          name={(update as any).fileUrl.split("/").pop() ?? "archivo"}
+                          buttonStyle={{
+                            fontSize: "11px",
+                            letterSpacing: "2px",
+                            padding: "6px 12px",
+                            borderRadius: "4px",
+                            background: `${CATEGORY_COLORS[cat]}18`,
+                            color: CATEGORY_COLORS[cat],
+                            border: `1px solid ${CATEGORY_COLORS[cat]}40`,
+                            fontFamily: "var(--font-label)"
+                          }}
+                        />
+                      )}
+                      {(update as any).fileUrl && (
+                        <a
+                          href={(update as any).fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px", letterSpacing: "2px", padding: "6px 12px", borderRadius: "4px", background: `${CATEGORY_COLORS[cat]}18`, color: CATEGORY_COLORS[cat], border: `1px solid ${CATEGORY_COLORS[cat]}40`, textDecoration: "none", fontFamily: "var(--font-label)" }}
+                        >
+                          ↓ DESCARGAR
+                        </a>
+                      )}
+                      {(update as any).url && (
+                        <a
+                          href={(update as any).url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px", letterSpacing: "2px", padding: "6px 12px", borderRadius: "4px", background: `${CATEGORY_COLORS[cat]}18`, color: CATEGORY_COLORS[cat], border: `1px solid ${CATEGORY_COLORS[cat]}40`, textDecoration: "none", fontFamily: "var(--font-label)" }}
+                        >
+                          🔗 VER REFERENCIA
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>

@@ -162,7 +162,7 @@ function UpdatesTab({ clientId }: { clientId: number }) {
     onError: (e) => toast.error(e.message),
   });
 
-  const EMPTY = { title: "", body: "", category: "general" as const, status: "on_track" as const, impact: "medium" as const, url: "", isPublic: true, date: new Date().toISOString().split("T")[0], phaseId: undefined as number | undefined, milestoneId: undefined as number | undefined };
+  const EMPTY = { title: "", body: "", category: "general" as const, status: "on_track" as const, impact: "medium" as const, url: "", fileUrl: "", isPublic: true, date: new Date().toISOString().split("T")[0], phaseId: undefined as number | undefined, milestoneId: undefined as number | undefined };
   const [form, setForm] = useState(EMPTY);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -213,6 +213,12 @@ function UpdatesTab({ clientId }: { clientId: number }) {
             </select>
           </div>
           <input style={inp} placeholder="URL de referencia (opcional) — ej. publicación, entregable, documento" value={form.url} onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))} />
+          <div className="flex items-center gap-3">
+            {form.fileUrl
+              ? <span className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}><Paperclip size={12} /> {form.fileUrl.split("/").pop()}<button type="button" onClick={() => setForm(f => ({ ...f, fileUrl: "" }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button></span>
+              : <FileUploadButton clientId={clientId} onUploaded={(url) => setForm(f => ({ ...f, fileUrl: url }))} label="SUBIR ARCHIVO (PDF, IMAGEN, ETC.)" />
+            }
+          </div>
           <label className="flex items-center gap-2 text-xs" style={{ color: "var(--gj-muted)", cursor: "pointer" }}>
             <input type="checkbox" checked={form.isPublic} onChange={(e) => setForm((f) => ({ ...f, isPublic: e.target.checked }))} />
             Visible para el cliente
@@ -260,6 +266,12 @@ function UpdatesTab({ clientId }: { clientId: number }) {
                   </select>
                 </div>
                 <input style={inp} placeholder="URL de referencia (opcional)" value={editData.url ?? u.url ?? ""} onChange={(e) => setEditData((d: any) => ({ ...d, url: e.target.value }))} />
+                <div className="flex items-center gap-3">
+                  {editData.fileUrl ?? u.fileUrl
+                    ? <span className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}><Paperclip size={12} /> {(editData.fileUrl ?? u.fileUrl ?? "").split("/").pop()}<button type="button" onClick={() => setEditData((d: any) => ({ ...d, fileUrl: "" }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button></span>
+                    : <FileUploadButton clientId={clientId} onUploaded={(url) => setEditData((d: any) => ({ ...d, fileUrl: url }))} label="SUBIR ARCHIVO (PDF, IMAGEN, ETC.)" />
+                  }
+                </div>
                 <div className="flex gap-2">
                   <button onClick={() => updateUpdate.mutate({ id: u.id, clientId, ...editData })} className="flex items-center gap-1 text-xs px-3 py-1 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}><Save size={12} /> GUARDAR</button>
                   <button onClick={() => { setEditingId(null); setEditData({}); }} className="text-xs px-3 py-1 rounded" style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", color: "var(--gj-muted)", cursor: "pointer", letterSpacing: "2px" }}>CANCELAR</button>
@@ -278,7 +290,17 @@ function UpdatesTab({ clientId }: { clientId: number }) {
                   </div>
                   <p className="text-sm font-medium" style={{ color: "var(--gj-cream)" }}>{u.title}</p>
                   <p className="text-xs mt-1" style={{ color: "var(--gj-muted)", lineHeight: 1.5 }}>{u.body.slice(0, 120)}{u.body.length > 120 ? "…" : ""}</p>
-                  {(u as any).url && <a href={(u as any).url} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 inline-block" style={{ color: "var(--gj-mint)", wordBreak: "break-all" }}>🔗 {(u as any).url}</a>}
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {(u as any).fileUrl && isPreviewable((u as any).fileUrl) && (
+                      <FilePreviewButton
+                        url={(u as any).fileUrl}
+                        name={(u as any).fileUrl.split("/").pop() ?? "archivo"}
+                        buttonStyle={{ color: "var(--gj-mint)", background: "rgba(154,230,180,0.08)", border: "1px solid rgba(154,230,180,0.2)" }}
+                      />
+                    )}
+                    {(u as any).fileUrl && <a href={(u as any).fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-mint)" }}>↓ Archivo</a>}
+                    {(u as any).url && <a href={(u as any).url} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-mint)", wordBreak: "break-all" }}>🔗 {(u as any).url}</a>}
+                  </div>
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
                   <button onClick={() => { setEditingId(u.id); setEditData({}); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}><Edit3 size={13} /></button>
