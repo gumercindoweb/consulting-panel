@@ -84,14 +84,8 @@ export default function SectionTimeline({ clientId }: Props) {
   const toggleCollapse = (id: number) =>
     setCollapsed((prev) => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
 
-  const phaseOriginalIndex = Object.fromEntries(phases.map((p, i) => [p.id, i + 1]));
-  // Orden: la etapa vigente (en curso) primero; el resto en orden descendente (3, 2, 1).
-  const sortedPhases = [...phases].sort((a, b) => {
-    const rank: Record<string, number> = { in_progress: 0, pending: 1, completed: 2 };
-    const r = (rank[a.status] ?? 3) - (rank[b.status] ?? 3);
-    if (r !== 0) return r;
-    return ((phaseOriginalIndex[b.id] as number) ?? 0) - ((phaseOriginalIndex[a.id] as number) ?? 0);
-  });
+  // Mostrar en orden secuencial: Etapa 1, Etapa 2, Etapa 3, etc.
+  const sortedPhases = [...phases].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   const milestonesByPhase = (phaseId: number) => milestones.filter((m) => m.phaseId === phaseId);
   const updatesByMilestone = (milestoneId: number) => updates.filter((u) => u.milestoneId === milestoneId);
@@ -127,13 +121,13 @@ export default function SectionTimeline({ clientId }: Props) {
         </div>
       ) : (
         <div className="space-y-6">
-          {sortedPhases.map((phase) => {
+          {sortedPhases.map((phase, phaseIndex) => {
             const cfg = PHASE_STATUS[phase.status];
             const Icon = cfg.Icon;
             const phaseMilestones = milestonesByPhase(phase.id);
             const phaseOnlyUpdates = updatesWithPhaseOnly(phase.id);
             const isCollapsed = collapsed.has(phase.id);
-            const phaseNum = phaseOriginalIndex[phase.id];
+            const phaseNum = phaseIndex + 1;
 
             return (
               <div key={phase.id}>
