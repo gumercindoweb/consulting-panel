@@ -11,7 +11,7 @@ import {
 
 // ─── ENUMS ───────────────────────────────────────────────────────────────────
 export const roleEnum = pgEnum("role", ["user", "admin"]);
-export const phaseStatusEnum = pgEnum("phase_status", ["completed", "in_progress", "pending"]);
+export const phaseStatusEnum = pgEnum("phase_status", ["completed", "in_progress", "pending", "paused"]);
 export const okrStatusEnum = pgEnum("okr_status", ["on_track", "at_risk", "off_track", "completed"]);
 export const milestoneStatusEnum = pgEnum("milestone_status", ["completed", "in_progress", "pending"]);
 export const milestoneCategoryEnum = pgEnum("milestone_category", ["strategy", "implementation", "training", "automation", "content", "analytics", "other"]);

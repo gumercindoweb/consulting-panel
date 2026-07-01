@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import { getQuarterLabel } from "@/lib/quarter";
+import { getQuarterRangeLabel } from "@/lib/quarter";
 import { useState, useEffect, useRef } from "react";
 import { Plus, Edit3, Trash2, Flag, AlertTriangle, ChevronDown, ChevronRight, GripVertical, Eye, EyeOff, Circle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ const PHASE_STATUS: Record<string, { label: string; color: string }> = {
   completed:   { label: "COMPLETADA",  color: "#4eba8a" },
   in_progress: { label: "EN CURSO",    color: "#E0913F" },
   pending:     { label: "PENDIENTE",   color: "rgba(143,169,163,0.5)" },
+  paused:      { label: "PAUSADA",     color: "#9a8480" },
 };
 
 const M_STATUS: Record<string, { label: string; color: string }> = {
@@ -179,7 +180,7 @@ export default function TimelineTab({ clientId }: Props) {
 
   // Phase mutations
   const createPhase = trpc.phases.create.useMutation({
-    onSuccess: () => { utils.phases.list.invalidate({ clientId }); toast.success("Etapa creada."); setNewPhase({ name: "", description: "", status: "pending", startDate: "" }); },
+    onSuccess: () => { utils.phases.list.invalidate({ clientId }); toast.success("Etapa creada."); setNewPhase({ name: "", description: "", status: "pending", startDate: "", endDate: "" }); },
     onError: (e) => toast.error(e.message),
   });
   const updatePhase = trpc.phases.update.useMutation({
@@ -230,7 +231,7 @@ export default function TimelineTab({ clientId }: Props) {
   // Phase editing state
   const [editingPhaseId, setEditingPhaseId] = useState<number | null>(null);
   const [editPhaseData, setEditPhaseData] = useState<any>({});
-  const [newPhase, setNewPhase] = useState({ name: "", description: "", status: "pending" as const, startDate: "" });
+  const [newPhase, setNewPhase] = useState({ name: "", description: "", status: "pending" as const, startDate: "", endDate: "" });
 
   // Milestone add per-phase
   const [addingToPhase, setAddingToPhase] = useState<number | null>(null);
@@ -271,7 +272,7 @@ export default function TimelineTab({ clientId }: Props) {
   const phaseOriginalIndex = Object.fromEntries(phases.map((p, i) => [p.id, i + 1]));
   // Orden: la etapa vigente (en curso) primero; el resto descendente (3, 2, 1).
   const sortedPhases = [...phases].sort((a, b) => {
-    const rank: Record<string, number> = { in_progress: 0, pending: 1, completed: 2 };
+    const rank: Record<string, number> = { in_progress: 0, pending: 1, paused: 1, completed: 2 };
     const r = (rank[a.status] ?? 3) - (rank[b.status] ?? 3);
     if (r !== 0) return r;
     return ((phaseOriginalIndex[b.id] as number) ?? 0) - ((phaseOriginalIndex[a.id] as number) ?? 0);
@@ -349,13 +350,13 @@ export default function TimelineTab({ clientId }: Props) {
                   }}>
                     {cfg.label}
                   </span>
-                  {getQuarterLabel(phase.startDate) && (
+                  {getQuarterRangeLabel(phase.startDate, phase.endDate) && (
                     <span style={{
                       fontSize: "9px", letterSpacing: "1px", padding: "2px 6px", borderRadius: "3px",
                       background: "rgba(154,230,180,0.1)", border: "1px solid rgba(154,230,180,0.3)",
                       color: "var(--gj-mint)", fontFamily: "var(--gj-font)",
                     }}>
-                      {getQuarterLabel(phase.startDate)}
+                      {getQuarterRangeLabel(phase.startDate, phase.endDate)}
                     </span>
                   )}
                 </div>
@@ -382,21 +383,40 @@ export default function TimelineTab({ clientId }: Props) {
                     >
                       <option value="pending">Pendiente</option>
                       <option value="in_progress">En curso</option>
+                      <option value="paused">Pausada</option>
                       <option value="completed">Completada</option>
                     </select>
-                    <div>
-                      <label style={{ fontSize: "9px", letterSpacing: "2px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", display: "block", marginBottom: "4px" }}>
-                        FECHA DE INICIO (define el trimestre)
-                      </label>
-                      <input
-                        type="date"
-                        style={INP}
-                        value={editPhaseData.startDate !== undefined
-                          ? (editPhaseData.startDate ? new Date(editPhaseData.startDate).toISOString().split("T")[0] : "")
-                          : (phase.startDate ? new Date(phase.startDate).toISOString().split("T")[0] : "")}
-                        onChange={(e) => setEditPhaseData((d: any) => ({ ...d, startDate: e.target.value ? new Date(e.target.value) : null }))}
-                      />
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: "9px", letterSpacing: "2px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", display: "block", marginBottom: "4px" }}>
+                          FECHA DE INICIO
+                        </label>
+                        <input
+                          type="date"
+                          style={INP}
+                          value={editPhaseData.startDate !== undefined
+                            ? (editPhaseData.startDate ? new Date(editPhaseData.startDate).toISOString().split("T")[0] : "")
+                            : (phase.startDate ? new Date(phase.startDate).toISOString().split("T")[0] : "")}
+                          onChange={(e) => setEditPhaseData((d: any) => ({ ...d, startDate: e.target.value ? new Date(e.target.value) : null }))}
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: "9px", letterSpacing: "2px", color: "var(--gj-muted)", fontFamily: "var(--gj-font)", display: "block", marginBottom: "4px" }}>
+                          FECHA DE FIN (opcional)
+                        </label>
+                        <input
+                          type="date"
+                          style={INP}
+                          value={editPhaseData.endDate !== undefined
+                            ? (editPhaseData.endDate ? new Date(editPhaseData.endDate).toISOString().split("T")[0] : "")
+                            : (phase.endDate ? new Date(phase.endDate).toISOString().split("T")[0] : "")}
+                          onChange={(e) => setEditPhaseData((d: any) => ({ ...d, endDate: e.target.value ? new Date(e.target.value) : null }))}
+                        />
+                      </div>
                     </div>
+                    <p style={{ fontSize: "10px", color: "var(--gj-muted)", fontStyle: "italic" }}>
+                      El trimestre (Q) se calcula solo a partir de estas fechas.
+                    </p>
                     <div style={{ display: "flex", gap: "6px" }}>
                       <button
                         style={BTN_SAVE}
@@ -770,7 +790,7 @@ export default function TimelineTab({ clientId }: Props) {
             onChange={(e) => setNewPhase((f) => ({ ...f, name: e.target.value }))}
             onKeyDown={(e) => {
               if (e.key === "Enter" && newPhase.name) {
-                createPhase.mutate({ clientId, ...newPhase, startDate: newPhase.startDate ? new Date(newPhase.startDate) : undefined, order: phases.length });
+                createPhase.mutate({ clientId, ...newPhase, startDate: newPhase.startDate ? new Date(newPhase.startDate) : undefined, endDate: newPhase.endDate ? new Date(newPhase.endDate) : undefined, order: phases.length });
               }
             }}
           />
@@ -781,6 +801,7 @@ export default function TimelineTab({ clientId }: Props) {
           >
             <option value="pending">Pendiente</option>
             <option value="in_progress">En curso</option>
+            <option value="paused">Pausada</option>
             <option value="completed">Completada</option>
           </select>
           <input
@@ -790,10 +811,17 @@ export default function TimelineTab({ clientId }: Props) {
             value={newPhase.startDate}
             onChange={(e) => setNewPhase((f) => ({ ...f, startDate: e.target.value }))}
           />
+          <input
+            type="date"
+            title="Fecha de fin (opcional) — si la etapa cruza trimestres, se muestra el rango"
+            style={{ ...INP, flex: "0 0 auto", width: "auto" }}
+            value={newPhase.endDate}
+            onChange={(e) => setNewPhase((f) => ({ ...f, endDate: e.target.value }))}
+          />
           <button
             style={{ ...BTN_SAVE, opacity: newPhase.name ? 1 : 0.5, display: "flex", alignItems: "center", gap: "5px" }}
             disabled={!newPhase.name}
-            onClick={() => { if (newPhase.name) createPhase.mutate({ clientId, ...newPhase, startDate: newPhase.startDate ? new Date(newPhase.startDate) : undefined, order: phases.length }); }}
+            onClick={() => { if (newPhase.name) createPhase.mutate({ clientId, ...newPhase, startDate: newPhase.startDate ? new Date(newPhase.startDate) : undefined, endDate: newPhase.endDate ? new Date(newPhase.endDate) : undefined, order: phases.length }); }}
           >
             <Plus size={12} /> AGREGAR
           </button>
