@@ -1105,8 +1105,7 @@ function ResourcesTab({ clientId }: { clientId: number }) {
   const [copyingId, setCopyingId] = useState<number | null>(null);
   const [copyTargets, setCopyTargets] = useState<number[]>([]);
 
-  const usedAreas = Array.from(new Set(resources.flatMap((r) => rAreas(r))));
-  const availableAreas = Array.from(new Set([...RESOURCE_AREAS, ...usedAreas, ...extraAreas])).filter(Boolean);
+  const availableAreas = Array.from(new Set([...RESOURCE_AREAS, ...extraAreas])).filter(Boolean);
   const otherClients = allClients.filter((c) => c.id !== clientId);
   const addCustom = (a: string) => setExtraAreas((p) => (p.includes(a) ? p : [...p, a]));
 
