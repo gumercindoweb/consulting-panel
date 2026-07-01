@@ -131,7 +131,7 @@ export default function SectionFeed({ clientId }: { clientId: number }) {
                     </p>
                   )}
                   {isExpanded && ((update as any).fileUrl || (update as any).url) && (
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "14px", flexWrap: "wrap" }}>
+                    <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "14px", flexWrap: "wrap" }}>
                       {(update as any).fileUrl && isPreviewable((update as any).fileUrl) && (
                         <FilePreviewButton
                           url={(update as any).fileUrl}
