@@ -17,7 +17,7 @@ export default function SectionOverview({ clientId, client }: Props) {
   const memberSections = ((client as any).memberVisibleSections as string[] | null) ?? [];
   const canSee = (id: string) => !isMember || memberSections.includes(id);
 
-  const { data: metrics = [] } = trpc.metrics.list.useQuery({ clientId }, { enabled: canSee("metrics") });
+  const { data: resources = [] } = trpc.resources.list.useQuery({ clientId }, { enabled: canSee("resources") });
   const { data: okrs = [] } = trpc.okrs.list.useQuery({ clientId }, { enabled: canSee("okrs") });
   const { data: phases = [] } = trpc.phases.list.useQuery({ clientId }, { enabled: canSee("timeline") });
   const { data: milestones = [] } = trpc.milestones.list.useQuery({ clientId }, { enabled: canSee("timeline") || canSee("milestones") });
@@ -54,7 +54,7 @@ export default function SectionOverview({ clientId, client }: Props) {
           </div>
           <div className="sdt-card p-4">
             <p className="font-label text-xs mb-2" style={{ color: "var(--gris)", letterSpacing: "2px" }}>RECURSOS</p>
-            <p className="font-display text-3xl font-bold">{metrics.length}</p>
+            <p className="font-display text-3xl font-bold">{resources.length}</p>
           </div>
         </div>
       </div>
@@ -80,7 +80,7 @@ export default function SectionOverview({ clientId, client }: Props) {
       },
       {
         label: "ACTIVOS",
-        value: `${metrics.length}`,
+        value: `${resources.length}`,
         sub: "Recursos y materiales",
       },
     ];
@@ -432,7 +432,7 @@ export default function SectionOverview({ clientId, client }: Props) {
               fontFamily: "'Futura Std', 'Futura', sans-serif",
             }}
           >
-            {metrics.length} recurso{metrics.length !== 1 ? "s" : ""}
+            {resources.length} recurso{resources.length !== 1 ? "s" : ""}
           </p>
           <p
             style={{
