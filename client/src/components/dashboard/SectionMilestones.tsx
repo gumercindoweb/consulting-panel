@@ -1,7 +1,60 @@
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import { CheckCircle2, Circle, Clock, Zap, BookOpen, Settings, Megaphone, BarChart2, Users } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CheckCircle2, Circle, Clock, Zap, BookOpen, Settings, Megaphone, BarChart2, Users, UserCog } from "lucide-react";
 
 interface Props { clientId: number; }
+
+// Botón + checklist que le permite al DUEÑO del cliente (o al admin) elegir,
+// hito por hito, a qué miembros del equipo (además del asignado) se lo
+// muestra en su portal. Solo se renderiza para dueño/admin — un miembro
+// nunca ve este control.
+function VisibilityPicker({ clientId, milestone, teamMembers }: {
+  clientId: number;
+  milestone: { id: number; assignedToUserId?: number | null; visibleToUserIds?: number[] | null };
+  teamMembers: { id: number; name: string | null }[];
+}) {
+  const utils = trpc.useUtils();
+  const setVisibility = trpc.milestones.setVisibility.useMutation({
+    onSuccess: () => utils.milestones.list.invalidate({ clientId }),
+  });
+  const current = milestone.visibleToUserIds ?? [];
+  const selectable = teamMembers.filter((u) => u.id !== milestone.assignedToUserId);
+  if (selectable.length === 0) return null;
+
+  function toggle(userId: number) {
+    const next = current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId];
+    setVisibility.mutate({ id: milestone.id, clientId, visibleToUserIds: next });
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex items-center gap-1 font-label text-xs px-2 py-0.5 rounded"
+          style={{ color: "var(--gris)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", letterSpacing: "1px", cursor: "pointer" }}
+          title="Elegir a quién más se le muestra este hito"
+        >
+          <UserCog size={11} /> {current.length > 0 ? `+${current.length}` : "COMPARTIR"}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64" style={{ background: "rgb(18,13,16)", border: "1px solid rgba(255,255,255,0.1)" }}>
+        <p className="text-xs mb-2" style={{ color: "var(--creme)", letterSpacing: "1px" }}>
+          Mostrar también a:
+        </p>
+        <div className="space-y-1.5">
+          {selectable.map((u) => (
+            <label key={u.id} className="flex items-center gap-2 text-xs" style={{ color: "var(--gris)", cursor: "pointer" }}>
+              <input type="checkbox" checked={current.includes(u.id)} onChange={() => toggle(u.id)} />
+              {u.name || "Sin nombre"}
+            </label>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; Icon: any }> = {
   strategy: { label: "Estrategia", color: "var(--rojo)", Icon: Zap },
@@ -26,6 +79,12 @@ const IMPACT_CONFIG = {
 };
 
 export default function SectionMilestones({ clientId }: Props) {
+  const { user } = useAuth();
+  const { data: myClients = [] } = trpc.clients.myClients.useQuery(undefined, { enabled: !!user });
+  const isOwnerOrAdmin = (user as any)?.role === "admin" || (myClients.find((c) => c.id === clientId) as any)?.accessLevel === "owner";
+  const { data: teamMembers = [] } = trpc.users.listTeamMembers.useQuery({ clientId }, { enabled: isOwnerOrAdmin });
+  const memberName = (userId: number | null | undefined) => teamMembers.find((u) => u.id === userId)?.name;
+
   const { data: milestones = [], isLoading } = trpc.milestones.list.useQuery({ clientId });
 
   // Group by year-month
@@ -142,7 +201,7 @@ export default function SectionMilestones({ clientId }: Props) {
                             {m.description}
                           </p>
                         )}
-                        <div className="flex items-center gap-3 mt-2">
+                        <div className="flex items-center gap-3 mt-2 flex-wrap">
                           <span
                             className="font-label text-xs"
                             style={{ color: cat.color, letterSpacing: "2px" }}
@@ -156,6 +215,17 @@ export default function SectionMilestones({ clientId }: Props) {
                               year: "numeric",
                             })}
                           </span>
+                          {memberName((m as any).assignedToUserId) && (
+                            <span
+                              className="font-label text-xs px-2 py-0.5 rounded"
+                              style={{ color: "var(--ambar)", background: "rgba(224,145,63,0.1)", border: "1px solid rgba(224,145,63,0.25)", letterSpacing: "1px" }}
+                            >
+                              👤 {memberName((m as any).assignedToUserId)}
+                            </span>
+                          )}
+                          {isOwnerOrAdmin && (
+                            <VisibilityPicker clientId={clientId} milestone={m as any} teamMembers={teamMembers} />
+                          )}
                         </div>
                       </div>
                     </div>

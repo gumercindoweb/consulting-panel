@@ -90,6 +90,19 @@ async function assertClientAccess(userId: number, clientId: number) {
   }
 }
 
+// ─── OWNER GUARD ──────────────────────────────────────────────────────────────
+// Para las pocas cosas que el DUEÑO de un cliente puede editar desde su propio
+// portal (hoy: a quién más se le muestra un hito). El admin (Gumercindo) puede
+// hacer todo lo que puede hacer el dueño, así que estos endpoints chequean
+// "admin O dueño de este cliente".
+async function assertOwnerAccess(userId: number, clientId: number) {
+  const accesses = await getClientAccessForUser(userId);
+  const access = accesses.find((a) => a.clientId === clientId);
+  if (!access || access.accessLevel !== "owner") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Solo el dueño del cliente puede hacer esto." });
+  }
+}
+
 // ─── MEMBER SECTION GUARD ──────────────────────────────────────────────────────
 // Para las secciones "confidenciales" (MEMBER_GATED_SECTIONS): un usuario nivel
 // "member" (empleado del cliente) solo puede leerlas si están en
@@ -364,11 +377,21 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ clientId: z.number() }))
       .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          await assertClientAccess(ctx.user.id, input.clientId);
-          await assertAnySectionAccess(ctx.user.id, input.clientId, ["timeline", "milestones"]);
+        if (ctx.user.role === "admin") {
+          return getMilestonesByClient(input.clientId, true);
         }
-        return getMilestonesByClient(input.clientId, ctx.user.role === "admin");
+        await assertClientAccess(ctx.user.id, input.clientId);
+        await assertAnySectionAccess(ctx.user.id, input.clientId, ["timeline", "milestones"]);
+        const all = await getMilestonesByClient(input.clientId, false);
+        const accesses = await getClientAccessForUser(ctx.user.id);
+        const access = accesses.find((a) => a.clientId === input.clientId);
+        if (access?.accessLevel !== "member") return all; // el dueño ve todo
+        // Un miembro solo ve los hitos asignados a él, o a los que el dueño
+        // le dio acceso explícito.
+        return all.filter((m) =>
+          m.assignedToUserId === ctx.user.id ||
+          (Array.isArray(m.visibleToUserIds) && m.visibleToUserIds.includes(ctx.user.id))
+        );
       }),
 
     pause: adminProcedure
@@ -388,6 +411,7 @@ export const appRouter = router({
             .enum(["strategy", "implementation", "training", "automation", "content", "analytics", "other"])
             .default("other"),
           impact: z.enum(["high", "medium", "low"]).default("medium"),
+          assignedToUserId: z.number().nullable().optional(),
         })
       )
       .mutation(({ input }) => createMilestone(input)),
@@ -406,11 +430,23 @@ export const appRouter = router({
             .enum(["strategy", "implementation", "training", "automation", "content", "analytics", "other"])
             .optional(),
           impact: z.enum(["high", "medium", "low"]).optional(),
+          assignedToUserId: z.number().nullable().optional(),
         })
       )
       .mutation(({ input }) => {
         const { id, clientId, ...data } = input;
         return updateMilestone(id, clientId, data);
+      }),
+
+    // El dueño del cliente (o el admin) decide, hito por hito, qué otros
+    // miembros del equipo (además del asignado) lo pueden ver en su portal.
+    setVisibility: protectedProcedure
+      .input(z.object({ id: z.number(), clientId: z.number(), visibleToUserIds: z.array(z.number()) }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          await assertOwnerAccess(ctx.user.id, input.clientId);
+        }
+        return updateMilestone(input.id, input.clientId, { visibleToUserIds: input.visibleToUserIds });
       }),
 
     delete: adminProcedure
@@ -854,6 +890,20 @@ export const appRouter = router({
     listByClient: adminProcedure
       .input(z.object({ clientId: z.number() }))
       .query(({ input }) => getUsersWithAccessToClient(input.clientId)),
+
+    // El dueño (o el admin) lo usa para armar el checklist de "a quién más
+    // le muestro este hito" — solo nombre e id, nada sensible.
+    listTeamMembers: protectedProcedure
+      .input(z.object({ clientId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          await assertOwnerAccess(ctx.user.id, input.clientId);
+        }
+        const all = await getUsersWithAccessToClient(input.clientId);
+        return all
+          .filter((u) => (u as any).accessLevel === "member")
+          .map((u) => ({ id: u.id, name: u.name }));
+      }),
 
     createWithAccess: adminProcedure
       .input(z.object({

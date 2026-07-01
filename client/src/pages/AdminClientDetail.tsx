@@ -374,6 +374,9 @@ function MilestonesTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
   const { data: phases = [] } = trpc.phases.list.useQuery({ clientId });
   const { data: serverMilestones = [] } = trpc.milestones.list.useQuery({ clientId });
+  const { data: clientUsers = [] } = trpc.users.listByClient.useQuery({ clientId });
+  const teamMembers = clientUsers.filter((u) => (u as any).accessLevel === "member");
+  const memberName = (userId: number | null | undefined) => teamMembers.find((u) => u.id === userId)?.name;
   const [items, setItems] = useState(serverMilestones);
 
   // Sync local state when server data changes (after create/delete)
@@ -415,6 +418,7 @@ function MilestonesTab({ clientId }: { clientId: number }) {
     category: "strategy" as "strategy" | "implementation" | "training" | "automation" | "content" | "analytics" | "other",
     impact: "medium" as "high" | "medium" | "low",
     resultType: null as any, phaseId: null as number | null,
+    assignedToUserId: null as number | null,
   };
   const RESULT_TYPES: Record<string, { label: string; color: string }> = {
     result: { label: "RESULTADO", color: "var(--ambar)" },
@@ -466,9 +470,13 @@ function MilestonesTab({ clientId }: { clientId: number }) {
                 <option value="blocker">Bloqueador</option>
               </select>
             )}
+            <select style={{ ...INP, gridColumn: "1/-1" }} value={form.assignedToUserId ?? ""} onChange={(e) => setForm(f => ({ ...f, assignedToUserId: e.target.value ? Number(e.target.value) : null }))}>
+              <option value="">Hito general del negocio (no asignado a nadie en particular)</option>
+              {teamMembers.map(u => <option key={u.id} value={u.id}>Asignado a: {u.name || u.email}</option>)}
+            </select>
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
-            <button onClick={() => { if (form.title) createMilestone.mutate({ clientId, ...form, phaseId: form.phaseId ?? undefined, date: new Date(form.date) }); }} disabled={!form.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", opacity: form.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>GUARDAR</button>
+            <button onClick={() => { if (form.title) createMilestone.mutate({ clientId, ...form, phaseId: form.phaseId ?? undefined, assignedToUserId: form.assignedToUserId ?? undefined, date: new Date(form.date) }); }} disabled={!form.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", opacity: form.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>GUARDAR</button>
             <button onClick={() => { setShowForm(false); setForm(EMPTY_M); }} style={{ background: "none", border: "1px solid rgba(154,230,180,0.2)", color: "var(--gj-muted)", borderRadius: "3px", padding: "8px 16px", fontSize: "11px", letterSpacing: "2px", cursor: "pointer", fontFamily: "var(--gj-font)" }}>CANCELAR</button>
           </div>
         </div>
@@ -524,7 +532,7 @@ function MilestonesTab({ clientId }: { clientId: number }) {
                                     {!m.isPaused && <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: `${status.color}12`, border: `1px solid ${status.color}30`, color: status.color, fontFamily: "var(--gj-font)" }}>{status.label}</span>}
                                     <button
                                       title="Editar"
-                                      onClick={() => { setEditingId(m.id); setEditForm({ title: m.title, description: m.description || "", date: new Date(m.date).toISOString().split("T")[0], status: m.status, category: m.category, impact: m.impact, resultType: m.resultType, phaseId: (m as any).phaseId ?? null }); }}
+                                      onClick={() => { setEditingId(m.id); setEditForm({ title: m.title, description: m.description || "", date: new Date(m.date).toISOString().split("T")[0], status: m.status, category: m.category, impact: m.impact, resultType: m.resultType, phaseId: (m as any).phaseId ?? null, assignedToUserId: (m as any).assignedToUserId ?? null }); }}
                                       style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: "2px" }}
                                     >
                                       <Edit3 size={14} />
@@ -571,6 +579,10 @@ function MilestonesTab({ clientId }: { clientId: number }) {
                                           <option value="blocker">Bloqueador</option>
                                         </select>
                                       )}
+                                      <select style={{ ...INP, gridColumn: "1/-1" }} value={editForm.assignedToUserId ?? ""} onChange={(e) => setEditForm(f => ({ ...f, assignedToUserId: e.target.value ? Number(e.target.value) : null }))}>
+                                        <option value="">Hito general del negocio (no asignado a nadie en particular)</option>
+                                        {teamMembers.map(u => <option key={u.id} value={u.id}>Asignado a: {u.name || u.email}</option>)}
+                                      </select>
                                     </div>
                                     <div style={{ display: "flex", gap: "6px" }}>
                                       <button onClick={() => { if (editForm.title) updateMilestone.mutate({ id: m.id, clientId, ...editForm, phaseId: editForm.phaseId ?? undefined, date: new Date(editForm.date) }); }} disabled={!editForm.title} style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", borderRadius: "3px", padding: "6px 12px", fontSize: "10px", letterSpacing: "1px", cursor: "pointer", opacity: editForm.title ? 1 : 0.5, fontFamily: "var(--gj-font)" }}>GUARDAR</button>
@@ -580,11 +592,16 @@ function MilestonesTab({ clientId }: { clientId: number }) {
                                 ) : (
                                   <>
                                     {m.description && <p style={{ fontSize: "12px", color: "var(--gj-muted)", lineHeight: 1.5, marginBottom: "6px" }}>{m.description}</p>}
-                                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
                                       <span style={{ fontSize: "9px", letterSpacing: "2px", color: cat.color, fontFamily: "var(--gj-font)" }}>{cat.label}</span>
                                       <span style={{ fontSize: "11px", color: "rgba(143,169,163,0.5)", fontFamily: "var(--gj-font)" }}>
                                         {new Date(m.date).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
                                       </span>
+                                      {memberName((m as any).assignedToUserId) && (
+                                        <span style={{ fontSize: "9px", letterSpacing: "1px", padding: "2px 7px", borderRadius: "3px", background: "rgba(224,145,63,0.12)", border: "1px solid rgba(224,145,63,0.3)", color: "#E0913F", fontFamily: "var(--gj-font)" }}>
+                                          👤 {memberName((m as any).assignedToUserId)}
+                                        </span>
+                                      )}
                                     </div>
                                   </>
                                 )}

@@ -165,6 +165,12 @@ export const milestones = pgTable("milestones", {
   resultType: updateCategoryEnum("resultType"),
   sortOrder: integer("sortOrder"),
   isPaused: boolean("isPaused").default(false).notNull(),
+  // Hito personal de un miembro del equipo del cliente (lo asigna el admin
+  // al cargar el hito). El asignado siempre lo ve en su portal.
+  assignedToUserId: integer("assignedToUserId"),
+  // Miembros adicionales (más allá del asignado) a los que el DUEÑO del
+  // cliente decide mostrarles este hito, desde su propio portal.
+  visibleToUserIds: integer("visibleToUserIds").array(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
