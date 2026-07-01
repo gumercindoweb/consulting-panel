@@ -292,6 +292,11 @@ export const backlogItems = pgTable("backlog_items", {
   // Archivos de referencia opcionales (imágenes, PDFs, capturas) con vista
   // previa — mismo patrón que Resources y ProjectUpdates.
   fileUrls: json("fileUrls").$type<{ url: string; name: string }[]>(),
+  // Fecha en la que surgió la idea (editable, distinta de createdAt) y, si
+  // se decide llevarla adelante, cuándo arrancó y cuándo se completó.
+  ideaDate: timestamp("ideaDate"),
+  startDate: timestamp("startDate"),
+  endDate: timestamp("endDate"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });

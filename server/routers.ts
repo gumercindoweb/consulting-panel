@@ -801,8 +801,19 @@ export const appRouter = router({
         priority: z.enum(["alta", "media", "baja"]).default("media"),
         url: z.string().optional(),
         fileUrls: z.array(z.object({ url: z.string(), name: z.string() })).optional(),
+        ideaDate: z.string().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
       }))
-      .mutation(({ input }) => createBacklogItem(input)),
+      .mutation(({ input }) => {
+        const { ideaDate, startDate, endDate, ...rest } = input;
+        return createBacklogItem({
+          ...rest,
+          ideaDate: ideaDate ? new Date(ideaDate) : undefined,
+          startDate: startDate ? new Date(startDate) : undefined,
+          endDate: endDate ? new Date(endDate) : undefined,
+        });
+      }),
 
     update: adminProcedure
       .input(z.object({
@@ -814,10 +825,18 @@ export const appRouter = router({
         priority: z.enum(["alta", "media", "baja"]).optional(),
         url: z.string().optional(),
         fileUrls: z.array(z.object({ url: z.string(), name: z.string() })).optional(),
+        ideaDate: z.string().nullable().optional(),
+        startDate: z.string().nullable().optional(),
+        endDate: z.string().nullable().optional(),
       }))
       .mutation(({ input }) => {
-        const { id, clientId, ...data } = input;
-        return updateBacklogItem(id, clientId, data);
+        const { id, clientId, ideaDate, startDate, endDate, ...rest } = input;
+        return updateBacklogItem(id, clientId, {
+          ...rest,
+          ...(ideaDate !== undefined ? { ideaDate: ideaDate ? new Date(ideaDate) : null } : {}),
+          ...(startDate !== undefined ? { startDate: startDate ? new Date(startDate) : null } : {}),
+          ...(endDate !== undefined ? { endDate: endDate ? new Date(endDate) : null } : {}),
+        });
       }),
 
     delete: adminProcedure

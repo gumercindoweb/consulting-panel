@@ -1475,7 +1475,12 @@ const PRIORITY_META: Record<string, { label: string; color: string }> = {
   media: { label: "MEDIA", color: "#E0913F" },
   baja:  { label: "BAJA",  color: "var(--gj-muted)" },
 };
-const EMPTY_BACKLOG = { title: "", description: "", status: "idea" as const, priority: "media" as const, url: "", fileUrls: [] as { url: string; name: string }[] };
+const EMPTY_BACKLOG = { title: "", description: "", status: "idea" as const, priority: "media" as const, url: "", fileUrls: [] as { url: string; name: string }[], ideaDate: new Date().toISOString().split("T")[0], startDate: "", endDate: "" };
+
+const fmtDate = (d: string | Date | null | undefined) =>
+  d ? new Date(d).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" }) : null;
+const toDateInput = (d: string | Date | null | undefined) =>
+  d ? new Date(d).toISOString().split("T")[0] : "";
 
 const bFiles = (b: any): { url: string; name: string }[] =>
   Array.isArray(b?.fileUrls) ? b.fileUrls : [];
@@ -1548,9 +1553,23 @@ function BacklogTab({ clientId }: { clientId: number }) {
                 </select>
               </div>
             </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <p className="text-xs mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>SURGIÓ EL</p>
+                <input type="date" value={form.ideaDate} onChange={e => setForm(f => ({ ...f, ideaDate: e.target.value }))} style={inp} />
+              </div>
+              <div>
+                <p className="text-xs mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>INICIO (opcional)</p>
+                <input type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} style={inp} />
+              </div>
+              <div>
+                <p className="text-xs mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>FIN (opcional)</p>
+                <input type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} style={inp} />
+              </div>
+            </div>
             <div className="flex gap-2 mt-2">
               <button
-                onClick={() => { if (form.title) createItem.mutate({ clientId, ...form }); }}
+                onClick={() => { if (form.title) createItem.mutate({ clientId, ...form, ideaDate: form.ideaDate || undefined, startDate: form.startDate || undefined, endDate: form.endDate || undefined }); }}
                 disabled={!form.title}
                 className="flex items-center gap-1 text-xs px-4 py-2 rounded"
                 style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px", opacity: form.title ? 1 : 0.5 }}
@@ -1594,6 +1613,20 @@ function BacklogTab({ clientId }: { clientId: number }) {
                       {Object.entries(PRIORITY_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                     </select>
                   </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <p className="text-xs mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>SURGIÓ EL</p>
+                      <input type="date" value={editData.ideaDate ?? toDateInput((item as any).ideaDate)} onChange={e => setEditData(d => ({ ...d, ideaDate: e.target.value }))} style={inp} />
+                    </div>
+                    <div>
+                      <p className="text-xs mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>INICIO</p>
+                      <input type="date" value={editData.startDate ?? toDateInput((item as any).startDate)} onChange={e => setEditData(d => ({ ...d, startDate: e.target.value }))} style={inp} />
+                    </div>
+                    <div>
+                      <p className="text-xs mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>FIN</p>
+                      <input type="date" value={editData.endDate ?? toDateInput((item as any).endDate)} onChange={e => setEditData(d => ({ ...d, endDate: e.target.value }))} style={inp} />
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <button onClick={() => updateItem.mutate({ id: item.id, clientId, ...editData })} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}>
                       <Save size={12} /> GUARDAR
@@ -1612,6 +1645,13 @@ function BacklogTab({ clientId }: { clientId: number }) {
                     </div>
                     <p className="text-sm font-medium" style={{ color: "var(--gj-cream)" }}>{item.title}</p>
                     {item.description && <p className="text-xs mt-1" style={{ color: "var(--gj-muted)", lineHeight: 1.5 }}>{item.description}</p>}
+                    {(fmtDate((item as any).ideaDate) || fmtDate((item as any).startDate) || fmtDate((item as any).endDate)) && (
+                      <p className="text-xs mt-1" style={{ color: "var(--gj-muted)" }}>
+                        {fmtDate((item as any).ideaDate) && <>💡 Surgió: {fmtDate((item as any).ideaDate)}</>}
+                        {fmtDate((item as any).startDate) && <>{fmtDate((item as any).ideaDate) ? "  ·  " : ""}▶ Inicio: {fmtDate((item as any).startDate)}</>}
+                        {fmtDate((item as any).endDate) && <>{(fmtDate((item as any).ideaDate) || fmtDate((item as any).startDate)) ? "  ·  " : ""}✓ Fin: {fmtDate((item as any).endDate)}</>}
+                      </p>
+                    )}
                     {(bFiles(item).length > 0 || (item as any).url) && (
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         {bFiles(item).map((f) => (

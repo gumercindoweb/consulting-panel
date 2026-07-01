@@ -8,6 +8,9 @@ interface Props {
 const bFiles = (b: any): { url: string; name: string }[] =>
   Array.isArray(b?.fileUrls) ? b.fileUrls : [];
 
+const fmtDate = (d: string | Date | null | undefined) =>
+  d ? new Date(d).toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" }) : null;
+
 const STATUS_META: Record<string, { label: string; color: string }> = {
   idea:        { label: "IDEA",        color: "#9A9A9A" },
   en_revision: { label: "EN REVISIÓN", color: "var(--ambar)" },
@@ -94,6 +97,13 @@ export default function SectionBacklog({ clientId }: Props) {
                     {item.description && (
                       <p className="font-body text-xs mt-2" style={{ color: "var(--gris)", lineHeight: 1.6 }}>
                         {item.description}
+                      </p>
+                    )}
+                    {(fmtDate((item as any).ideaDate) || fmtDate((item as any).startDate) || fmtDate((item as any).endDate)) && (
+                      <p className="font-label text-xs mt-2" style={{ color: "var(--gris)", letterSpacing: "1px" }}>
+                        {fmtDate((item as any).ideaDate) && <>Surgió: {fmtDate((item as any).ideaDate)}</>}
+                        {fmtDate((item as any).startDate) && <>{fmtDate((item as any).ideaDate) ? "  ·  " : ""}Inicio: {fmtDate((item as any).startDate)}</>}
+                        {fmtDate((item as any).endDate) && <>{(fmtDate((item as any).ideaDate) || fmtDate((item as any).startDate)) ? "  ·  " : ""}Fin: {fmtDate((item as any).endDate)}</>}
                       </p>
                     )}
                     {(bFiles(item).length > 0 || (item as any).url) && (
