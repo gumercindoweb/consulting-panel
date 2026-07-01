@@ -799,6 +799,8 @@ export const appRouter = router({
         description: z.string().optional(),
         status: z.enum(["idea", "en_revision", "aprobada", "en_progreso", "descartada"]).default("idea"),
         priority: z.enum(["alta", "media", "baja"]).default("media"),
+        url: z.string().optional(),
+        fileUrls: z.array(z.object({ url: z.string(), name: z.string() })).optional(),
       }))
       .mutation(({ input }) => createBacklogItem(input)),
 
@@ -810,6 +812,8 @@ export const appRouter = router({
         description: z.string().optional(),
         status: z.enum(["idea", "en_revision", "aprobada", "en_progreso", "descartada"]).optional(),
         priority: z.enum(["alta", "media", "baja"]).optional(),
+        url: z.string().optional(),
+        fileUrls: z.array(z.object({ url: z.string(), name: z.string() })).optional(),
       }))
       .mutation(({ input }) => {
         const { id, clientId, ...data } = input;

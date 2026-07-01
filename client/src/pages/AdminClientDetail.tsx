@@ -1475,7 +1475,10 @@ const PRIORITY_META: Record<string, { label: string; color: string }> = {
   media: { label: "MEDIA", color: "#E0913F" },
   baja:  { label: "BAJA",  color: "var(--gj-muted)" },
 };
-const EMPTY_BACKLOG = { title: "", description: "", status: "idea" as const, priority: "media" as const };
+const EMPTY_BACKLOG = { title: "", description: "", status: "idea" as const, priority: "media" as const, url: "", fileUrls: [] as { url: string; name: string }[] };
+
+const bFiles = (b: any): { url: string; name: string }[] =>
+  Array.isArray(b?.fileUrls) ? b.fileUrls : [];
 
 function BacklogTab({ clientId }: { clientId: number }) {
   const utils = trpc.useUtils();
@@ -1521,6 +1524,16 @@ function BacklogTab({ clientId }: { clientId: number }) {
           <div className="space-y-3">
             <input placeholder="Título de la idea *" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} style={inp} />
             <textarea placeholder="Descripción (opcional)" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} style={{ ...inp, resize: "vertical" }} />
+            <input placeholder="URL de referencia (opcional) — ej. app o producto de inspiración" value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} style={inp} />
+            <div className="flex flex-wrap items-center gap-2">
+              {form.fileUrls.map((f, i) => (
+                <span key={f.url} className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}>
+                  <Paperclip size={12} /> {f.name}
+                  <button type="button" onClick={() => setForm(cf => ({ ...cf, fileUrls: cf.fileUrls.filter((_, idx) => idx !== i) }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button>
+                </span>
+              ))}
+              <MultiFileUploadButton clientId={clientId} onUploaded={(url, name) => setForm(cf => ({ ...cf, fileUrls: [...cf.fileUrls, { url, name }] }))} label="SUBIR IMÁGENES / PDF DE REFERENCIA" />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-xs mb-1" style={{ color: "var(--gj-muted)", letterSpacing: "2px" }}>ESTADO</p>
@@ -1563,6 +1576,16 @@ function BacklogTab({ clientId }: { clientId: number }) {
                 <div className="space-y-3">
                   <input value={editData.title ?? item.title} onChange={e => setEditData(d => ({ ...d, title: e.target.value }))} style={inp} />
                   <textarea value={editData.description ?? item.description ?? ""} onChange={e => setEditData(d => ({ ...d, description: e.target.value }))} rows={3} style={{ ...inp, resize: "vertical" }} />
+                  <input placeholder="URL de referencia (opcional)" value={editData.url ?? (item as any).url ?? ""} onChange={e => setEditData(d => ({ ...d, url: e.target.value }))} style={inp} />
+                  <div className="flex flex-wrap items-center gap-2">
+                    {(editData.fileUrls ?? bFiles(item)).map((f, i) => (
+                      <span key={f.url} className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}>
+                        <Paperclip size={12} /> {f.name}
+                        <button type="button" onClick={() => setEditData(d => ({ ...d, fileUrls: (d.fileUrls ?? bFiles(item)).filter((_, idx) => idx !== i) }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button>
+                      </span>
+                    ))}
+                    <MultiFileUploadButton clientId={clientId} onUploaded={(url, name) => setEditData(d => ({ ...d, fileUrls: [...(d.fileUrls ?? bFiles(item)), { url, name }] }))} label="SUBIR IMÁGENES / PDF DE REFERENCIA" />
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <select value={editData.status ?? item.status} onChange={e => setEditData(d => ({ ...d, status: e.target.value as any }))} style={inp}>
                       {Object.entries(STATUS_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
@@ -1589,6 +1612,23 @@ function BacklogTab({ clientId }: { clientId: number }) {
                     </div>
                     <p className="text-sm font-medium" style={{ color: "var(--gj-cream)" }}>{item.title}</p>
                     {item.description && <p className="text-xs mt-1" style={{ color: "var(--gj-muted)", lineHeight: 1.5 }}>{item.description}</p>}
+                    {(bFiles(item).length > 0 || (item as any).url) && (
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        {bFiles(item).map((f) => (
+                          <div key={f.url} className="flex items-center gap-1.5 flex-wrap">
+                            {isPreviewable(f.name) && (
+                              <FilePreviewButton
+                                url={f.url}
+                                name={f.name}
+                                buttonStyle={{ color: "var(--gj-mint)", background: "rgba(154,230,180,0.08)", border: "1px solid rgba(154,230,180,0.2)" }}
+                              />
+                            )}
+                            <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-mint)" }}>↓ {f.name}</a>
+                          </div>
+                        ))}
+                        {(item as any).url && <a href={(item as any).url} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-mint)", wordBreak: "break-all" }}>🔗 {(item as any).url}</a>}
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
                     <button onClick={() => { setEditingId(item.id); setEditData({}); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-green)", padding: "4px" }}><Edit3 size={13} /></button>

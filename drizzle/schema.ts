@@ -287,6 +287,11 @@ export const backlogItems = pgTable("backlog_items", {
   description: text("description"),
   status: varchar("status", { length: 32 }).notNull().default("idea"),
   priority: varchar("priority", { length: 16 }).notNull().default("media"),
+  // URL de referencia opcional (ej. una app/producto que sirve de inspiración).
+  url: text("url"),
+  // Archivos de referencia opcionales (imágenes, PDFs, capturas) con vista
+  // previa — mismo patrón que Resources y ProjectUpdates.
+  fileUrls: json("fileUrls").$type<{ url: string; name: string }[]>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });

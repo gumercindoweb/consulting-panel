@@ -1,8 +1,12 @@
 import { trpc } from "@/lib/trpc";
+import { FilePreviewButton, isPreviewable } from "@/components/FilePreview";
 
 interface Props {
   clientId: number;
 }
+
+const bFiles = (b: any): { url: string; name: string }[] =>
+  Array.isArray(b?.fileUrls) ? b.fileUrls : [];
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
   idea:        { label: "IDEA",        color: "#9A9A9A" },
@@ -91,6 +95,32 @@ export default function SectionBacklog({ clientId }: Props) {
                       <p className="font-body text-xs mt-2" style={{ color: "var(--gris)", lineHeight: 1.6 }}>
                         {item.description}
                       </p>
+                    )}
+                    {(bFiles(item).length > 0 || (item as any).url) && (
+                      <div className="flex items-center gap-2 mt-3 flex-wrap">
+                        {bFiles(item).map((f) => (
+                          <div key={f.url} className="flex items-center gap-1.5 flex-wrap">
+                            {isPreviewable(f.name) && (
+                              <FilePreviewButton
+                                url={f.url}
+                                name={f.name}
+                                buttonStyle={{ color: "var(--creme)", background: "rgba(245,240,232,0.06)", border: "1px solid rgba(245,240,232,0.15)" }}
+                              />
+                            )}
+                          </div>
+                        ))}
+                        {(item as any).url && (
+                          <a
+                            href={(item as any).url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 font-label text-xs px-3 py-1.5 rounded"
+                            style={{ color: "var(--creme)", background: "rgba(245,240,232,0.06)", border: "1px solid rgba(245,240,232,0.15)", textDecoration: "none", letterSpacing: "2px" }}
+                          >
+                            🔗 VER REFERENCIA
+                          </a>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
