@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { Globe, Layers, Wrench, FileText, Star, Box, ExternalLink, Download } from "lucide-react";
+import { FilePreviewButton, isPreviewable } from "@/components/FilePreview";
 
 interface Props { clientId: number; }
 
@@ -114,6 +115,17 @@ export default function SectionDigitalAssets({ clientId }: Props) {
                                 <ExternalLink size={11} />
                                 ABRIR
                               </a>
+                            )}
+                            {asset.fileUrl && isPreviewable(asset.fileUrl) && (
+                              <FilePreviewButton
+                                url={asset.fileUrl}
+                                name={asset.fileUrl.split("/").pop() ?? "archivo"}
+                                buttonStyle={{
+                                  color: cfg.color,
+                                  background: `${cfg.color}12`,
+                                  border: `1px solid ${cfg.color}30`,
+                                }}
+                              />
                             )}
                             {asset.fileUrl && (
                               <a

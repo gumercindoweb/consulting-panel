@@ -13,6 +13,7 @@ import SectionLearnings from "@/components/dashboard/SectionLearnings";
 import SectionScope from "@/components/dashboard/SectionScope";
 import SectionResources from "@/components/dashboard/SectionResources";
 import SectionDigitalAssets from "@/components/dashboard/SectionDigitalAssets";
+import { FilePreviewButton, isPreviewable } from "@/components/FilePreview";
 import SectionBacklog from "@/components/dashboard/SectionBacklog";
 import SectionTimeline from "@/components/dashboard/SectionTimeline";
 import { useIsMobile } from "@/hooks/useMobile";
@@ -1303,8 +1304,15 @@ function DigitalAssetsTab({ clientId }: { clientId: number }) {
                 <p className="text-sm font-medium mt-1" style={{ color: "var(--gj-cream)" }}>{a.title}</p>
                 {a.description && <p className="text-xs mt-0.5" style={{ color: "var(--gj-muted)" }}>{a.description}</p>}
                 {a.notes && <p className="text-xs mt-0.5 italic" style={{ color: "rgba(138,128,130,0.6)" }}>{a.notes}</p>}
-                <div className="flex gap-3 mt-1 flex-wrap">
+                <div className="flex items-center gap-3 mt-1 flex-wrap">
                   {a.externalUrl && <a href={a.externalUrl} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-green)" }}>↗ {a.externalUrl}</a>}
+                  {a.fileUrl && isPreviewable(a.fileUrl) && (
+                    <FilePreviewButton
+                      url={a.fileUrl}
+                      name={a.fileUrl.split("/").pop() ?? "archivo"}
+                      buttonStyle={{ color: "var(--gj-mint)", background: "rgba(154,230,180,0.08)", border: "1px solid rgba(154,230,180,0.2)" }}
+                    />
+                  )}
                   {a.fileUrl && <a href={a.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-mint)" }}>↓ Archivo</a>}
                 </div>
               </div>
