@@ -162,7 +162,12 @@ function UpdatesTab({ clientId }: { clientId: number }) {
     onError: (e) => toast.error(e.message),
   });
 
-  const EMPTY = { title: "", body: "", category: "general" as const, status: "on_track" as const, impact: "medium" as const, url: "", fileUrl: "", isPublic: true, date: new Date().toISOString().split("T")[0], phaseId: undefined as number | undefined, milestoneId: undefined as number | undefined };
+  const EMPTY = { title: "", body: "", category: "general" as const, status: "on_track" as const, impact: "medium" as const, url: "", fileUrls: [] as { url: string; name: string }[], isPublic: true, date: new Date().toISOString().split("T")[0], phaseId: undefined as number | undefined, milestoneId: undefined as number | undefined };
+
+  const uFiles = (u: any): { url: string; name: string }[] =>
+    Array.isArray(u?.fileUrls) && u.fileUrls.length
+      ? u.fileUrls
+      : (u?.fileUrl ? [{ url: u.fileUrl, name: u.fileUrl.split("/").pop() ?? "archivo" }] : []);
   const [form, setForm] = useState(EMPTY);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -213,11 +218,14 @@ function UpdatesTab({ clientId }: { clientId: number }) {
             </select>
           </div>
           <input style={inp} placeholder="URL de referencia (opcional) — ej. publicación, entregable, documento" value={form.url} onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))} />
-          <div className="flex items-center gap-3">
-            {form.fileUrl
-              ? <span className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}><Paperclip size={12} /> {form.fileUrl.split("/").pop()}<button type="button" onClick={() => setForm(f => ({ ...f, fileUrl: "" }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button></span>
-              : <FileUploadButton clientId={clientId} onUploaded={(url) => setForm(f => ({ ...f, fileUrl: url }))} label="SUBIR ARCHIVO (PDF, IMAGEN, ETC.)" />
-            }
+          <div className="flex flex-wrap items-center gap-2">
+            {form.fileUrls.map((f, i) => (
+              <span key={f.url} className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}>
+                <Paperclip size={12} /> {f.name}
+                <button type="button" onClick={() => setForm((cf) => ({ ...cf, fileUrls: cf.fileUrls.filter((_, idx) => idx !== i) }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button>
+              </span>
+            ))}
+            <MultiFileUploadButton clientId={clientId} onUploaded={(url, name) => setForm((cf) => ({ ...cf, fileUrls: [...cf.fileUrls, { url, name }] }))} label="SUBIR ARCHIVOS (PDF, IMAGEN, ETC.)" />
           </div>
           <label className="flex items-center gap-2 text-xs" style={{ color: "var(--gj-muted)", cursor: "pointer" }}>
             <input type="checkbox" checked={form.isPublic} onChange={(e) => setForm((f) => ({ ...f, isPublic: e.target.checked }))} />
@@ -266,11 +274,14 @@ function UpdatesTab({ clientId }: { clientId: number }) {
                   </select>
                 </div>
                 <input style={inp} placeholder="URL de referencia (opcional)" value={editData.url ?? u.url ?? ""} onChange={(e) => setEditData((d: any) => ({ ...d, url: e.target.value }))} />
-                <div className="flex items-center gap-3">
-                  {editData.fileUrl ?? u.fileUrl
-                    ? <span className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}><Paperclip size={12} /> {(editData.fileUrl ?? u.fileUrl ?? "").split("/").pop()}<button type="button" onClick={() => setEditData((d: any) => ({ ...d, fileUrl: "" }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button></span>
-                    : <FileUploadButton clientId={clientId} onUploaded={(url) => setEditData((d: any) => ({ ...d, fileUrl: url }))} label="SUBIR ARCHIVO (PDF, IMAGEN, ETC.)" />
-                  }
+                <div className="flex flex-wrap items-center gap-2">
+                  {(editData.fileUrls ?? uFiles(u)).map((f: { url: string; name: string }, i: number) => (
+                    <span key={f.url} className="text-xs flex items-center gap-1" style={{ color: "var(--gj-mint)" }}>
+                      <Paperclip size={12} /> {f.name}
+                      <button type="button" onClick={() => setEditData((d: any) => ({ ...d, fileUrls: (d.fileUrls ?? uFiles(u)).filter((_: any, idx: number) => idx !== i) }))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", marginLeft: 4 }}><X size={11} /></button>
+                    </span>
+                  ))}
+                  <MultiFileUploadButton clientId={clientId} onUploaded={(url, name) => setEditData((d: any) => ({ ...d, fileUrls: [...(d.fileUrls ?? uFiles(u)), { url, name }] }))} label="SUBIR ARCHIVOS (PDF, IMAGEN, ETC.)" />
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => updateUpdate.mutate({ id: u.id, clientId, ...editData })} className="flex items-center gap-1 text-xs px-3 py-1 rounded" style={{ background: "var(--gj-green)", color: "var(--gj-cream)", border: "none", cursor: "pointer", letterSpacing: "2px" }}><Save size={12} /> GUARDAR</button>
@@ -291,14 +302,18 @@ function UpdatesTab({ clientId }: { clientId: number }) {
                   <p className="text-sm font-medium" style={{ color: "var(--gj-cream)" }}>{u.title}</p>
                   <p className="text-xs mt-1" style={{ color: "var(--gj-muted)", lineHeight: 1.5 }}>{u.body.slice(0, 120)}{u.body.length > 120 ? "…" : ""}</p>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    {(u as any).fileUrl && isPreviewable((u as any).fileUrl) && (
-                      <FilePreviewButton
-                        url={(u as any).fileUrl}
-                        name={(u as any).fileUrl.split("/").pop() ?? "archivo"}
-                        buttonStyle={{ color: "var(--gj-mint)", background: "rgba(154,230,180,0.08)", border: "1px solid rgba(154,230,180,0.2)" }}
-                      />
-                    )}
-                    {(u as any).fileUrl && <a href={(u as any).fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-mint)" }}>↓ Archivo</a>}
+                    {uFiles(u).map((f) => (
+                      <div key={f.url} className="flex items-center gap-1.5 flex-wrap">
+                        {isPreviewable(f.name) && (
+                          <FilePreviewButton
+                            url={f.url}
+                            name={f.name}
+                            buttonStyle={{ color: "var(--gj-mint)", background: "rgba(154,230,180,0.08)", border: "1px solid rgba(154,230,180,0.2)" }}
+                          />
+                        )}
+                        <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-mint)" }}>↓ {uFiles(u).length > 1 ? f.name : "Archivo"}</a>
+                      </div>
+                    ))}
                     {(u as any).url && <a href={(u as any).url} target="_blank" rel="noopener noreferrer" className="text-xs" style={{ color: "var(--gj-mint)", wordBreak: "break-all" }}>🔗 {(u as any).url}</a>}
                   </div>
                 </div>

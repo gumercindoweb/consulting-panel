@@ -265,8 +265,11 @@ export const projectUpdates = pgTable("project_updates", {
   // URL de referencia opcional (ej. publicación, entregable, documento) que se
   // muestra como link en la actualización, tanto en el feed como en la Hoja de Ruta.
   url: text("url"),
-  // Archivo adjunto opcional (PDF, imagen, etc.) con vista previa.
+  // Archivo adjunto opcional (PDF, imagen, etc.) con vista previa. fileUrl
+  // queda solo por compat de lectura — las actualizaciones nuevas escriben
+  // en fileUrls (varios archivos por actualización, igual que en Resources).
   fileUrl: text("fileUrl"),
+  fileUrls: json("fileUrls").$type<{ url: string; name: string }[]>(),
   isPublic: boolean("isPublic").default(true).notNull(),
   date: timestamp("date").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

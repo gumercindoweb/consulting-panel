@@ -2,6 +2,11 @@ import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { FilePreviewButton, isPreviewable } from "@/components/FilePreview";
 
+const uFiles = (u: any): { url: string; name: string }[] =>
+  Array.isArray(u?.fileUrls) && u.fileUrls.length
+    ? u.fileUrls
+    : (u?.fileUrl ? [{ url: u.fileUrl, name: u.fileUrl.split("/").pop() ?? "archivo" }] : []);
+
 type Category = "session" | "result" | "delivery" | "insight" | "blocker" | "win" | "general";
 type Status = "on_track" | "at_risk" | "blocked" | "completed";
 type Impact = "high" | "medium" | "low";
@@ -130,35 +135,37 @@ export default function SectionFeed({ clientId }: { clientId: number }) {
                       {update.body}
                     </p>
                   )}
-                  {isExpanded && ((update as any).fileUrl || (update as any).url) && (
+                  {isExpanded && (uFiles(update).length > 0 || (update as any).url) && (
                     <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "14px", flexWrap: "wrap" }}>
-                      {(update as any).fileUrl && isPreviewable((update as any).fileUrl) && (
-                        <FilePreviewButton
-                          url={(update as any).fileUrl}
-                          name={(update as any).fileUrl.split("/").pop() ?? "archivo"}
-                          buttonStyle={{
-                            fontSize: "11px",
-                            letterSpacing: "2px",
-                            padding: "6px 12px",
-                            borderRadius: "4px",
-                            background: `${CATEGORY_COLORS[cat]}18`,
-                            color: CATEGORY_COLORS[cat],
-                            border: `1px solid ${CATEGORY_COLORS[cat]}40`,
-                            fontFamily: "var(--font-label)"
-                          }}
-                        />
-                      )}
-                      {(update as any).fileUrl && (
-                        <a
-                          href={(update as any).fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px", letterSpacing: "2px", padding: "6px 12px", borderRadius: "4px", background: `${CATEGORY_COLORS[cat]}18`, color: CATEGORY_COLORS[cat], border: `1px solid ${CATEGORY_COLORS[cat]}40`, textDecoration: "none", fontFamily: "var(--font-label)" }}
-                        >
-                          ↓ DESCARGAR
-                        </a>
-                      )}
+                      {uFiles(update).map((f) => (
+                        <div key={f.url} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          {isPreviewable(f.name) && (
+                            <FilePreviewButton
+                              url={f.url}
+                              name={f.name}
+                              buttonStyle={{
+                                fontSize: "11px",
+                                letterSpacing: "2px",
+                                padding: "6px 12px",
+                                borderRadius: "4px",
+                                background: `${CATEGORY_COLORS[cat]}18`,
+                                color: CATEGORY_COLORS[cat],
+                                border: `1px solid ${CATEGORY_COLORS[cat]}40`,
+                                fontFamily: "var(--font-label)"
+                              }}
+                            />
+                          )}
+                          <a
+                            href={f.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px", letterSpacing: "2px", padding: "6px 12px", borderRadius: "4px", background: `${CATEGORY_COLORS[cat]}18`, color: CATEGORY_COLORS[cat], border: `1px solid ${CATEGORY_COLORS[cat]}40`, textDecoration: "none", fontFamily: "var(--font-label)" }}
+                          >
+                            ↓ {uFiles(update).length > 1 ? f.name : "DESCARGAR"}
+                          </a>
+                        </div>
+                      ))}
                       {(update as any).url && (
                         <a
                           href={(update as any).url}
