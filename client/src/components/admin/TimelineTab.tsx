@@ -1,6 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { useState, useEffect, useRef } from "react";
-import { Plus, Edit3, Trash2, Flag, AlertTriangle, ChevronDown, ChevronRight, GripVertical } from "lucide-react";
+import { Plus, Edit3, Trash2, Flag, AlertTriangle, ChevronDown, ChevronRight, GripVertical, Eye, EyeOff, Circle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -99,8 +99,74 @@ function SortableMilestone({ id, children }: { id: number; children: React.React
   );
 }
 
+// ── Checklist de Onboarding / Outboarding ──────────────────────────────────
+export type StageChecklist = { visible: boolean; items: { id: string; text: string; done: boolean }[] };
+const EMPTY_CHECKLIST: StageChecklist = { visible: false, items: [] };
+const newChecklistItemId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+function StageChecklistEditor({ title, subtitle, accent, value, onSave }: {
+  title: string; subtitle: string; accent: string; value: StageChecklist; onSave: (c: StageChecklist) => void;
+}) {
+  const [state, setState] = useState<StageChecklist>(value);
+  const [draft, setDraft] = useState("");
+  // Resync solo cuando cambia el contenido real del server (no en cada render).
+  useEffect(() => { setState(value); }, [JSON.stringify(value)]);
+  const dirty = JSON.stringify(state) !== JSON.stringify(value);
+  const items = state.items ?? [];
+  const setItems = (its: StageChecklist["items"]) => setState((s) => ({ ...s, items: its }));
+  const addItem = () => { const t = draft.trim(); if (!t) return; setItems([...items, { id: newChecklistItemId(), text: t, done: false }]); setDraft(""); };
+
+  const fieldStyle = { flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 4, color: "var(--gj-cream)", fontFamily: "var(--gj-font)", fontSize: 13, padding: "6px 10px", outline: "none" as const };
+
+  return (
+    <div style={{ border: `1px solid ${accent}33`, borderRadius: 8, padding: 16, background: `${accent}0a` }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
+        <div>
+          <p style={{ fontSize: 11, letterSpacing: 3, color: accent, fontWeight: 700, fontFamily: "var(--gj-font)" }}>{title}</p>
+          <p style={{ fontSize: 11, color: "var(--gj-muted)", marginTop: 2 }}>{subtitle}</p>
+        </div>
+        <button type="button" onClick={() => setState((s) => ({ ...s, visible: !s.visible }))} title="Mostrar u ocultar al cliente"
+          style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6, fontSize: 10, letterSpacing: 1, padding: "6px 10px", borderRadius: 6, cursor: "pointer",
+            background: state.visible ? "rgba(78,186,138,0.15)" : "rgba(255,255,255,0.05)", color: state.visible ? "#4eba8a" : "var(--gj-muted)", border: `1px solid ${state.visible ? "rgba(78,186,138,0.4)" : "rgba(255,255,255,0.12)"}`, fontFamily: "var(--gj-font)" }}>
+          {state.visible ? <Eye size={13} /> : <EyeOff size={13} />} {state.visible ? "VISIBLE AL CLIENTE" : "OCULTO AL CLIENTE"}
+        </button>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {items.map((it) => (
+          <div key={it.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button type="button" onClick={() => setItems(items.map((x) => (x.id === it.id ? { ...x, done: !x.done } : x)))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: it.done ? "#4eba8a" : "var(--gj-muted)", display: "flex", flexShrink: 0 }}>
+              {it.done ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+            </button>
+            <input value={it.text} onChange={(e) => setItems(items.map((x) => (x.id === it.id ? { ...x, text: e.target.value } : x)))} style={{ ...fieldStyle, textDecoration: it.done ? "line-through" : "none", opacity: it.done ? 0.6 : 1 }} />
+            <button type="button" onClick={() => setItems(items.filter((x) => x.id !== it.id))} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gj-muted)", padding: 4, flexShrink: 0 }}><Trash2 size={13} /></button>
+          </div>
+        ))}
+        {items.length === 0 && <p style={{ fontSize: 12, color: "var(--gj-muted)", fontStyle: "italic" }}>Sin pasos todavía.</p>}
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+        <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addItem(); } }} placeholder="Agregar paso..." style={fieldStyle} />
+        <button type="button" onClick={addItem} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, letterSpacing: 1, padding: "6px 12px", borderRadius: 6, cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "var(--gj-cream)", border: "none", fontFamily: "var(--gj-font)" }}><Plus size={13} /> PASO</button>
+      </div>
+
+      {dirty && (
+        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+          <button type="button" onClick={() => onSave(state)} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, letterSpacing: 2, padding: "7px 14px", borderRadius: 6, cursor: "pointer", background: accent, color: "#0d0a0c", border: "none", fontWeight: 700, fontFamily: "var(--gj-font)" }}>GUARDAR CAMBIOS</button>
+          <button type="button" onClick={() => setState(value)} style={{ fontSize: 11, letterSpacing: 2, padding: "7px 14px", borderRadius: 6, cursor: "pointer", background: "transparent", color: "var(--gj-muted)", border: "1px solid rgba(255,255,255,0.12)", fontFamily: "var(--gj-font)" }}>DESCARTAR</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function TimelineTab({ clientId }: Props) {
   const utils = trpc.useUtils();
+  const { data: client } = trpc.clients.get.useQuery({ id: clientId });
+  const updateClient = trpc.clients.update.useMutation({
+    onSuccess: () => { utils.clients.get.invalidate({ id: clientId }); toast.success("Guardado."); },
+    onError: (e) => toast.error(e.message),
+  });
   const { data: phases = [] } = trpc.phases.list.useQuery({ clientId });
   const { data: serverMilestones = [] } = trpc.milestones.list.useQuery({ clientId });
   const { data: updates = [] } = trpc.updates.list.useQuery({ clientId });
@@ -200,13 +266,15 @@ export default function TimelineTab({ clientId }: Props) {
   const orphanedMilestones = milestones.filter((m) => !(m as any).phaseId);
   const totalCompleted = phases.filter((p) => p.status === "completed").length;
 
-  // Descending order: in_progress first, then pending, then completed
-  const sortedPhases = [...phases].sort((a, b) => {
-    const rank = { in_progress: 0, pending: 1, completed: 2 };
-    return (rank[a.status] ?? 3) - (rank[b.status] ?? 3);
-  });
   // Map original index (for "ETAPA N" label) by id
   const phaseOriginalIndex = Object.fromEntries(phases.map((p, i) => [p.id, i + 1]));
+  // Orden: la etapa vigente (en curso) primero; el resto descendente (3, 2, 1).
+  const sortedPhases = [...phases].sort((a, b) => {
+    const rank: Record<string, number> = { in_progress: 0, pending: 1, completed: 2 };
+    const r = (rank[a.status] ?? 3) - (rank[b.status] ?? 3);
+    if (r !== 0) return r;
+    return ((phaseOriginalIndex[b.id] as number) ?? 0) - ((phaseOriginalIndex[a.id] as number) ?? 0);
+  });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -229,6 +297,15 @@ export default function TimelineTab({ clientId }: Props) {
           </button>
         </div>
       )}
+
+      {/* ── ONBOARDING (entrada del cliente) — arriba de las etapas ── */}
+      <StageChecklistEditor
+        title="ONBOARDING · ENTRADA DEL CLIENTE"
+        subtitle="Pasos para integrar al cliente antes de arrancar las etapas."
+        accent="#4db6e8"
+        value={((client as any)?.onboarding as StageChecklist) ?? EMPTY_CHECKLIST}
+        onSave={(c) => updateClient.mutate({ id: clientId, onboarding: c })}
+      />
 
       {sortedPhases.map((phase) => {
         const cfg = PHASE_STATUS[phase.status] ?? PHASE_STATUS.pending;
@@ -644,6 +721,15 @@ export default function TimelineTab({ clientId }: Props) {
           </div>
         </div>
       )}
+
+      {/* ── OUTBOARDING (cierre / salida del cliente) — abajo de las etapas ── */}
+      <StageChecklistEditor
+        title="OUTBOARDING · CIERRE DEL CLIENTE"
+        subtitle="Pasos de cierre / handoff al terminar las etapas."
+        accent="#E0913F"
+        value={((client as any)?.outboarding as StageChecklist) ?? EMPTY_CHECKLIST}
+        onSave={(c) => updateClient.mutate({ id: clientId, outboarding: c })}
+      />
 
       {/* ── Add phase form ── */}
       <div style={{

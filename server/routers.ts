@@ -215,6 +215,8 @@ export const appRouter = router({
           isActive: z.boolean().optional(),
           visibleSections: z.array(z.string()).optional(),
           memberVisibleSections: z.array(z.string()).optional(),
+          onboarding: z.any().optional(),
+          outboarding: z.any().optional(),
         })
       )
       .mutation(({ input }) => {

@@ -66,6 +66,11 @@ export const clients = pgTable("clients", {
   // miembros — no es 1x1 todavía (queda como evolución futura: ver
   // clientAccess.accessLevel para el campo que ya distingue cada usuario).
   memberVisibleSections: json("memberVisibleSections").$type<string[]>(),
+  // Onboarding (entrada del cliente) y Outboarding (cierre/salida): bloques con
+  // checklist de pasos que enmarcan las etapas en la Hoja de Ruta. `visible`
+  // controla si el cliente los ve en su portal. Estándar para todos los clientes.
+  onboarding: json("onboarding").$type<{ visible: boolean; items: { id: string; text: string; done: boolean }[] }>(),
+  outboarding: json("outboarding").$type<{ visible: boolean; items: { id: string; text: string; done: boolean }[] }>(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });

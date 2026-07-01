@@ -36,10 +36,37 @@ const CAT_LABELS: Record<string, string> = {
   general: "ACTUALIZACIÓN",
 };
 
+type PortalChecklist = { visible: boolean; items: { id: string; text: string; done: boolean }[] };
+
+// Bloque read-only de Onboarding / Outboarding en el portal del cliente.
+function StageChecklistView({ title, subtitle, accent, data }: { title: string; subtitle: string; accent: string; data?: PortalChecklist | null }) {
+  if (!data || !data.visible || !(data.items && data.items.length)) return null;
+  return (
+    <div className="sdt-card p-5 border-l-4" style={{ borderColor: accent }}>
+      <p className="font-label text-xs tracking-widest mb-1" style={{ color: accent, letterSpacing: "3px" }}>{title}</p>
+      <p className="text-xs mb-3" style={{ color: "var(--gris)" }}>{subtitle}</p>
+      <div className="space-y-2">
+        {data.items.map((it) => (
+          <div key={it.id} className="flex items-start gap-2">
+            {it.done
+              ? <CheckCircle2 size={16} style={{ color: "#4eba8a", flexShrink: 0, marginTop: 2 }} />
+              : <Circle size={16} style={{ color: "var(--gris)", flexShrink: 0, marginTop: 2 }} />}
+            <span className="text-sm" style={{ color: it.done ? "var(--gris)" : "var(--creme)", textDecoration: it.done ? "line-through" : "none" }}>{it.text}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function SectionTimeline({ clientId }: Props) {
   const { data: phases = [], isLoading: phasesLoading } = trpc.phases.list.useQuery({ clientId });
   const { data: milestones = [], isLoading: milestonesLoading } = trpc.milestones.list.useQuery({ clientId });
   const { data: updates = [], isLoading: updatesLoading } = trpc.updates.list.useQuery({ clientId });
+  const { data: myClients = [] } = trpc.clients.myClients.useQuery(undefined);
+  const activeClient = (myClients as any[]).find((c) => c.id === clientId);
+  const onboarding = (activeClient as any)?.onboarding as PortalChecklist | undefined;
+  const outboarding = (activeClient as any)?.outboarding as PortalChecklist | undefined;
 
   const isLoading = phasesLoading || milestonesLoading || updatesLoading;
 
@@ -55,11 +82,14 @@ export default function SectionTimeline({ clientId }: Props) {
   const toggleCollapse = (id: number) =>
     setCollapsed((prev) => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
 
+  const phaseOriginalIndex = Object.fromEntries(phases.map((p, i) => [p.id, i + 1]));
+  // Orden: la etapa vigente (en curso) primero; el resto en orden descendente (3, 2, 1).
   const sortedPhases = [...phases].sort((a, b) => {
     const rank: Record<string, number> = { in_progress: 0, pending: 1, completed: 2 };
-    return (rank[a.status] ?? 3) - (rank[b.status] ?? 3);
+    const r = (rank[a.status] ?? 3) - (rank[b.status] ?? 3);
+    if (r !== 0) return r;
+    return ((phaseOriginalIndex[b.id] as number) ?? 0) - ((phaseOriginalIndex[a.id] as number) ?? 0);
   });
-  const phaseOriginalIndex = Object.fromEntries(phases.map((p, i) => [p.id, i + 1]));
 
   const milestonesByPhase = (phaseId: number) => milestones.filter((m) => m.phaseId === phaseId);
   const updatesByMilestone = (milestoneId: number) => updates.filter((u) => u.milestoneId === milestoneId);
@@ -79,6 +109,8 @@ export default function SectionTimeline({ clientId }: Props) {
         </p>
       </div>
       <div className="sdt-divider" />
+
+      <StageChecklistView title="ONBOARDING" subtitle="Cómo arranca tu proceso con nosotros." accent="#4db6e8" data={onboarding} />
 
       {isLoading ? (
         <div className="flex items-center gap-3 py-8">
@@ -246,6 +278,8 @@ export default function SectionTimeline({ clientId }: Props) {
           </div>
         </div>
       )}
+
+      <StageChecklistView title="OUTBOARDING" subtitle="Cómo cerramos y hacemos el traspaso al finalizar." accent="#E0913F" data={outboarding} />
     </div>
   );
 }
